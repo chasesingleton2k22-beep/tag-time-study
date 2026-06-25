@@ -36,10 +36,18 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #btn-end-bucket:active { filter: brightness(1.3); }
 
 /* Plant / Stream Select */
-#screen-plant-select { align-items: center; justify-content: center; gap: 24px; padding: 24px; overflow-y: auto; }
+#screen-plant-select { align-items: center; justify-content: center; gap: 28px; padding: 24px; overflow-y: auto; }
 #screen-stream-select { align-items: center; gap: 24px; padding-bottom: 24px; overflow-y: auto; }
 #screen-stream-select .stream-content { display: flex; flex-direction: column; align-items: center; gap: 24px; flex: 1; justify-content: center; padding: 0 24px; }
 #screen-plant-select h1, #screen-stream-select h1 { color: var(--gold-light); font-size: 1.8rem; margin-bottom: 8px; text-align: center; }
+
+/* CI Brand block (plant select) */
+.ci-brand-block { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0; }
+.ci-tag-wordmark { font-size: 4.2rem; font-weight: 900; color: var(--gold-light); letter-spacing: 0.18em; line-height: 1; text-shadow: 0 2px 24px rgba(255,213,79,0.22); }
+.ci-mfg-label { font-size: 0.7rem; color: var(--gold); letter-spacing: 0.42em; font-weight: bold; margin-top: 3px; text-transform: uppercase; }
+.ci-rule { width: 240px; height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); margin: 12px auto; }
+.ci-dept-label { font-size: 0.68rem; color: #8a9ab8; letter-spacing: 0.3em; font-weight: bold; text-transform: uppercase; }
+.ci-tool-label { font-size: 1.55rem; font-weight: bold; color: var(--text-light); letter-spacing: 0.06em; margin-top: 10px; }
 .draft-badge { display: inline-block; font-size: 0.72rem; color: #fff; font-weight: bold; background: #5a6a8a; border-radius: 6px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
 .plant-btn, .stream-btn { width: 90%; max-width: 420px; min-height: 140px; background: var(--navy-light); border: 4px solid var(--gold); color: var(--text-light); font-size: 2rem; font-weight: bold; border-radius: 16px; cursor: pointer; }
 .stream-btn { font-size: 1.8rem; }
@@ -211,7 +219,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 
 <!-- Plant Select -->
 <div class="screen active" id="screen-plant-select">
-  <h1>TAG TIME STUDY</h1>
+  <div class="ci-brand-block">
+    <div class="ci-tag-wordmark">TAG</div>
+    <div class="ci-mfg-label">M A N U F A C T U R I N G</div>
+    <div class="ci-rule"></div>
+    <div class="ci-dept-label">C O N T I N U O U S &nbsp; I M P R O V E M E N T</div>
+    <div class="ci-tool-label">⏱ Time Study</div>
+  </div>
   <button class="plant-btn" data-plant="Plant 1">PLANT 1</button>
   <button class="plant-btn" data-plant="Plant 2">PLANT 2</button>
 </div>
@@ -232,7 +246,10 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <!-- Session Home -->
 <div class="screen" id="screen-session-home">
   <div class="topbar">
-    <span class="plant-label" id="home-plant-label"></span>
+    <div>
+      <div class="plant-label" id="home-plant-label"></div>
+      <div class="topbar-subtitle">Continuous Improvement · TAG Mfg</div>
+    </div>
     <button class="back-btn" id="home-change-plant">Change Plant</button>
   </div>
   <div id="home-session-info"></div>
@@ -534,7 +551,7 @@ function plantDisplayLabel() {
 
 /* ── Session Home ── */
 function updateSessionHomeInfo() {
-  const completed = state.buckets.filter(b => !b.isDraft);
+  const completed = state.buckets.filter(b => !b.isDraft && b.sealed);
   const drafts = state.buckets.filter(b => b.isDraft);
   const n = completed.length;
   const unexported = completed.filter(b => !b.exportedAt).length;
@@ -1126,7 +1143,7 @@ function renderLog() {
       </div>`;
 
     if (isLive) {
-      row.querySelector('[data-jumpin]').addEventListener('click', e => { e.stopPropagation(); showScreen('screen-session'); });
+      row.querySelector('[data-jumpin]').addEventListener('click', e => { e.stopPropagation(); goToSession(); });
     } else if (bucket.isDraft) {
       const resumeBtn = row.querySelector('[data-resume]');
       if (resumeBtn && !resumeBtn.disabled) resumeBtn.addEventListener('click', e => { e.stopPropagation(); resumeDraft(bucket.id); });
