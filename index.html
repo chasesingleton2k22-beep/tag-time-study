@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TAG Time Study</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0a1f44">
+<meta name="theme-color" content="#0d2b5c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TAG TS">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --navy: #0a1f44; --navy-light: #14315c;
-  --gold: #d4a017; --gold-light: #f0c040;
-  --green: #2e7d32; --amber: #1565c0; --red: #c62828;
-  --text-light: #f5f5f0;
+  --navy: #0d2b5c; --navy-light: #1a3d78;
+  --gold: #e6b020; --gold-light: #ffd54f;
+  --green: #43a047; --amber: #1e88e5; --red: #e53935;
+  --text-light: #ffffff;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 input, select, textarea { user-select: text; -webkit-user-select: text; }
@@ -1049,7 +1049,7 @@ function renderLog() {
   actionBar.style.display = isHistory ? 'none' : 'flex';
 
   if (!isHistory) {
-    const exportable = buckets.filter(b => !b.isDraft).length;
+    const exportable = buckets.filter(b => !b.isDraft && b.sealed).length;
     const expNewBtn = document.getElementById('log-export-new');
     expNewBtn.textContent = `Export Unexported${exportable > 0 ? ` (${exportable})` : ''}`;
     expNewBtn.disabled = exportable === 0;
@@ -1061,6 +1061,8 @@ function renderLog() {
       : '<div class="empty-log-msg">No buckets yet.<br><small style="color:#7a8aaa;">Tap New Bucket to start timing.</small></div>';
     return;
   }
+
+  const hasLiveBucket = !!state.activeElement;
 
   buckets.forEach(bucket => {
     const h = bucket.header || {};
@@ -1104,10 +1106,12 @@ function renderLog() {
           </div>
         </div>
         <div class="bucket-row-btns">
-          ${bucket.isDraft
-            ? `<button class="bucket-action-btn edit" data-resume="${bucket.id}">▶ Resume</button>`
-            : `<button class="bucket-action-btn edit" data-edit="${bucket.id}">Edit</button>
-               <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>`}
+          ${isLive
+            ? `<button class="bucket-action-btn edit" data-jumpin="${bucket.id}">▶ Jump In</button>`
+            : bucket.isDraft
+              ? `<button class="bucket-action-btn edit" data-resume="${bucket.id}" ${hasLiveBucket ? 'disabled title="Finish the live bucket first"' : ''}>▶ Resume</button>`
+              : `<button class="bucket-action-btn edit" data-edit="${bucket.id}">Edit</button>
+                 <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>`}
           <button class="bucket-action-btn delete" data-delete="${bucket.id}">Delete</button>
         </div>
       </div>
@@ -1121,8 +1125,11 @@ function renderLog() {
               </div>${el.note ? `<div class="bucket-element-note">📝 ${esc(el.note)}</div>` : ''}`).join('')}
       </div>`;
 
-    if (bucket.isDraft) {
-      row.querySelector('[data-resume]').addEventListener('click', e => { e.stopPropagation(); resumeDraft(bucket.id); });
+    if (isLive) {
+      row.querySelector('[data-jumpin]').addEventListener('click', e => { e.stopPropagation(); showScreen('screen-session'); });
+    } else if (bucket.isDraft) {
+      const resumeBtn = row.querySelector('[data-resume]');
+      if (resumeBtn && !resumeBtn.disabled) resumeBtn.addEventListener('click', e => { e.stopPropagation(); resumeDraft(bucket.id); });
     } else {
       row.querySelector('[data-edit]').addEventListener('click', e => { e.stopPropagation(); openEditModal(bucket.id); });
       row.querySelector('[data-export]').addEventListener('click', e => {
@@ -1144,7 +1151,7 @@ document.getElementById('log-sub-active').addEventListener('click', () => { logS
 document.getElementById('log-sub-history').addEventListener('click', () => { logSubTab = 'history'; renderLog(); });
 
 document.getElementById('log-export-new').addEventListener('click', () => {
-  const toExport = state.buckets.filter(b => !b.exportedAt && !b.isDraft);
+  const toExport = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
   const exported = runExportBuckets(toExport);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
@@ -1152,7 +1159,7 @@ document.getElementById('log-export-new').addEventListener('click', () => {
   }
 });
 document.getElementById('log-export-all').addEventListener('click', () => {
-  const exported = runExportBuckets(state.buckets.filter(b => !b.isDraft));
+  const exported = runExportBuckets(state.buckets.filter(b => !b.isDraft && b.sealed));
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
