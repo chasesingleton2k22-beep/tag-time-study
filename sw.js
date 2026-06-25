@@ -1,7 +1,7 @@
-const CACHE_NAME = 'tag-time-study-v13';
+const CACHE_NAME = 'tag-time-study-v15';
 
 const CORE_ASSETS = ['./', './index.html'];
-const CDN_SHEETJS = 'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js';
+const CDN_SHEETJS = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -42,7 +42,7 @@ self.addEventListener('fetch', e => {
   }
 
   if (isCDN) {
-    // Cache-first for CDN assets (SheetJS) — they are versioned/stable
+    // Cache-first for CDN assets (SheetJS) — versioned and stable
     e.respondWith(
       caches.match(e.request).then(cached => {
         if (cached) return cached;

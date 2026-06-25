@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="TAG TS">
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
   --navy: #0a1f44; --navy-light: #14315c;
@@ -165,7 +165,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #element-note-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
 .bucket-element-note { font-size: 0.82rem; color: #c9d8f0; font-style: italic; padding: 2px 8px 4px 22px; }
 
-/* Landscape orientation */
+/* Portrait — more vertical room, so make buttons taller */
+@media (orientation: portrait) {
+  .element-btn { min-height: 80px; font-size: 0.92rem; }
+}
+
+/* Landscape — short screen, go 6 columns and compress heights */
 @media (orientation: landscape) and (max-height: 600px) {
   #grid-container { grid-template-columns: repeat(6, 1fr); }
   .element-btn { min-height: 48px; font-size: 0.78rem; }
@@ -1343,6 +1348,18 @@ function autoFitColumns(ws, aoa) {
   }));
 }
 
+function boldAllCells(ws) {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[addr]) continue;
+      ws[addr].s = ws[addr].s || {};
+      ws[addr].s.font = { bold: true };
+    }
+  }
+}
+
 // Returns array of buckets that were actually written to the file, or null on failure.
 function runExportBuckets(buckets) {
   if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
@@ -1366,6 +1383,7 @@ function runExportBuckets(buckets) {
     const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
     const ws   = XLSX.utils.aoa_to_sheet(aoa);
     autoFitColumns(ws, aoa);
+    boldAllCells(ws);
     XLSX.utils.book_append_sheet(wb, ws, processName);
     sheetCount++;
   });
@@ -1382,7 +1400,7 @@ function runExportBuckets(buckets) {
   const plantLabel = state.plant === 'Plant 2' ? `P2_${(state.stream||'').replaceAll(' ','')}` : 'P1';
   const today = new Date();
   const fd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
-  XLSX.writeFile(wb, `TAG_TimeStudy_${plantLabel}_${fd}.xlsx`);
+  XLSX.writeFile(wb, `TAG_TimeStudy_${plantLabel}_${fd}.xlsx`, { cellStyles: true });
   return exported;
 }
 
