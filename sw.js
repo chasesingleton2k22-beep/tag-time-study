@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tag-time-study-v6';
+const CACHE_NAME = 'tag-time-study-v9';
 
 // Core assets cached on install. SheetJS CDN is attempted but won't block install if offline.
 const CORE_ASSETS = ['./', './index.html'];
