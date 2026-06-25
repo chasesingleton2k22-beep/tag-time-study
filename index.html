@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TAG Time Study</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1f44">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TAG TS">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --navy: #0a1f44; --navy-light: #14315c;
+  --gold: #d4a017; --gold-light: #f0c040;
+  --green: #2e7d32; --amber: #1565c0; --red: #c62828;
+  --text-light: #f5f5f0;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+input, select, textarea { user-select: text; -webkit-user-select: text; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; background: var(--navy); color: var(--text-light); overscroll-behavior: none; }
+#app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+#screens-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.screen { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* Topbar */
+.topbar { background: var(--navy-light); border-bottom: 3px solid var(--gold); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; }
+.topbar .plant-label { color: var(--gold-light); font-weight: bold; font-size: 1.05rem; line-height: 1.2; }
+.topbar .topbar-subtitle { font-size: 0.78rem; color: #b9c4d8; margin-top: 1px; }
+.topbar-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.topbar .back-btn { background: none; border: 2px solid var(--gold); color: var(--gold-light); border-radius: 8px; padding: 6px 12px; font-size: 0.95rem; min-height: 42px; flex-shrink: 0; }
+.topbar .back-btn:active { background: var(--gold); color: var(--navy); }
+#btn-end-bucket { background: var(--red); border: none; color: #fff; border-radius: 8px; padding: 6px 14px; font-size: 0.95rem; font-weight: bold; min-height: 42px; flex-shrink: 0; letter-spacing: 0.02em; }
+#btn-end-bucket:active { filter: brightness(1.3); }
+
+/* Plant / Stream Select */
+#screen-plant-select, #screen-stream-select { align-items: center; justify-content: center; gap: 24px; padding: 24px; overflow-y: auto; }
+#screen-plant-select h1, #screen-stream-select h1 { color: var(--gold-light); font-size: 1.8rem; margin-bottom: 8px; text-align: center; }
+.plant-btn, .stream-btn { width: 90%; max-width: 420px; min-height: 140px; background: var(--navy-light); border: 4px solid var(--gold); color: var(--text-light); font-size: 2rem; font-weight: bold; border-radius: 16px; cursor: pointer; }
+.stream-btn { font-size: 1.8rem; }
+.plant-btn:active, .stream-btn:active { background: var(--gold); color: var(--navy); }
+
+/* Session Home */
+#screen-session-home { align-items: center; justify-content: center; gap: 14px; padding: 20px; overflow-y: auto; }
+#home-session-info { font-size: 0.95rem; color: #b9c4d8; font-weight: bold; text-align: center; padding: 2px 0; }
+#home-live-banner { display: none; align-items: center; justify-content: center; gap: 8px; padding: 7px 16px; background: rgba(46,125,50,0.18); border: 2px solid rgba(46,125,50,0.5); border-radius: 10px; width: 90%; max-width: 420px; font-size: 0.92rem; font-weight: bold; color: #81c784; }
+#home-live-banner.visible { display: flex; }
+.home-live-dot { width: 10px; height: 10px; border-radius: 50%; background: #66bb6a; flex-shrink: 0; animation: live-pulse 1.5s infinite; }
+.home-btn { width: 90%; max-width: 420px; min-height: 76px; background: var(--navy-light); border: 3px solid var(--gold); color: var(--text-light); font-size: 1.25rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
+.home-btn:active { background: var(--gold); color: var(--navy); }
+#btn-check-update { width: 90%; max-width: 420px; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.92rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
+#btn-check-update:active { border-color: var(--gold); color: var(--gold-light); }
+#btn-check-update:disabled { opacity: 0.6; cursor: default; }
+#home-observer-wrap { width: 90%; max-width: 420px; display: flex; flex-direction: column; gap: 5px; }
+#home-observer-label { font-size: 0.75rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; }
+#home-observer-input { min-height: 52px; font-size: 1.05rem; border-radius: 10px; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.08); color: var(--text-light); padding: 8px 14px; font-family: inherit; }
+#home-observer-input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+#home-observer-input::placeholder { color: #5a6a8a; }
+
+/* Grid view */
+#view-grid { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+#grid-legend { flex-shrink: 0; display: flex; justify-content: center; gap: 16px; padding: 4px 8px; background: rgba(0,0,0,0.2); font-size: 0.78rem; }
+.legend-chip { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+#sealed-banner { flex-shrink: 0; display: none; background: rgba(212,160,23,0.12); border-bottom: 2px solid rgba(212,160,23,0.4); padding: 8px 14px; font-size: 0.88rem; color: var(--gold-light); text-align: center; }
+#sealed-banner.visible { display: block; }
+#grid-container { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; overflow-y: auto; align-content: start; }
+.element-btn { min-height: 60px; border-radius: 9px; border: none; font-size: 0.88rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px 4px; cursor: pointer; line-height: 1.2; }
+.element-btn.tier-green { background: var(--green); }
+.element-btn.tier-amber { background: var(--amber); }
+.element-btn.tier-red   { background: var(--red); }
+.element-btn.active-pulse { animation: pulse 1s infinite; outline: 3px solid var(--gold-light); box-shadow: 0 0 16px rgba(240,192,64,0.6); }
+@keyframes pulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
+
+/* New Bucket element button */
+.new-bucket-el-btn { background: var(--navy-light) !important; border: 2px solid var(--gold) !important; color: var(--gold-light) !important; }
+.new-bucket-el-btn:active { background: var(--gold) !important; color: var(--navy) !important; }
+
+/* Timer details SAVE button */
+#td-save-btn { width: 100%; min-height: 48px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 4px; }
+#td-save-btn:active { background: var(--gold-light); }
+
+/* Process picker overlay */
+#process-overlay { position: fixed; inset: 0; background: var(--navy); z-index: 500; display: none; flex-direction: column; padding: 20px 16px; gap: 14px; overflow-y: auto; }
+#process-overlay.visible { display: flex; }
+#process-overlay-title { color: var(--gold-light); font-size: 1.15rem; font-weight: bold; text-align: center; flex-shrink: 0; letter-spacing: 0.04em; }
+#process-overlay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.process-overlay-btn { min-height: 80px; border-radius: 12px; border: 3px solid var(--gold); background: var(--navy-light); color: var(--text-light); font-size: 1rem; font-weight: bold; cursor: pointer; padding: 10px; text-align: center; line-height: 1.3; }
+.process-overlay-btn:active { background: var(--gold); color: var(--navy); }
+#process-overlay-cancel { min-height: 52px; flex-shrink: 0; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 12px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+#process-overlay-cancel:active { border-color: var(--gold); color: var(--gold-light); }
+
+/* Log screen */
+#screen-log { overflow: hidden; }
+
+/* Timer Details collapsible panel */
+#timer-details-panel { flex-shrink: 0; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(212,160,23,0.22); }
+#timer-details-toggle { width: 100%; min-height: 36px; background: none; border: none; color: var(--text-light); display: flex; align-items: center; padding: 0 12px; gap: 8px; cursor: pointer; }
+#timer-details-toggle:active { background: rgba(212,160,23,0.1); }
+.td-label-text { font-size: 0.71rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; flex-shrink: 0; }
+#td-summary-text { flex: 1; font-size: 0.78rem; color: #8a9ab8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.td-chevron { font-size: 0.68rem; color: var(--gold); flex-shrink: 0; }
+#timer-details-content { padding: 8px 10px 6px; display: none; flex-direction: column; gap: 6px; }
+#timer-details-content.open { display: flex; }
+.td-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.td-full { grid-column: 1 / -1; }
+.td-field { display: flex; flex-direction: column; gap: 3px; }
+.td-field label { font-size: 0.67rem; font-weight: bold; color: var(--gold-light); text-transform: uppercase; letter-spacing: 0.03em; }
+.td-field input, .td-field select { height: 40px; font-size: 0.9rem; border-radius: 8px; border: 1.5px solid rgba(212,160,23,0.35); background: rgba(255,255,255,0.09); color: var(--text-light); padding: 5px 9px; font-family: inherit; }
+.td-field input:focus, .td-field select:focus { outline: 1.5px solid var(--gold); border-color: transparent; }
+.td-field select option { background: var(--navy-light); color: var(--text-light); }
+
+/* Log screen sub-elements */
+#log-sub-tabs { flex-shrink: 0; display: flex; background: rgba(0,0,0,0.25); border-bottom: 2px solid rgba(212,160,23,0.3); }
+.log-sub-tab { flex: 1; min-height: 40px; background: transparent; border: none; color: #8a9ab8; font-size: 0.88rem; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+.log-sub-tab.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
+#log-action-bar { flex-shrink: 0; display: flex; gap: 8px; padding: 6px 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(212,160,23,0.3); }
+.log-action-btn { flex: 1; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+.log-action-btn.secondary { background: transparent; color: var(--gold-light); }
+.log-action-btn:disabled { opacity: 0.4; cursor: default; }
+#log-list { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.bucket-row { background: var(--navy-light); border: 2px solid var(--gold); border-radius: 12px; padding: 10px 12px; position: relative; cursor: pointer; }
+.bucket-row.exported { border-color: #3a7a3a; }
+.bucket-row.live-bucket { border-color: #f0c040; box-shadow: 0 0 10px rgba(240,192,64,0.25); }
+.bucket-row-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.bucket-row-meta { flex: 1; min-width: 0; }
+.bucket-time-label { color: var(--gold-light); font-weight: bold; font-size: 0.95rem; }
+.bucket-process-badge { display: inline-block; font-size: 0.72rem; color: var(--navy); font-weight: bold; background: var(--gold); border-radius: 6px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
+.live-badge { display: inline-block; font-size: 0.72rem; color: #fff; font-weight: bold; background: var(--green); border-radius: 6px; padding: 2px 7px; margin-left: 7px; animation: live-pulse 1.5s infinite; vertical-align: middle; }
+@keyframes live-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+.bucket-exported-badge { font-size: 0.72rem; color: #66bb6a; font-weight: bold; background: rgba(46,125,50,0.2); border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
+.bucket-fields { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 3px; font-size: 0.86rem; }
+.bucket-fields .lbl { color: #b9c4d8; }
+.bucket-tier-bar { display: flex; gap: 10px; margin-top: 5px; font-size: 0.82rem; flex-wrap: wrap; align-items: center; }
+.tier-chip { display: flex; align-items: center; gap: 4px; }
+.tier-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.expand-hint { color: #7a8aaa; font-size: 0.76rem; margin-left: auto; padding-left: 8px; white-space: nowrap; }
+.bucket-row-btns { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+.bucket-action-btn { min-height: 38px; min-width: 60px; border-radius: 8px; border: none; font-weight: bold; font-size: 0.82rem; cursor: pointer; }
+.bucket-action-btn.edit   { background: var(--navy); border: 2px solid var(--gold); color: var(--gold-light); }
+.bucket-action-btn.export { background: var(--gold); color: var(--navy); }
+.bucket-action-btn.export.done { background: #2e5c2e; color: #90ee90; }
+.bucket-action-btn.delete { background: var(--red); color: #fff; }
+.bucket-elements { margin-top: 8px; border-top: 1px solid rgba(212,160,23,0.4); padding-top: 6px; display: none; flex-direction: column; gap: 4px; }
+.bucket-row.expanded .bucket-elements { display: flex; }
+.bucket-element-row { display: flex; justify-content: space-between; font-size: 0.86rem; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); }
+.el-tier-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.empty-log-msg { text-align: center; color: #b9c4d8; padding: 32px 16px; font-size: 1.05rem; }
+
+/* Element Note Modal */
+#element-note-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 600; display: none; align-items: flex-end; justify-content: center; }
+#element-note-overlay.visible { display: flex; }
+#element-note-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+#element-note-title { font-size: 0.78rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+#element-note-name { color: var(--text-light); text-transform: none; letter-spacing: 0; font-size: 1rem; }
+#element-note-input { width: 100%; min-height: 100px; background: rgba(255,255,255,0.1); border: 2px solid rgba(212,160,23,0.4); border-radius: 10px; color: var(--text-light); padding: 10px 12px; font-size: 1rem; font-family: inherit; resize: vertical; }
+#element-note-input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+#element-note-save { min-height: 52px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+#element-note-save:active { background: var(--gold-light); }
+#element-note-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
+.bucket-element-note { font-size: 0.82rem; color: #c9d8f0; font-style: italic; padding: 2px 8px 4px 22px; }
+
+/* Status bar */
+#status-bar { flex-shrink: 0; background: var(--navy-light); border-top: 3px solid var(--gold); padding: 8px 14px; display: none; align-items: center; justify-content: space-between; }
+#status-bar.visible { display: flex; }
+#status-bar.idle { opacity: 0.65; }
+#status-element-name { font-weight: bold; font-size: 1rem; color: var(--text-light); }
+#status-element-time { font-weight: bold; font-size: 1.15rem; color: var(--gold-light); font-family: monospace; }
+
+/* Export toast */
+#export-toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); background: #2e7d32; color: #fff; font-weight: bold; font-size: 1rem; padding: 12px 28px; border-radius: 24px; z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+#export-toast.show { opacity: 1; }
+
+/* Edit Modal (log only) */
+#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 14px; }
+#modal-overlay.active { display: flex; }
+#bucket-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px; width: 100%; max-width: 520px; max-height: 94vh; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+#bucket-modal h2 { color: var(--gold-light); margin: 0 0 2px 0; font-size: 1.2rem; text-align: center; }
+.modal-field { display: flex; flex-direction: column; gap: 5px; }
+.modal-field label { font-size: 0.95rem; font-weight: bold; color: var(--text-light); }
+.modal-field input, .modal-field select, .modal-field textarea { min-height: 54px; font-size: 1.05rem; border-radius: 10px; border: 2px solid var(--gold); background: #fff; color: #111; padding: 10px 12px; font-family: inherit; }
+.modal-field textarea { min-height: 80px; resize: vertical; }
+.modal-field select option { background: #fff; color: #111; }
+.modal-btn-row { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.modal-btn { min-height: 58px; border-radius: 12px; border: none; font-size: 1.05rem; font-weight: bold; cursor: pointer; }
+.modal-btn.primary { background: var(--gold); color: var(--navy); }
+.modal-btn.cancel  { background: transparent; border: 2px solid #888; color: #ccc; }
+</style>
+</head>
+<body>
+<div id="app">
+<div id="screens-wrapper">
+
+<!-- Plant Select -->
+<div class="screen active" id="screen-plant-select">
+  <h1>TAG TIME STUDY</h1>
+  <button class="plant-btn" data-plant="Plant 1">PLANT 1</button>
+  <button class="plant-btn" data-plant="Plant 2">PLANT 2</button>
+</div>
+
+<!-- Stream Select -->
+<div class="screen" id="screen-stream-select">
+  <h1>PLANT 2 — SELECT VALUE STREAM</h1>
+  <button class="stream-btn" data-stream="Quick Hitch">QUICK HITCH</button>
+  <button class="stream-btn" data-stream="Pin On">PIN ON</button>
+</div>
+
+<!-- Session Home -->
+<div class="screen" id="screen-session-home">
+  <div class="topbar">
+    <span class="plant-label" id="home-plant-label"></span>
+    <button class="back-btn" id="home-change-plant">Change Plant</button>
+  </div>
+  <div id="home-session-info"></div>
+  <div id="home-live-banner"><span class="home-live-dot"></span><span id="home-live-text"></span></div>
+  <div id="home-observer-wrap">
+    <label for="home-observer-input" id="home-observer-label">YOUR NAME (TIMER)</label>
+    <input id="home-observer-input" type="text" placeholder="Who is running this study…" autocomplete="off">
+  </div>
+  <button class="home-btn" id="home-new-bucket">▶ New Bucket</button>
+  <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
+  <button class="home-btn" id="home-view-log">View Log</button>
+  <button id="btn-check-update">Check for Update</button>
+</div>
+
+<!-- Session Screen -->
+<div class="screen" id="screen-session">
+  <div class="topbar">
+    <div>
+      <div class="plant-label" id="session-plant-label"></div>
+      <div class="topbar-subtitle" id="session-bucket-label"></div>
+    </div>
+    <div class="topbar-right">
+      <button id="btn-end-bucket">END BUCKET</button>
+      <button class="back-btn" id="session-go-home">Home</button>
+    </div>
+  </div>
+
+
+  <!-- TIMER -->
+  <div id="view-grid">
+    <div id="grid-legend">
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--green)"></span>Value Added</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--amber)"></span>Necessary</span>
+      <span class="legend-chip"><span class="legend-dot" style="background:var(--red)"></span>Non-Value Added</span>
+    </div>
+    <div id="sealed-banner"></div>
+    <!-- Collapsible details panel -->
+    <div id="timer-details-panel">
+      <button id="timer-details-toggle">
+        <span class="td-label-text">DETAILS</span>
+        <span id="td-summary-text"></span>
+        <span class="td-chevron" id="td-chevron">▼</span>
+      </button>
+      <div id="timer-details-content">
+        <div class="td-row">
+          <div class="td-field td-full">
+            <label>Process</label>
+            <select id="td-process"><option value="">— Select process —</option></select>
+          </div>
+        </div>
+        <div class="td-row">
+          <div class="td-field"><label>Frame #</label><input id="td-frame" type="text" inputmode="numeric" placeholder="e.g. 330" autocomplete="off"></div>
+          <div class="td-field"><label>Frame Width</label><input id="td-width" type="text" inputmode="decimal" placeholder="e.g. 24" autocomplete="off"></div>
+        </div>
+        <div class="td-row">
+          <div class="td-field"><label>Operator</label><input id="td-operator" type="text" placeholder="Name" autocomplete="off"></div>
+          <div class="td-field"><label># of Obs</label><input id="td-obs" type="number" min="1" value="1" inputmode="numeric"></div>
+        </div>
+        <div class="td-row" id="td-teeth-row" style="display:none">
+          <div class="td-field"><label>Tooth Type</label><input id="td-tooth-type" type="text" placeholder="optional" autocomplete="off"></div>
+          <div class="td-field"><label># of Teeth</label><input id="td-num-teeth" type="number" min="0" inputmode="numeric"></div>
+        </div>
+        <div class="td-row" id="td-ear-row" style="display:none">
+          <div class="td-field td-full"><label>Ear Type</label><input id="td-ear-type" type="text" placeholder="optional" autocomplete="off"></div>
+        </div>
+        <button id="td-save-btn">✓ Save &amp; Close</button>
+      </div>
+    </div>
+    <div id="grid-container"></div>
+  </div>
+
+</div>
+
+<!-- Log Screen -->
+<div class="screen" id="screen-log">
+  <div class="topbar">
+    <span class="plant-label">SESSION LOG</span>
+    <button class="back-btn" id="log-go-home">← Home</button>
+  </div>
+  <div id="log-sub-tabs">
+    <button class="log-sub-tab active" id="log-sub-active">ACTIVE</button>
+    <button class="log-sub-tab" id="log-sub-history">HISTORY</button>
+  </div>
+  <div id="log-action-bar">
+    <button class="log-action-btn" id="log-export-new">Export Unexported</button>
+    <button class="log-action-btn secondary" id="log-export-all">Export All</button>
+  </div>
+  <div id="log-list"></div>
+</div>
+
+</div><!-- screens-wrapper -->
+
+<!-- Element Note Overlay -->
+<div id="element-note-overlay">
+  <div id="element-note-modal">
+    <div id="element-note-title">NOTE FOR: <span id="element-note-name"></span></div>
+    <textarea id="element-note-input" placeholder="What happened? What did you observe?…"></textarea>
+    <button id="element-note-save">✓ Save Note</button>
+    <button id="element-note-cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Process Picker Overlay -->
+<div id="process-overlay">
+  <div id="process-overlay-title">SELECT PROCESS</div>
+  <div id="process-overlay-grid"></div>
+  <button id="process-overlay-cancel">Cancel</button>
+</div>
+
+<!-- Status bar -->
+<div id="status-bar">
+  <span id="status-element-name">Tap an element to begin</span>
+  <span id="status-element-time">–</span>
+</div>
+
+<!-- Export toast -->
+<div id="export-toast">✓ Exported to Excel</div>
+
+<!-- Edit Modal (log editing only) -->
+<div id="modal-overlay">
+  <div id="bucket-modal">
+    <h2 id="modal-title">Edit Bucket</h2>
+    <div class="modal-field">
+      <label>Process</label>
+      <select id="modal-process"></select>
+    </div>
+    <div class="modal-field">
+      <label>Frame #</label>
+      <input type="text" id="modal-frame-number" inputmode="numeric" placeholder="e.g. 330">
+    </div>
+    <div class="modal-field">
+      <label>Frame Width</label>
+      <input type="text" id="modal-frame-width" inputmode="decimal" placeholder="e.g. 24">
+    </div>
+    <div class="modal-field">
+      <label>Operator</label>
+      <input type="text" id="modal-operator">
+    </div>
+    <div class="modal-field">
+      <label># of Observations</label>
+      <input type="number" id="modal-num-obs" min="1" value="1" inputmode="numeric">
+    </div>
+    <div class="modal-field" id="modal-teeth-section" style="display:none">
+      <label>Tooth Type</label>
+      <input type="text" id="modal-tooth-type" placeholder="optional">
+    </div>
+    <div class="modal-field" id="modal-teeth-count-section" style="display:none">
+      <label># of Teeth</label>
+      <input type="number" id="modal-num-teeth" min="0" placeholder="optional" inputmode="numeric">
+    </div>
+    <div class="modal-field" id="modal-ear-section" style="display:none">
+      <label>Ear Type</label>
+      <input type="text" id="modal-ear-type" placeholder="optional">
+    </div>
+    <div class="modal-field">
+      <label>Notes</label>
+      <textarea id="modal-notes" placeholder="optional"></textarea>
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-btn primary" id="modal-save-log-edit">Save Changes</button>
+      <button class="modal-btn cancel"  id="modal-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- app -->
+<script>
+/* ── Constants ── */
+const STORAGE_KEY = 'tagTimeStudy_state';
+
+const PROCESSES_BY_PLANT = {
+  'Plant 1':    ['Bucket Roll','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld'],
+  'Quick Hitch':['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install'],
+  'Pin On':     ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld'],
+};
+const TEETH_PROCESSES = new Set(['Teeth and Logo','Teeth And Logo','Teeth Install']);
+const EAR_PROCESSES   = new Set(['Ears','Ear & Bushing Install','Ear and Bushing Install']);
+
+function getProcessesForCurrent() {
+  if (state.plant === 'Plant 1') return PROCESSES_BY_PLANT['Plant 1'];
+  return PROCESSES_BY_PLANT[state.stream] || [];
+}
+function isTeethProcess(p) { return TEETH_PROCESSES.has(p); }
+function isEarProcess(p)   { return EAR_PROCESSES.has(p); }
+
+const PLANT1_ROLL_ELEMENTS = [
+  { name: 'Roll Bucket - Large', tier: 'green' },
+  { name: 'Roll Bucket - Small', tier: 'green' },
+];
+const PLANT2_ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
+const COMMON_ELEMENTS = [
+  { name: 'Weld',                   tier: 'green' },
+  { name: 'Install Teeth',          tier: 'green' },
+  { name: 'Install Ears',           tier: 'green' },
+  { name: 'Install Id Tag',         tier: 'green' },
+  { name: 'Machining Part',         tier: 'green' },
+  { name: 'Form Part',              tier: 'green' },
+  { name: 'Preheat Time',           tier: 'amber' },
+  { name: 'Adjusting Parts',        tier: 'amber' },
+  { name: 'Scan Paperwork',         tier: 'amber' },
+  { name: 'Operating Crane',        tier: 'amber' },
+  { name: 'Placing Parts in Jig',   tier: 'amber' },
+  { name: 'Cleaning Welding Lead',  tier: 'amber' },
+  { name: 'Positioning Bucket',     tier: 'amber' },
+  { name: 'Changing Wire',          tier: 'amber' },
+  { name: 'Operating Forklift',     tier: 'amber' },
+  { name: 'Arc Gouging',            tier: 'amber' },
+  { name: 'Training',               tier: 'amber' },
+  { name: 'Computer Work',          tier: 'amber' },
+  { name: 'Spray Paint Bucket',     tier: 'red'   },
+  { name: 'Searching For Parts',    tier: 'red'   },
+  { name: 'Restroom',               tier: 'red'   },
+  { name: 'Looking for Supervisor', tier: 'red'   },
+  { name: 'Misc. Idle Time',        tier: 'red'   },
+  { name: 'Waiting',                tier: 'red'   },
+  { name: 'Fixing Welder',          tier: 'red'   },
+  { name: 'Checking Phone',         tier: 'red'   },
+  { name: 'Sanding / Grinding',     tier: 'red'   },
+  { name: 'Rework',                 tier: 'red'   },
+  { name: 'Torch Work',             tier: 'red'   },
+  { name: 'Cleaning Area',          tier: 'red'   },
+  { name: 'Visiting with Others',   tier: 'red'   },
+  { name: 'Break',                  tier: 'red'   },
+];
+
+function getElementsForPlant(plant) {
+  return [...(plant === 'Plant 1' ? PLANT1_ROLL_ELEMENTS : PLANT2_ROLL_ELEMENTS), ...COMMON_ELEMENTS];
+}
+
+/* ── State ── */
+function emptyHeader() {
+  return { process:'', frameNumber:'', frameWidth:'', operator:'', numObservations:'1', toothType:'', numTeeth:'', earType:'' };
+}
+function defaultState() {
+  return { plant: null, stream: null, buckets: [], activeElement: null, nextBucketId: 1, observerName: '' };
+}
+let state = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    return Object.assign(defaultState(), JSON.parse(raw));
+  } catch(e) { return defaultState(); }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function getCurrentBucket() {
+  return state.buckets.length > 0 ? state.buckets[state.buckets.length - 1] : null;
+}
+function createNewBucket() {
+  stopActiveElement(Date.now());
+  const h = emptyHeader();
+  state.buckets.push({ id: state.nextBucketId++, header: h, startTs: Date.now(), elements: [], exportedAt: null, sealed: false, observerName: state.observerName || '' });
+  timerDetailsOpen = true;
+  saveState();
+}
+
+/* ── Screen navigation ── */
+const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select']);
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('status-bar').classList.toggle('visible', !SCREENS_WITHOUT_STATUS.has(id));
+}
+
+/* ── Plant / Stream select ── */
+document.querySelectorAll('.plant-btn').forEach(btn => btn.addEventListener('click', () => {
+  state.plant = btn.dataset.plant; state.stream = null; saveState();
+  state.plant === 'Plant 2' ? showScreen('screen-stream-select') : goToSessionHome();
+}));
+document.querySelectorAll('.stream-btn').forEach(btn => btn.addEventListener('click', () => {
+  state.stream = btn.dataset.stream; saveState(); goToSessionHome();
+}));
+
+function plantDisplayLabel() {
+  return (state.plant === 'Plant 2' && state.stream) ? `${state.plant} — ${state.stream}` : (state.plant || '');
+}
+
+/* ── Session Home ── */
+function updateSessionHomeInfo() {
+  const n = state.buckets.length;
+  const unexported = state.buckets.filter(b => !b.exportedAt).length;
+  let txt = n === 0 ? 'No buckets logged yet' : `${n} bucket${n!==1?'s':''} logged`;
+  if (n > 0 && unexported > 0) txt += ` · ${unexported} not yet exported`;
+  if (n > 0 && unexported === 0) txt += ' · all exported ✓';
+  document.getElementById('home-session-info').textContent = txt;
+
+  // Live banner — shown when an element is actively timing
+  const liveBanner = document.getElementById('home-live-banner');
+  const liveText   = document.getElementById('home-live-text');
+  if (state.activeElement) {
+    liveText.textContent = `Timing: ${state.activeElement.name}`;
+    liveBanner.classList.add('visible');
+  } else {
+    liveBanner.classList.remove('visible');
+  }
+  document.getElementById('home-resume-timing').style.display = state.activeElement ? '' : 'none';
+}
+
+function goToSessionHome() {
+  document.getElementById('home-plant-label').textContent = plantDisplayLabel();
+  document.getElementById('home-observer-input').value = state.observerName || '';
+  updateSessionHomeInfo();
+  showScreen('screen-session-home');
+}
+
+document.getElementById('home-change-plant').addEventListener('click', () => {
+  if (state.buckets.length > 0) {
+    if (!confirm(`You have ${state.buckets.length} bucket(s) logged. Export first if needed. Continue?`)) return;
+  }
+  // Stop any running element so it doesn't accumulate time silently across a plant change
+  if (state.activeElement) { stopActiveElement(Date.now()); updateStatusBar(); }
+  showScreen('screen-plant-select');
+});
+
+document.getElementById('home-new-bucket').addEventListener('click', () => {
+  const last = getCurrentBucket();
+  if (!last || last.sealed) {
+    createNewBucket();
+    goToSession();
+    openProcessOverlay();
+  } else {
+    goToSession();
+  }
+});
+
+document.getElementById('home-resume-timing').addEventListener('click', goToSession);
+document.getElementById('home-view-log').addEventListener('click', goToLogScreen);
+
+let observerNameSaveTimer = null;
+document.getElementById('home-observer-input').addEventListener('input', () => {
+  clearTimeout(observerNameSaveTimer);
+  observerNameSaveTimer = setTimeout(() => {
+    state.observerName = document.getElementById('home-observer-input').value.trim();
+    saveState();
+  }, 400);
+});
+
+/* ── Session Screen ── */
+function goToSession() {
+  document.getElementById('session-plant-label').textContent = plantDisplayLabel();
+  renderGrid();
+  showScreen('screen-session');
+}
+
+function goToLogScreen() {
+  renderLog();
+  showScreen('screen-log');
+}
+
+function openProcessOverlay() {
+  const grid = document.getElementById('process-overlay-grid');
+  grid.innerHTML = '';
+  getProcessesForCurrent().forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'process-overlay-btn';
+    btn.textContent = p;
+    btn.addEventListener('click', () => {
+      const b = getCurrentBucket();
+      if (b) { b.header.process = p; saveState(); }
+      closeProcessOverlay();
+      renderGrid();
+    });
+    grid.appendChild(btn);
+  });
+  document.getElementById('process-overlay').classList.add('visible');
+}
+
+function closeProcessOverlay() {
+  document.getElementById('process-overlay').classList.remove('visible');
+}
+
+document.getElementById('process-overlay-cancel').addEventListener('click', closeProcessOverlay);
+document.getElementById('log-go-home').addEventListener('click', goToSessionHome);
+
+document.getElementById('session-go-home').addEventListener('click', () => {
+  clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
+  goToSessionHome();
+});
+
+document.getElementById('btn-end-bucket').addEventListener('click', () => {
+  clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
+  stopActiveElement(Date.now());
+  const b = getCurrentBucket();
+  if (b) { b.sealed = true; saveState(); }
+  goToSessionHome();
+});
+
+
+/* ── Bucket label / subtitle ── */
+function bucketTimeLabel(bucket) {
+  const d = new Date(bucket.startTs);
+  return d.toLocaleDateString([],{month:'short',day:'numeric'}) + ' · ' +
+         d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+function bucketSubtitleText() {
+  const b = getCurrentBucket();
+  if (!b) return 'No active bucket';
+  const h = b.header || {};
+  const parts = [];
+  if (h.process) parts.push(h.process);
+  if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  if (h.operator) parts.push(h.operator);
+  if (parts.length === 0) return bucketTimeLabel(b);
+  return parts.join(' · ');
+}
+
+function updateSessionBucketLabel() {
+  document.getElementById('session-bucket-label').textContent = bucketSubtitleText();
+}
+
+/* ── Grid ── */
+function renderGrid() {
+  updateSessionBucketLabel();
+  const container = document.getElementById('grid-container');
+  container.innerHTML = '';
+
+  const last = getCurrentBucket();
+  const isSealed = last && last.sealed;
+  const banner = document.getElementById('sealed-banner');
+  if (isSealed) {
+    banner.textContent = `✓ ${bucketTimeLabel(last)} ended — tap an element or NEW BUCKET to continue`;
+    banner.classList.add('visible');
+  } else {
+    banner.textContent = '';
+    banner.classList.remove('visible');
+  }
+
+  getElementsForPlant(state.plant).forEach(el => {
+    const btn = document.createElement('button');
+    btn.className = `element-btn tier-${el.tier}`;
+    btn.textContent = el.name;
+    if (state.activeElement && state.activeElement.name === el.name) btn.classList.add('active-pulse');
+    btn.addEventListener('click', () => onElementTap(el));
+    addLongPressNote(btn, el.name);
+    container.appendChild(btn);
+  });
+
+  // NEW BUCKET button as last element
+  const nbBtn = document.createElement('button');
+  nbBtn.className = 'element-btn new-bucket-el-btn';
+  nbBtn.innerHTML = '+ NEW<br>BUCKET';
+  nbBtn.addEventListener('click', () => {
+    clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
+    createNewBucket();
+    renderGrid();
+    openProcessOverlay();
+  });
+  container.appendChild(nbBtn);
+
+  renderTimerDetails();
+}
+
+/* ── Timer Details Panel ── */
+function populateTdProcess(selected) {
+  const sel = document.getElementById('td-process');
+  sel.innerHTML = '<option value="">— Select process —</option>';
+  getProcessesForCurrent().forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    if (p === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function updateTdConditionals(process) {
+  const isTeeth = isTeethProcess(process);
+  const isEar   = isEarProcess(process);
+  document.getElementById('td-teeth-row').style.display = isTeeth ? 'grid' : 'none';
+  document.getElementById('td-ear-row').style.display   = isEar   ? 'grid' : 'none';
+}
+
+function renderTimerDetails() {
+  const b = getCurrentBucket();
+  const content   = document.getElementById('timer-details-content');
+  const summaryEl = document.getElementById('td-summary-text');
+  const chevron   = document.getElementById('td-chevron');
+  if (!content) return;
+
+  chevron.textContent = timerDetailsOpen ? '▲' : '▼';
+  content.classList.toggle('open', timerDetailsOpen);
+
+  if (!b) {
+    summaryEl.textContent = 'No active bucket';
+    document.getElementById('td-process').innerHTML = '<option value="">— Select process —</option>';
+    ['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.value = id === 'td-obs' ? '1' : ''; });
+    updateTdConditionals('');
+    return;
+  }
+
+  const h = b.header || {};
+  populateTdProcess(h.process || '');
+  document.getElementById('td-frame').value      = h.frameNumber || '';
+  document.getElementById('td-width').value      = h.frameWidth  || '';
+  document.getElementById('td-operator').value   = h.operator    || '';
+  document.getElementById('td-obs').value        = h.numObservations || '1';
+  document.getElementById('td-tooth-type').value = h.toothType   || '';
+  document.getElementById('td-num-teeth').value  = h.numTeeth    || '';
+  document.getElementById('td-ear-type').value   = h.earType     || '';
+  updateTdConditionals(h.process || '');
+
+  const parts = [];
+  if (h.process) parts.push(h.process);
+  if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  if (h.operator) parts.push(h.operator);
+  summaryEl.textContent = parts.length ? parts.join(' · ') : '— tap to fill in frame, operator…';
+}
+
+function saveTimerDetails() {
+  const b = getCurrentBucket();
+  if (!b) return;
+  b.header.process         = document.getElementById('td-process').value;
+  b.header.frameNumber     = document.getElementById('td-frame').value.trim();
+  b.header.frameWidth      = document.getElementById('td-width').value.trim();
+  b.header.operator        = document.getElementById('td-operator').value.trim();
+  b.header.numObservations = document.getElementById('td-obs').value || '1';
+  b.header.toothType       = document.getElementById('td-tooth-type').value.trim();
+  b.header.numTeeth        = document.getElementById('td-num-teeth').value.trim();
+  b.header.earType         = document.getElementById('td-ear-type').value.trim();
+  saveState();
+  updateSessionBucketLabel();
+  const h = b.header;
+  const parts = [];
+  if (h.process) parts.push(h.process);
+  if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  if (h.operator) parts.push(h.operator);
+  const summaryEl = document.getElementById('td-summary-text');
+  if (summaryEl) summaryEl.textContent = parts.length ? parts.join(' · ') : '— tap to fill in frame, operator…';
+}
+
+function scheduleTimerDetailsSave() {
+  clearTimeout(timerDetailsSaveTimer);
+  timerDetailsSaveTimer = setTimeout(saveTimerDetails, 400);
+}
+
+document.getElementById('td-save-btn').addEventListener('click', () => {
+  clearTimeout(timerDetailsSaveTimer);
+  saveTimerDetails();
+  timerDetailsOpen = false;
+  renderTimerDetails();
+});
+
+document.getElementById('timer-details-toggle').addEventListener('click', () => {
+  if (!getCurrentBucket()) return;
+  timerDetailsOpen = !timerDetailsOpen;
+  renderTimerDetails();
+});
+
+document.getElementById('td-process').addEventListener('change', () => {
+  updateTdConditionals(document.getElementById('td-process').value);
+  saveTimerDetails();
+});
+
+['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type']
+  .forEach(id => document.getElementById(id).addEventListener('input', scheduleTimerDetailsSave));
+
+/* ── Element Note Modal (long-press on active element) ── */
+let longPressTimer = null;
+let longPressActivated = false;
+
+function addLongPressNote(btn, elName) {
+  const start = () => {
+    clearTimeout(longPressTimer);
+    if (!state.activeElement || state.activeElement.name !== elName) return;
+    longPressTimer = setTimeout(() => {
+      longPressActivated = true;
+      openElementNoteModal();
+    }, 1000);
+  };
+  const cancel = () => clearTimeout(longPressTimer);
+  btn.addEventListener('touchstart', start, { passive: true });
+  btn.addEventListener('touchend', cancel);
+  btn.addEventListener('touchmove', cancel);
+  btn.addEventListener('touchcancel', cancel);
+  btn.addEventListener('mousedown', start);
+  btn.addEventListener('mouseup', cancel);
+  btn.addEventListener('mouseleave', cancel);
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+function openElementNoteModal() {
+  if (!state.activeElement) return;
+  document.getElementById('element-note-name').textContent = state.activeElement.name;
+  document.getElementById('element-note-input').value = state.activeElement.note || '';
+  document.getElementById('element-note-overlay').classList.add('visible');
+  setTimeout(() => document.getElementById('element-note-input').focus(), 100);
+}
+
+function closeElementNoteModal() {
+  document.getElementById('element-note-overlay').classList.remove('visible');
+}
+
+document.getElementById('element-note-save').addEventListener('click', () => {
+  if (state.activeElement) {
+    state.activeElement.note = document.getElementById('element-note-input').value.trim();
+    saveState();
+  }
+  closeElementNoteModal();
+});
+document.getElementById('element-note-cancel').addEventListener('click', closeElementNoteModal);
+document.getElementById('element-note-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('element-note-overlay')) closeElementNoteModal();
+});
+
+function ensureBucket() {
+  const last = getCurrentBucket();
+  if (!last || last.sealed) {
+    state.buckets.push({ id: state.nextBucketId++, header: emptyHeader(), startTs: Date.now(), elements: [], exportedAt: null, sealed: false, observerName: state.observerName || '' });
+    saveState();
+  }
+  return state.buckets[state.buckets.length - 1];
+}
+
+function onElementTap(el) {
+  if (longPressActivated) { longPressActivated = false; return; }
+  const last = getCurrentBucket();
+  if (!last || last.sealed) createNewBucket();
+  if (state.activeElement && state.activeElement.name === el.name) return;
+  const now = Date.now();
+  stopActiveElement(now);
+  const bucket = ensureBucket();
+  state.activeElement = { name: el.name, tier: el.tier, startTs: now, bucketId: bucket.id, note: '' };
+  saveState();
+  renderGrid();
+  updateStatusBar();
+}
+
+function stopActiveElement(endTs) {
+  if (!state.activeElement) return;
+  const bucket = state.buckets.find(b => b.id === state.activeElement.bucketId);
+  if (bucket) {
+    bucket.elements.push({
+      name: state.activeElement.name, tier: state.activeElement.tier,
+      startTs: state.activeElement.startTs, endTs,
+      durationSec: Math.max(0, Math.round((endTs - state.activeElement.startTs) / 1000)),
+      note: state.activeElement.note || '',
+    });
+  }
+  state.activeElement = null;
+  saveState();
+}
+
+/* ── Status bar ── */
+function formatHMS(s) {
+  const p = n => String(n).padStart(2,'0');
+  return `${p(Math.floor(s/3600))}:${p(Math.floor((s%3600)/60))}:${p(s%60)}`;
+}
+function updateStatusBar() {
+  const bar = document.getElementById('status-bar');
+  const nameEl = document.getElementById('status-element-name');
+  const timeEl = document.getElementById('status-element-time');
+  if (state.activeElement) {
+    nameEl.textContent = `▶ ${state.activeElement.name}`;
+    timeEl.textContent = formatHMS(Math.max(0, Math.floor((Date.now()-state.activeElement.startTs)/1000)));
+    bar.classList.remove('idle');
+  } else {
+    nameEl.textContent = 'Tap an element to begin';
+    timeEl.textContent = '–';
+    bar.classList.add('idle');
+  }
+}
+setInterval(updateStatusBar, 1000);
+
+
+/* ── Export toast ── */
+let toastTimer = null;
+function showExportToast() {
+  const t = document.getElementById('export-toast');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ── Log ── */
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+const TIER_COLORS = { green:'var(--green)', amber:'var(--amber)', red:'var(--red)' };
+let expandedBucketIds = new Set();
+let logSubTab = 'active'; // 'active' | 'history'
+let timerDetailsOpen = false;
+let timerDetailsSaveTimer = null;
+
+function formatMS(s) { const p=n=>String(n).padStart(2,'0'); return `${p(Math.floor(s/60))}:${p(s%60)}`; }
+function formatClockTime(ts) { return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
+function formatDate(ts) { return new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'}); }
+
+function deleteBucket(bucketId) {
+  const idx = state.buckets.findIndex(b => b.id === bucketId);
+  if (idx === -1) return;
+  const label = bucketTimeLabel(state.buckets[idx]);
+  if (!confirm(`Delete bucket "${label}"? This cannot be undone.`)) return;
+  if (state.activeElement && state.activeElement.bucketId === bucketId) {
+    state.activeElement = null; updateStatusBar();
+  }
+  state.buckets.splice(idx, 1);
+  expandedBucketIds.delete(bucketId);
+  saveState(); renderLog(); renderGrid(); updateSessionHomeInfo();
+}
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  list.innerHTML = '';
+
+  // Sub-tab sync
+  document.getElementById('log-sub-active').classList.toggle('active', logSubTab === 'active');
+  document.getElementById('log-sub-history').classList.toggle('active', logSubTab === 'history');
+
+  const isHistory = logSubTab === 'history';
+  const buckets = isHistory
+    ? state.buckets.filter(b => b.exportedAt)
+    : state.buckets.filter(b => !b.exportedAt);
+
+  // Action bar: only show on active tab
+  const actionBar = document.getElementById('log-action-bar');
+  actionBar.style.display = isHistory ? 'none' : 'flex';
+
+  if (!isHistory) {
+    const unexported = buckets.length;
+    const expNewBtn = document.getElementById('log-export-new');
+    expNewBtn.textContent = `Export Unexported${unexported > 0 ? ` (${unexported})` : ''}`;
+    expNewBtn.disabled = unexported === 0;
+  }
+
+  if (buckets.length === 0) {
+    list.innerHTML = isHistory
+      ? '<div class="empty-log-msg">No exported buckets yet.<br><small style="color:#7a8aaa;">Exported buckets appear here.</small></div>'
+      : '<div class="empty-log-msg">No buckets yet.<br><small style="color:#7a8aaa;">Tap New Bucket to start timing.</small></div>';
+    return;
+  }
+
+  buckets.forEach(bucket => {
+    const h = bucket.header || {};
+    const isLive = state.activeElement && state.activeElement.bucketId === bucket.id;
+    const vaSec    = bucket.elements.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
+    const nnvaSec  = bucket.elements.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+    const wasteSec = bucket.elements.filter(e=>e.tier==='red').reduce((s,e)=>s+e.durationSec,0);
+    const elemCount = bucket.elements.length;
+    const isExpanded = expandedBucketIds.has(bucket.id);
+
+    const row = document.createElement('div');
+    row.className = ['bucket-row', bucket.exportedAt?'exported':'', isLive?'live-bucket':'', isExpanded?'expanded':''].filter(Boolean).join(' ');
+
+    const liveBadge     = isLive ? `<span class="live-badge">● LIVE</span>` : '';
+    const procBadge     = h.process ? `<span class="bucket-process-badge">${esc(h.process)}</span>` : '';
+    const exportedBadge = bucket.exportedAt ? `<span class="bucket-exported-badge">✓ ${formatDate(bucket.exportedAt)}</span>` : '';
+    const expandHint    = `<span class="expand-hint">${isExpanded?'▲':'▼'} ${elemCount} element${elemCount!==1?'s':''}</span>`;
+
+    row.innerHTML = `
+      <div class="bucket-row-header">
+        <div class="bucket-row-meta">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+            <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${procBadge}${liveBadge}${exportedBadge}
+          </div>
+          <div class="bucket-fields">
+            <span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
+            <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>
+            <span><span class="lbl">Operator:</span> ${esc(h.operator)||'—'}</span>
+            ${h.numObservations && h.numObservations!=='1' ? `<span><span class="lbl">Obs:</span> ${esc(h.numObservations)}</span>` : ''}
+            ${bucket.observerName ? `<span><span class="lbl">Timed by:</span> ${esc(bucket.observerName)}</span>` : ''}
+          </div>
+          <div class="bucket-tier-bar">
+            <span class="tier-chip"><span class="tier-dot" style="background:var(--green)"></span>VA ${formatMS(vaSec)}</span>
+            <span class="tier-chip"><span class="tier-dot" style="background:var(--amber)"></span>Nec ${formatMS(nnvaSec)}</span>
+            <span class="tier-chip"><span class="tier-dot" style="background:var(--red)"></span>Waste ${formatMS(wasteSec)}</span>
+            <span class="tier-chip" style="color:#b9c4d8;">Total ${formatMS(vaSec+nnvaSec+wasteSec)}</span>
+            ${expandHint}
+          </div>
+        </div>
+        <div class="bucket-row-btns">
+          <button class="bucket-action-btn edit"   data-edit="${bucket.id}">Edit</button>
+          <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>
+          <button class="bucket-action-btn delete" data-delete="${bucket.id}">Delete</button>
+        </div>
+      </div>
+      <div class="bucket-elements">
+        ${elemCount === 0
+          ? '<div class="bucket-element-row">No elements logged yet.</div>'
+          : bucket.elements.map(el=>`
+              <div class="bucket-element-row">
+                <span><span class="el-tier-dot" style="background:${TIER_COLORS[el.tier]}"></span>${esc(el.name)}</span>
+                <span>${formatMS(el.durationSec)} <span style="color:#b9c4d8;">${formatClockTime(el.endTs)}</span></span>
+              </div>${el.note ? `<div class="bucket-element-note">📝 ${esc(el.note)}</div>` : ''}`).join('')}
+      </div>`;
+
+    row.querySelector('[data-edit]').addEventListener('click', e => { e.stopPropagation(); openEditModal(bucket.id); });
+    row.querySelector('[data-export]').addEventListener('click', e => {
+      e.stopPropagation();
+      const exported = runExportBuckets([bucket]);
+      if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); showExportToast(); }
+    });
+    row.querySelector('[data-delete]').addEventListener('click', e => { e.stopPropagation(); deleteBucket(bucket.id); });
+    row.addEventListener('click', () => {
+      expandedBucketIds.has(bucket.id) ? expandedBucketIds.delete(bucket.id) : expandedBucketIds.add(bucket.id);
+      renderLog();
+    });
+    list.appendChild(row);
+  });
+}
+
+document.getElementById('log-sub-active').addEventListener('click', () => { logSubTab = 'active'; renderLog(); });
+document.getElementById('log-sub-history').addEventListener('click', () => { logSubTab = 'history'; renderLog(); });
+
+document.getElementById('log-export-new').addEventListener('click', () => {
+  const toExport = state.buckets.filter(b => !b.exportedAt);
+  const exported = runExportBuckets(toExport);
+  if (exported) {
+    exported.forEach(b => { b.exportedAt = Date.now(); });
+    saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
+  }
+});
+document.getElementById('log-export-all').addEventListener('click', () => {
+  const exported = runExportBuckets(state.buckets);
+  if (exported) {
+    exported.forEach(b => { b.exportedAt = Date.now(); });
+    saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
+  }
+});
+
+/* ── Edit Modal (log only) ── */
+const modalOverlay = document.getElementById('modal-overlay');
+let editingBucketId = null;
+
+function populateModalProcessSelect(selected) {
+  const sel = document.getElementById('modal-process');
+  sel.innerHTML = '<option value="">-- Select Process --</option>';
+  getProcessesForCurrent().forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p; opt.textContent = p;
+    if (p === selected) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function updateModalConditionals(process) {
+  const isTeeth = isTeethProcess(process);
+  const isEar   = isEarProcess(process);
+  document.getElementById('modal-teeth-section').style.display       = isTeeth ? 'flex' : 'none';
+  document.getElementById('modal-teeth-count-section').style.display = isTeeth ? 'flex' : 'none';
+  document.getElementById('modal-ear-section').style.display         = isEar   ? 'flex' : 'none';
+}
+
+document.getElementById('modal-process').addEventListener('change', () => {
+  updateModalConditionals(document.getElementById('modal-process').value);
+});
+
+function openEditModal(bucketId) {
+  const b = state.buckets.find(b => b.id === bucketId);
+  if (!b) return;
+  editingBucketId = bucketId;
+  const h = b.header || {};
+  document.getElementById('modal-title').textContent = `Edit: ${bucketTimeLabel(b)}`;
+  populateModalProcessSelect(h.process || '');
+  document.getElementById('modal-frame-number').value = h.frameNumber || '';
+  document.getElementById('modal-frame-width').value  = h.frameWidth  || '';
+  document.getElementById('modal-operator').value     = h.operator    || '';
+  document.getElementById('modal-num-obs').value      = h.numObservations || '1';
+  document.getElementById('modal-tooth-type').value   = h.toothType   || '';
+  document.getElementById('modal-num-teeth').value    = h.numTeeth    || '';
+  document.getElementById('modal-ear-type').value     = h.earType     || '';
+  document.getElementById('modal-notes').value        = h.notes       || '';
+  updateModalConditionals(h.process || '');
+  modalOverlay.classList.add('active');
+}
+
+function closeEditModal() { modalOverlay.classList.remove('active'); editingBucketId = null; }
+
+document.getElementById('modal-cancel').addEventListener('click', closeEditModal);
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeEditModal(); });
+document.getElementById('modal-save-log-edit').addEventListener('click', () => {
+  const b = state.buckets.find(b => b.id === editingBucketId);
+  if (b) {
+    b.header = {
+      process:         document.getElementById('modal-process').value,
+      frameNumber:     document.getElementById('modal-frame-number').value.trim(),
+      frameWidth:      document.getElementById('modal-frame-width').value.trim(),
+      operator:        document.getElementById('modal-operator').value.trim(),
+      numObservations: document.getElementById('modal-num-obs').value || '1',
+      toothType:       document.getElementById('modal-tooth-type').value.trim(),
+      numTeeth:        document.getElementById('modal-num-teeth').value.trim(),
+      earType:         document.getElementById('modal-ear-type').value.trim(),
+      notes:           document.getElementById('modal-notes').value,
+    };
+    saveState(); renderLog();
+    if (b === getCurrentBucket()) {
+      updateSessionBucketLabel();
+      renderTimerDetails();
+    }
+  }
+  closeEditModal();
+});
+
+/* ── Export ── */
+function stripInSuffix(w) {
+  const s = String(w||'').trim();
+  return s.toLowerCase().endsWith('in') ? s.slice(0,-2) : s;
+}
+function ensureInSuffix(w) {
+  const s = String(w||'').trim();
+  if (!s) return '';
+  return (s.toLowerCase().endsWith('in') ? s.slice(0,-2) : s) + 'in';
+}
+function formatExportDate(ts) {
+  const d = new Date(ts);
+  return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+function buildExportRow(bucket) {
+  const h = bucket.header || {};
+  const els = bucket.elements || [];
+  const greenSec = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
+  const amberSec = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+  const cycleSec = greenSec + amberSec;
+  const cycleMin = cycleSec > 0 ? +(cycleSec/60).toFixed(4) : 0;
+  const vaMin    = +(greenSec/60).toFixed(4);
+  const nnvaMin  = +(amberSec/60).toFixed(4);
+  const preheatSec    = els.filter(e=>e.name==='Preheat Time').reduce((s,e)=>s+e.durationSec,0);
+  const posBucketSec  = els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0);
+  const numTeeth = h.numTeeth ? Number(h.numTeeth) : 0;
+  return {
+    date:        formatExportDate(bucket.startTs),
+    frameNum:    h.frameNumber || '',
+    fwP2:        ensureInSuffix(h.frameWidth),
+    fwRaw:       stripInSuffix(h.frameWidth),
+    operator:    h.operator    || '',
+    toothType:   h.toothType   || '',
+    numTeeth:    numTeeth || '',
+    earType:     h.earType     || '',
+    numObs:      Number(h.numObservations) || 1,
+    notes:       els.filter(e=>e.note).map(e=>`${e.name}: ${e.note}`).join('\n') || h.notes || '',
+    cycleMin:    cycleMin || '',
+    vaMin,
+    nnvaMin,
+    vaPct:       cycleMin > 0 ? +(vaMin/cycleMin).toFixed(6) : '',
+    nnvaPct:     cycleMin > 0 ? +(nnvaMin/cycleMin).toFixed(6) : '',
+    preheatMin:  preheatSec > 0 ? +(preheatSec/60).toFixed(4) : '',
+    posBucketMin:posBucketSec > 0 ? +(posBucketSec/60).toFixed(4) : '',
+    timePTooth:  (numTeeth > 0 && cycleMin > 0) ? +(cycleMin/numTeeth).toFixed(4) : '',
+  };
+}
+
+function getColumnsForProcess(processName) {
+  const isP1 = state.plant === 'Plant 1';
+  const isQH = state.stream === 'Quick Hitch';
+  const c = (h, fn) => [h, fn];
+  const D=r=>r.date, FN=r=>r.frameNum, FW2=r=>r.fwP2, FWR=r=>r.fwRaw,
+        OP=r=>r.operator, CY=r=>r.cycleMin, VA=r=>r.vaMin, NV=r=>r.nnvaMin,
+        VP=r=>r.vaPct, NP=r=>r.nnvaPct, OB=r=>r.numObs, NO=r=>r.notes,
+        PH=r=>r.preheatMin, PB=r=>r.posBucketMin,
+        TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType;
+
+  if (isP1) {
+    // Plant 1 (Large Bucket) — Frame Width stored as plain number in workbook; strip any "in" suffix
+    const base = [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP)];
+    const pp   = [c('Preheat Time (min)',PH),c('Positioning Bucket (min)',PB)];
+    const tail = [c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    if (processName === 'Teeth and Logo')
+      return [...base,c('Tooth Type',TT),c('# of Teeth',NT),...pp,c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    if (processName === 'Ears')
+      return [...base,c('Ear Type',ET),...pp,...tail];
+    return [...base,...pp,...tail];
+  }
+
+  if (isQH) {
+    // Quick Hitch — all sheets use "Frame Width (in)" header + has # of Observations
+    // Ear & Bushing Install: header is "Frame Width (in)" but data values are raw numbers (no "in")
+    switch (processName) {
+      case 'Bucket Roll':
+        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+      case 'Manual Shell Weld':
+        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+      case 'Teeth And Logo':
+        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Tooth Type',TT),c('Operator',OP),c('# of Teeth',NT),c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+      case 'Teeth Weld':
+        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+      case 'Ear & Bushing Install':
+        // Column header says "Frame Width (in)" but actual cell values are raw numbers like "12", "24"
+        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FWR),c('Ear Type',ET),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+      default:
+        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+    }
+  }
+
+  // Pin On — mixed: some sheets have "in" data, some raw; no # of Observations
+  switch (processName) {
+    case 'Bucket Roll':
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+    case 'Manual Shell Weld':
+      return [c('Date',D),c('Frame #',FN),c('Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    case 'Teeth Install':
+      // Frame Width data is raw numbers ("24", "12") — use FWR
+      return [c('Date',D),c('Frame Size',FN),c('Frame Width',FWR),c('Tooth Type',TT),c('Operator',OP),c('Number of Teeth',NT),c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    case 'Ear and Bushing Install':
+      // Frame Width data is raw numbers ("18", "12") — use FWR
+      return [c('Date',D),c('Frame #',FN),c('Width (in)',FWR),c('Ear Type',ET),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    case 'Final Weld':
+      return [c('Date',D),c('Frame Size',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    default:
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+  }
+}
+
+function autoFitColumns(ws, aoa) {
+  ws['!cols'] = aoa[0].map((_, ci) => ({
+    wch: Math.min(45, Math.max(10, ...aoa.map(row => String(row[ci] ?? '').length)))
+  }));
+}
+
+// Returns array of buckets that were actually written to the file, or null on failure.
+function runExportBuckets(buckets) {
+  if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
+  if (!buckets || !buckets.length) { alert('No buckets to export.'); return null; }
+
+  const byProcess = {};
+  const noProcess = [];
+  const exported = [];
+  buckets.forEach(b => {
+    const p = b.header && b.header.process;
+    if (!p) { noProcess.push(b); return; }
+    (byProcess[p] = byProcess[p] || []).push(b);
+    exported.push(b);
+  });
+
+  const wb = XLSX.utils.book_new();
+  let sheetCount = 0;
+  Object.entries(byProcess).forEach(([processName, pBuckets]) => {
+    const cols = getColumnsForProcess(processName);
+    const rows = pBuckets.map(b => buildExportRow(b));
+    const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
+    const ws   = XLSX.utils.aoa_to_sheet(aoa);
+    autoFitColumns(ws, aoa);
+    XLSX.utils.book_append_sheet(wb, ws, processName);
+    sheetCount++;
+  });
+
+  if (sheetCount === 0) {
+    alert(`${noProcess.length} bucket${noProcess.length!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before exporting.`);
+    return null;
+  }
+
+  if (noProcess.length > 0) {
+    alert(`Exported ${sheetCount} process sheet${sheetCount!==1?'s':''}. Note: ${noProcess.length} bucket${noProcess.length!==1?'s were':' was'} skipped (no process selected).`);
+  }
+
+  const plantLabel = state.plant === 'Plant 2' ? `P2_${(state.stream||'').replaceAll(' ','')}` : 'P1';
+  const today = new Date();
+  const fd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `TAG_TimeStudy_${plantLabel}_${fd}.xlsx`);
+  return exported;
+}
+
+/* ── Service Worker ── */
+let swRegistration = null;
+function setUpdateBtn(text, disabled) {
+  const btn = document.getElementById('btn-check-update');
+  btn.textContent = text; btn.disabled = !!disabled;
+}
+async function checkForUpdate() {
+  if (!swRegistration) { setUpdateBtn('No update service',true); setTimeout(()=>setUpdateBtn('Check for Update',false),2500); return; }
+  setUpdateBtn('Checking…',true);
+  try {
+    await swRegistration.update();
+    if (swRegistration.waiting) { setUpdateBtn('Reloading…',true); swRegistration.waiting.postMessage({type:'SKIP_WAITING'}); }
+    else { setUpdateBtn('Already up to date ✓',true); setTimeout(()=>setUpdateBtn('Check for Update',false),2500); }
+  } catch(e) { setUpdateBtn('Check failed (offline?)',true); setTimeout(()=>setUpdateBtn('Check for Update',false),2500); }
+}
+document.getElementById('btn-check-update').addEventListener('click', checkForUpdate);
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      swRegistration = reg;
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        w.addEventListener('statechange', () => {
+          if (w.state==='installed' && navigator.serviceWorker.controller) setUpdateBtn('Update ready — tap to reload',false);
+        });
+      });
+    }).catch(e => console.warn('SW failed:',e));
+    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  });
+}
+
+/* ── Init ── */
+// Clear any element that was timing when the app last closed or crashed.
+// Without this, the next element tap would call stopActiveElement(now) and log
+// a false duration equal to however long the app was closed — corrupting exports.
+if (state.activeElement) { state.activeElement = null; saveState(); }
+
+if (state.plant==='Plant 2' && !state.stream) showScreen('screen-stream-select');
+else if (state.plant) goToSessionHome();
+updateStatusBar();
+</script>
+</body>
+</html>

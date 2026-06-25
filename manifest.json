@@ -1,0 +1,18 @@
+{
+  "name": "TAG Time Study",
+  "short_name": "TAG TS",
+  "description": "Factory floor cycle time study tool for TAG Manufacturing",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a1f44",
+  "theme_color": "#0a1f44",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
