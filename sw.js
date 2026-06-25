@@ -1,6 +1,5 @@
-const CACHE_NAME = 'tag-time-study-v10';
+const CACHE_NAME = 'tag-time-study-v13';
 
-// Core assets cached on install. SheetJS CDN is attempted but won't block install if offline.
 const CORE_ASSETS = ['./', './index.html'];
 const CDN_SHEETJS = 'https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js';
 
@@ -21,9 +20,45 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Cache-first: serve from cache, fall back to network and cache the result.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+  const isHTML = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/');
+  const isCDN  = url.origin !== self.location.origin;
+
+  if (isHTML) {
+    // Network-first for HTML: always try to fetch fresh, fall back to cache
+    e.respondWith(
+      fetch(e.request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  if (isCDN) {
+    // Cache-first for CDN assets (SheetJS) — they are versioned/stable
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if (cached) return cached;
+        return fetch(e.request).then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          }
+          return response;
+        });
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (sw.js, manifest, icon)
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;

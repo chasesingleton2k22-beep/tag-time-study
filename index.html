@@ -53,8 +53,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .home-live-dot { width: 10px; height: 10px; border-radius: 50%; background: #66bb6a; flex-shrink: 0; animation: live-pulse 1.5s infinite; }
 .home-btn { width: 90%; max-width: 420px; min-height: 76px; background: var(--navy-light); border: 3px solid var(--gold); color: var(--text-light); font-size: 1.25rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
 .home-btn:active { background: var(--gold); color: var(--navy); }
-#btn-check-update, #btn-rotate-orientation { width: 90%; max-width: 420px; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.92rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
-#btn-check-update:active, #btn-rotate-orientation:active { border-color: var(--gold); color: var(--gold-light); }
+#btn-check-update { width: 90%; max-width: 420px; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.92rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
+#btn-check-update:active { border-color: var(--gold); color: var(--gold-light); }
 #btn-check-update:disabled { opacity: 0.6; cursor: default; }
 #home-observer-wrap { width: 90%; max-width: 420px; display: flex; flex-direction: column; gap: 5px; }
 #home-observer-label { font-size: 0.75rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; }
@@ -239,7 +239,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   <button class="home-btn" id="home-new-bucket">▶ New Bucket</button>
   <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
   <button class="home-btn" id="home-view-log">View Log</button>
-  <button id="btn-rotate-orientation">↻ Switch to Portrait</button>
   <button id="btn-check-update">Check for Update</button>
 </div>
 
@@ -508,7 +507,7 @@ function createNewBucket() {
 }
 
 /* ── Screen navigation ── */
-const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select']);
+const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select','screen-session-home','screen-log']);
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -555,8 +554,6 @@ function updateSessionHomeInfo() {
 function goToSessionHome() {
   document.getElementById('home-plant-label').textContent = plantDisplayLabel();
   document.getElementById('home-observer-input').value = state.observerName || '';
-  currentOrientation = (screen.orientation && screen.orientation.type || '').startsWith('landscape') ? 'landscape' : 'portrait';
-  updateRotateBtn();
   updateSessionHomeInfo();
   showScreen('screen-session-home');
 }
@@ -564,10 +561,16 @@ function goToSessionHome() {
 document.getElementById('home-change-plant').addEventListener('click', () => {
   const realBuckets = state.buckets.filter(b => !b.isDraft);
   if (realBuckets.length > 0) {
-    if (!confirm(`You have ${realBuckets.length} bucket(s) logged. Export first if needed. Continue?`)) return;
+    if (!confirm(`You have ${realBuckets.length} bucket(s) logged. Export first if needed.\n\nChanging plant will clear this session. Continue?`)) return;
   }
-  // Stop any running element so it doesn't accumulate time silently across a plant change
-  if (state.activeElement) { stopActiveElement(Date.now()); updateStatusBar(); }
+  // Clear session — old buckets belong to the old plant/stream and would get wrong
+  // export column layout if carried forward to a different plant context.
+  state.activeElement = null;
+  state.buckets = [];
+  state.nextBucketId = 1;
+  state.plant = null;
+  state.stream = null;
+  saveState();
   showScreen('screen-plant-select');
 });
 
@@ -601,6 +604,8 @@ document.getElementById('home-observer-input').addEventListener('input', () => {
   clearTimeout(observerNameSaveTimer);
   observerNameSaveTimer = setTimeout(() => {
     state.observerName = document.getElementById('home-observer-input').value.trim();
+    const b = getCurrentBucket();
+    if (b && !b.sealed) b.observerName = state.observerName;
     saveState();
   }, 400);
 });
@@ -729,6 +734,21 @@ function renderGrid() {
   nbBtn.innerHTML = '+ NEW<br>BUCKET';
   nbBtn.addEventListener('click', () => {
     clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
+    stopActiveElement(Date.now());
+    updateStatusBar();
+    const cur = getCurrentBucket();
+    if (cur && !cur.sealed) {
+      const h = cur.header || {};
+      const hasHeader = !!(h.process || h.frameNumber || h.frameWidth || h.operator);
+      if (!hasHeader && cur.elements.length === 0) {
+        state.buckets.pop();
+      } else if (hasHeader && cur.elements.length === 0) {
+        cur.isDraft = true; cur.sealed = true;
+      } else {
+        cur.sealed = true; cur.isDraft = false;
+      }
+      saveState();
+    }
     createNewBucket();
     renderGrid();
     openProcessOverlay();
@@ -1383,21 +1403,6 @@ async function checkForUpdate() {
 }
 document.getElementById('btn-check-update').addEventListener('click', checkForUpdate);
 
-/* ── Orientation toggle ── */
-let currentOrientation = 'landscape';
-function updateRotateBtn() {
-  const btn = document.getElementById('btn-rotate-orientation');
-  btn.textContent = currentOrientation === 'landscape' ? '↻ Switch to Portrait' : '↻ Switch to Landscape';
-}
-document.getElementById('btn-rotate-orientation').addEventListener('click', async () => {
-  currentOrientation = currentOrientation === 'landscape' ? 'portrait' : 'landscape';
-  try {
-    await screen.orientation.lock(currentOrientation);
-  } catch(e) {
-    // iOS doesn't support lock — physical rotation still works freely
-  }
-  updateRotateBtn();
-});
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(reg => {
