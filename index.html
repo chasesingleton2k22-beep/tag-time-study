@@ -422,8 +422,7 @@ const PLANT2_ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
 const COMMON_ELEMENTS = [
   { name: 'Weld',                   tier: 'green' },
   { name: 'Install Teeth',          tier: 'green' },
-  { name: 'Install Ears',           tier: 'green' },
-  { name: 'Install Id Tag',         tier: 'green' },
+  { name: 'Fabrication',            tier: 'green' },
   { name: 'Machining Part',         tier: 'green' },
   { name: 'Form Part',              tier: 'green' },
   { name: 'Loading Parts',          tier: 'amber' },
@@ -433,6 +432,7 @@ const COMMON_ELEMENTS = [
   { name: 'Scan Paperwork',         tier: 'amber' },
   { name: 'Operating Crane',        tier: 'amber' },
   { name: 'Placing Parts in Jig',   tier: 'amber' },
+  { name: 'Cleaning Jig',           tier: 'amber' },
   { name: 'Cleaning Welding Lead',  tier: 'amber' },
   { name: 'Positioning Bucket',     tier: 'amber' },
   { name: 'Changing Wire',          tier: 'amber' },
@@ -440,6 +440,7 @@ const COMMON_ELEMENTS = [
   { name: 'Arc Gouging',            tier: 'amber' },
   { name: 'Training',               tier: 'amber' },
   { name: 'Computer Work',          tier: 'amber' },
+  { name: 'Out of Area',            tier: 'red'   },
   { name: 'Spray Paint Bucket',     tier: 'red'   },
   { name: 'Searching For Parts',    tier: 'red'   },
   { name: 'Restroom',               tier: 'red'   },
@@ -561,8 +562,9 @@ function goToSessionHome() {
 }
 
 document.getElementById('home-change-plant').addEventListener('click', () => {
-  if (state.buckets.length > 0) {
-    if (!confirm(`You have ${state.buckets.length} bucket(s) logged. Export first if needed. Continue?`)) return;
+  const realBuckets = state.buckets.filter(b => !b.isDraft);
+  if (realBuckets.length > 0) {
+    if (!confirm(`You have ${realBuckets.length} bucket(s) logged. Export first if needed. Continue?`)) return;
   }
   // Stop any running element so it doesn't accumulate time silently across a plant change
   if (state.activeElement) { stopActiveElement(Date.now()); updateStatusBar(); }
