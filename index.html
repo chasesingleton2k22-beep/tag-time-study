@@ -497,7 +497,13 @@ function loadState() {
     return Object.assign(defaultState(), JSON.parse(raw));
   } catch(e) { return defaultState(); }
 }
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    alert('WARNING: Could not save — your tablet storage may be full. This bucket\'s data may not be saved. Export what you can now.');
+  }
+}
 
 function getCurrentBucket() {
   return state.buckets.length > 0 ? state.buckets[state.buckets.length - 1] : null;
@@ -523,7 +529,7 @@ function cleanupCurrentBucket() {
 function createNewBucket() {
   stopActiveElement(Date.now());
   const h = emptyHeader();
-  state.buckets.push({ id: state.nextBucketId++, header: h, startTs: Date.now(), elements: [], exportedAt: null, sealed: false, observerName: state.observerName || '' });
+  state.buckets.push({ id: state.nextBucketId++, header: h, startTs: Date.now(), elements: [], exportedAt: null, sealed: false, observerName: state.observerName || '', plant: state.plant, stream: state.stream });
   timerDetailsOpen = true;
   saveState();
 }
@@ -581,15 +587,29 @@ function goToSessionHome() {
 }
 
 document.getElementById('home-change-plant').addEventListener('click', () => {
-  const realBuckets = state.buckets.filter(b => !b.isDraft);
-  if (realBuckets.length > 0) {
-    if (!confirm(`You have ${realBuckets.length} bucket(s) logged. Export first if needed.\n\nChanging plant will clear this session. Continue?`)) return;
+  // NOTE: this used to wipe state.buckets entirely, deleting ALL history —
+  // including already-exported buckets — every time someone changed plants.
+  // Bucket history is now permanent: each bucket is stamped with its own
+  // plant/stream at creation (see createNewBucket/ensureBucket) and export
+  // always uses that stamp, so old buckets never need to be deleted just
+  // because the current plant selection changes.
+  if (state.activeElement) {
+    if (!confirm(`You are timing "${state.activeElement.name}". Changing plant will stop this timer and seal the current bucket. Continue?`)) return;
   }
-  // Clear session — old buckets belong to the old plant/stream and would get wrong
-  // export column layout if carried forward to a different plant context.
-  state.activeElement = null;
-  state.buckets = [];
-  state.nextBucketId = 1;
+  const last = getCurrentBucket();
+  if (last && !last.sealed) {
+    stopActiveElement(Date.now());
+    updateStatusBar();
+    const h = last.header || {};
+    const hasHeader = !!(h.process || h.frameNumber || h.frameWidth || h.operator);
+    if (!hasHeader && last.elements.length === 0) {
+      state.buckets.pop(); // truly empty — nothing to keep
+    } else if (hasHeader && last.elements.length === 0) {
+      last.isDraft = true; last.sealed = true; // header only — keep as draft
+    } else {
+      last.sealed = true; last.isDraft = false; // has timing — seal normally
+    }
+  }
   state.plant = null;
   state.stream = null;
   saveState();
@@ -935,7 +955,7 @@ document.getElementById('element-note-overlay').addEventListener('click', e => {
 function ensureBucket() {
   const last = getCurrentBucket();
   if (!last || last.sealed) {
-    state.buckets.push({ id: state.nextBucketId++, header: emptyHeader(), startTs: Date.now(), elements: [], exportedAt: null, sealed: false, observerName: state.observerName || '' });
+    state.buckets.push({ id: state.nextBucketId++, header: emptyHeader(), startTs: Date.now(), elements: [], exportedAt: null, sealed: false, observerName: state.observerName || '', plant: state.plant, stream: state.stream });
     saveState();
   }
   return state.buckets[state.buckets.length - 1];
@@ -943,6 +963,12 @@ function ensureBucket() {
 
 function onElementTap(el) {
   if (longPressActivated) { longPressActivated = false; return; }
+  // Flush any pending DETAILS-panel keystrokes (frame #, operator, tooth type, etc.)
+  // BEFORE re-rendering the grid below. Without this, tapping an element within
+  // ~400ms of typing would wipe whatever you just typed — the grid re-render
+  // repopulates the inputs from the (still-stale) saved header, silently
+  // discarding the unsaved text in the DOM.
+  clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
   const last = getCurrentBucket();
   if (!last || last.sealed) createNewBucket();
   if (state.activeElement && state.activeElement.name === el.name) return;
@@ -1038,8 +1064,14 @@ function resumeDraft(bucketId) {
 function deleteBucket(bucketId) {
   const idx = state.buckets.findIndex(b => b.id === bucketId);
   if (idx === -1) return;
-  const label = bucketTimeLabel(state.buckets[idx]);
-  if (!confirm(`Delete bucket "${label}"? This cannot be undone.`)) return;
+  const bucket = state.buckets[idx];
+  const label = bucketTimeLabel(bucket);
+  const elCount = bucket.elements.length;
+  // This is the ONLY way bucket data can be deleted in this app. Requires
+  // typing DELETE rather than a plain OK/Cancel — a single mis-tap must
+  // never be able to destroy a day's worth of timing data again.
+  const typed = prompt(`Delete bucket "${label}" (${elCount} element${elCount!==1?'s':''} timed, ${bucket.exportedAt ? 'already exported' : 'NOT exported'})?\n\nThis cannot be undone. Type DELETE to confirm.`);
+  if (typed === null || typed.trim().toUpperCase() !== 'DELETE') return;
   if (state.activeElement && state.activeElement.bucketId === bucketId) {
     state.activeElement = null; updateStatusBar();
   }
@@ -1305,9 +1337,9 @@ function buildExportRow(bucket) {
   };
 }
 
-function getColumnsForProcess(processName) {
-  const isP1 = state.plant === 'Plant 1';
-  const isQH = state.stream === 'Quick Hitch';
+function getColumnsForProcess(processName, plant, stream) {
+  const isP1 = plant === 'Plant 1';
+  const isQH = stream === 'Quick Hitch';
   const c = (h, fn) => [h, fn];
   const D=r=>r.date, FN=r=>r.frameNum, FW2=r=>r.fwP2, FWR=r=>r.fwRaw,
         OP=r=>r.operator, CY=r=>r.cycleMin, VA=r=>r.vaMin, NV=r=>r.nnvaMin,
@@ -1389,26 +1421,40 @@ function runExportBuckets(buckets) {
   if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
   if (!buckets || !buckets.length) { alert('No buckets to export.'); return null; }
 
-  const byProcess = {};
+  // Group by (plant + stream + process) — each bucket carries its OWN plant/stream
+  // stamped at creation time, so re-exporting old history after a plant switch
+  // always uses the correct column schema instead of whatever plant is selected now.
+  const byGroup = {};
   const noProcess = [];
   const exported = [];
   buckets.forEach(b => {
     const p = b.header && b.header.process;
     if (!p) { noProcess.push(b); return; }
-    (byProcess[p] = byProcess[p] || []).push(b);
+    const plant  = b.plant  || state.plant;
+    const stream = b.stream || state.stream;
+    const key = `${plant}||${stream}||${p}`;
+    (byGroup[key] = byGroup[key] || { plant, stream, process: p, buckets: [] }).buckets.push(b);
     exported.push(b);
   });
 
+  const processCounts = {};
+  Object.values(byGroup).forEach(g => { processCounts[g.process] = (processCounts[g.process]||0) + 1; });
+
   const wb = XLSX.utils.book_new();
   let sheetCount = 0;
-  Object.entries(byProcess).forEach(([processName, pBuckets]) => {
-    const cols = getColumnsForProcess(processName);
-    const rows = pBuckets.map(b => buildExportRow(b));
+  const plantTagsUsed = new Set();
+  Object.values(byGroup).forEach(g => {
+    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
+    plantTagsUsed.add(plantTag);
+    const cols = getColumnsForProcess(g.process, g.plant, g.stream);
+    const rows = g.buckets.map(b => buildExportRow(b));
     const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
     const ws   = XLSX.utils.aoa_to_sheet(aoa);
     autoFitColumns(ws, aoa);
     boldAllCells(ws);
-    XLSX.utils.book_append_sheet(wb, ws, processName);
+    let sheetName = g.process;
+    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
+    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
     sheetCount++;
   });
 
@@ -1421,10 +1467,15 @@ function runExportBuckets(buckets) {
     alert(`Exported ${sheetCount} process sheet${sheetCount!==1?'s':''}. Note: ${noProcess.length} bucket${noProcess.length!==1?'s were':' was'} skipped (no process selected).`);
   }
 
-  const plantLabel = state.plant === 'Plant 2' ? `P2_${(state.stream||'').replaceAll(' ','')}` : 'P1';
-  const today = new Date();
-  const fd = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
-  XLSX.writeFile(wb, `TAG_TimeStudy_${plantLabel}_${fd}.xlsx`, { cellStyles: true });
+  // Filename includes a per-second timestamp so repeated exports in the same day
+  // NEVER collide and silently overwrite a prior download — this was the cause of
+  // earlier exported buckets vanishing from the tablet's Downloads folder.
+  const plantLabel = plantTagsUsed.size === 1 ? [...plantTagsUsed][0] : 'Mixed';
+  const now = new Date();
+  const p2 = n => String(n).padStart(2,'0');
+  const fd = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
+  const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
+  XLSX.writeFile(wb, `TAG_TimeStudy_${plantLabel}_${fd}_${ft}.xlsx`, { cellStyles: true });
   return exported;
 }
 
@@ -1461,13 +1512,34 @@ if ('serviceWorker' in navigator) {
 }
 
 /* ── Init ── */
-// Clear any element that was timing when the app last closed or crashed.
-// Without this, the next element tap would call stopActiveElement(now) and log
-// a false duration equal to however long the app was closed — corrupting exports.
-if (state.activeElement) { state.activeElement = null; saveState(); }
+// If an element was still timing when the app last closed (service-worker
+// update reload, tablet backgrounding/killing the tab, a crash), SEAL it
+// into its bucket with the elapsed time instead of silently discarding it.
+// Recorded data must never be destroyed on reload — if the elapsed time
+// looks too long (tablet sat overnight, etc.) the operator is warned and
+// can edit/delete that one element from the Log, but nothing vanishes
+// without them knowing.
+if (state.activeElement) {
+  const wasTiming = state.activeElement.name;
+  const startedAt = state.activeElement.startTs;
+  stopActiveElement(Date.now());
+  saveState();
+  const gapMin = Math.round((Date.now() - startedAt) / 60000);
+  if (gapMin >= 10) {
+    setTimeout(() => alert(`"${wasTiming}" was still timing when the app reopened (started ${gapMin} min ago) and has been recorded as ending just now. Check that entry in the Log and edit/delete it if the duration looks wrong.`), 300);
+  }
+}
 
-// Always start at plant select — never auto-resume a session on app open
-showScreen('screen-plant-select');
+// Resume wherever the session actually was — losing your place after a
+// forced reload (e.g. an app update) shouldn't mean re-picking plant and
+// stream from scratch every time.
+if (!state.plant) {
+  showScreen('screen-plant-select');
+} else if (state.plant === 'Plant 2' && !state.stream) {
+  showScreen('screen-stream-select');
+} else {
+  goToSessionHome();
+}
 updateStatusBar();
 </script>
 </body>
