@@ -1486,9 +1486,9 @@ function buildExportRow(bucket) {
   const greenSec = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
   const amberSec = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
   const cycleSec = greenSec + amberSec;
-  const cycleMin = cycleSec > 0 ? +(cycleSec/60).toFixed(4) : '';
-  const vaMin    = +(greenSec/60).toFixed(4);
-  const nnvaMin  = +(amberSec/60).toFixed(4);
+  const cycleMin = cycleSec > 0 ? +(cycleSec/60).toFixed(4) : null;
+  const vaMin    = cycleSec > 0 ? +(greenSec/60).toFixed(4) : null;
+  const nnvaMin  = cycleSec > 0 ? +(amberSec/60).toFixed(4) : null;
   const preheatSec    = els.filter(e=>e.name==='Preheat Time').reduce((s,e)=>s+e.durationSec,0);
   const posBucketEls  = els.filter(e=>e.name==='Positioning Bucket');
   const posBucketSec  = posBucketEls.reduce((s,e)=>s+e.durationSec,0);
@@ -1504,15 +1504,15 @@ function buildExportRow(bucket) {
     earType:     h.earType     || '',
     numObs:      Number(h.numObservations) || 1,
     notes:       els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${e.note}`).join('\n') || h.notes || '',
-    cycleMin:    cycleMin || '',
+    cycleMin:    cycleMin,
     vaMin,
     nnvaMin,
-    vaPct:       cycleMin > 0 ? +(vaMin/cycleMin).toFixed(6) : '',
-    nnvaPct:     cycleMin > 0 ? +(nnvaMin/cycleMin).toFixed(6) : '',
-    preheatMin:  preheatSec > 0 ? +(preheatSec/60).toFixed(4) : '',
-    posBucketMin:posBucketSec > 0 ? +(posBucketSec/60).toFixed(4) : '',
-    posCount:    posBucketEls.length || '',
-    timePTooth:  (numTeeth > 0 && cycleMin > 0) ? +(cycleMin/numTeeth).toFixed(4) : '',
+    vaPct:       cycleMin > 0 ? +(vaMin/cycleMin).toFixed(6) : null,
+    nnvaPct:     cycleMin > 0 ? +(nnvaMin/cycleMin).toFixed(6) : null,
+    preheatMin:  preheatSec > 0 ? +(preheatSec/60).toFixed(4) : null,
+    posBucketMin:posBucketSec > 0 ? +(posBucketSec/60).toFixed(4) : null,
+    posCount:    posBucketEls.length || null,
+    timePTooth:  (numTeeth > 0 && cycleMin > 0) ? +(cycleMin/numTeeth).toFixed(4) : null,
   };
 }
 
