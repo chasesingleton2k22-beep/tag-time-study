@@ -19,14 +19,14 @@
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 input, select, textarea { user-select: text; -webkit-user-select: text; }
-html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; background: var(--navy); color: var(--text-light); overscroll-behavior: none; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; background: #091d44; color: var(--text-light); overscroll-behavior: none; }
 #app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 #screens-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .screen { flex: 1; display: none; flex-direction: column; overflow: hidden; }
 .screen.active { display: flex; }
 
 /* Topbar */
-.topbar { background: var(--navy-light); border-bottom: 3px solid var(--gold); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; }
+.topbar { background: linear-gradient(180deg, #1f4285 0%, #142f6a 100%); border-bottom: 3px solid var(--gold); padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.4); }
 .topbar .plant-label { color: var(--gold-light); font-weight: bold; font-size: 1.05rem; line-height: 1.2; }
 .topbar .topbar-subtitle { font-size: 0.78rem; color: #b9c4d8; margin-top: 1px; }
 .topbar-right { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
@@ -36,31 +36,36 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #btn-end-bucket:active { filter: brightness(1.3); }
 
 /* Plant / Stream Select */
-#screen-plant-select { align-items: center; justify-content: center; gap: 28px; padding: 24px; overflow-y: auto; }
-#screen-stream-select { align-items: center; gap: 24px; padding-bottom: 24px; overflow-y: auto; }
+#screen-plant-select { align-items: center; justify-content: center; gap: 22px; padding: 24px; overflow-y: auto; background: radial-gradient(ellipse at 50% 38%, #1b3f85 0%, #091d44 100%); }
+#screen-stream-select { align-items: center; gap: 24px; padding-bottom: 24px; overflow-y: auto; background: radial-gradient(ellipse at 50% 30%, #1b3f85 0%, #091d44 100%); }
 #screen-stream-select .stream-content { display: flex; flex-direction: column; align-items: center; gap: 24px; flex: 1; justify-content: center; padding: 0 24px; }
 #screen-plant-select h1, #screen-stream-select h1 { color: var(--gold-light); font-size: 1.8rem; margin-bottom: 8px; text-align: center; }
 
 /* CI Brand block (plant select) */
 .ci-brand-block { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0; }
+.ci-logo-wrap { background: #fff; border-radius: 16px; padding: 18px 32px; box-shadow: 0 0 0 3px rgba(230,176,32,0.55), 0 6px 36px rgba(230,176,32,0.28), 0 2px 14px rgba(0,0,0,0.45); margin-bottom: 6px; }
+.ci-logo-img { width: 300px; max-width: 75vw; display: block; }
+.ci-logo-fallback { display: none; flex-direction: column; align-items: center; gap: 0; }
+.ci-logo-wrap-sm { background: #fff; border-radius: 10px; padding: 8px 18px; box-shadow: 0 0 0 2px rgba(230,176,32,0.45), 0 3px 16px rgba(230,176,32,0.2), 0 1px 6px rgba(0,0,0,0.4); }
+.ci-logo-img-sm { width: 160px; max-width: 50vw; display: block; }
 .ci-tag-wordmark { font-size: 4.2rem; font-weight: 900; color: var(--gold-light); letter-spacing: 0.18em; line-height: 1; text-shadow: 0 2px 24px rgba(255,213,79,0.22); }
 .ci-mfg-label { font-size: 0.7rem; color: var(--gold); letter-spacing: 0.42em; font-weight: bold; margin-top: 3px; text-transform: uppercase; }
 .ci-rule { width: 240px; height: 1px; background: linear-gradient(to right, transparent, var(--gold), transparent); margin: 12px auto; }
-.ci-dept-label { font-size: 0.68rem; color: #8a9ab8; letter-spacing: 0.3em; font-weight: bold; text-transform: uppercase; }
-.ci-tool-label { font-size: 1.55rem; font-weight: bold; color: var(--text-light); letter-spacing: 0.06em; margin-top: 10px; }
+.ci-dept-label { font-size: 0.68rem; color: var(--gold); opacity: 0.75; letter-spacing: 0.3em; font-weight: bold; text-transform: uppercase; }
+.ci-tool-label { font-size: 1.6rem; font-weight: bold; color: var(--text-light); letter-spacing: 0.06em; margin-top: 10px; text-shadow: 0 1px 12px rgba(255,255,255,0.15); }
 .draft-badge { display: inline-block; font-size: 0.72rem; color: #fff; font-weight: bold; background: #5a6a8a; border-radius: 6px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
-.plant-btn, .stream-btn { width: 90%; max-width: 420px; min-height: 140px; background: var(--navy-light); border: 4px solid var(--gold); color: var(--text-light); font-size: 2rem; font-weight: bold; border-radius: 16px; cursor: pointer; }
+.plant-btn, .stream-btn { width: 90%; max-width: 420px; min-height: 130px; background: linear-gradient(180deg, #1e4085 0%, #0d2258 100%); border: 3px solid var(--gold); color: var(--text-light); font-size: 2rem; font-weight: bold; border-radius: 18px; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.1); letter-spacing: 0.05em; }
 .stream-btn { font-size: 1.8rem; }
-.plant-btn:active, .stream-btn:active { background: var(--gold); color: var(--navy); }
+.plant-btn:active, .stream-btn:active { background: var(--gold); color: var(--navy); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
 /* Session Home */
-#screen-session-home { align-items: center; justify-content: center; gap: 14px; padding: 20px; overflow-y: auto; }
+#screen-session-home { align-items: center; justify-content: center; gap: 14px; padding: 20px; overflow-y: auto; background: radial-gradient(ellipse at 50% 20%, #162f6e 0%, #091d44 100%); }
 #home-session-info { font-size: 0.95rem; color: #b9c4d8; font-weight: bold; text-align: center; padding: 2px 0; }
 #home-live-banner { display: none; align-items: center; justify-content: center; gap: 8px; padding: 7px 16px; background: rgba(46,125,50,0.18); border: 2px solid rgba(46,125,50,0.5); border-radius: 10px; width: 90%; max-width: 420px; font-size: 0.92rem; font-weight: bold; color: #81c784; }
 #home-live-banner.visible { display: flex; }
 .home-live-dot { width: 10px; height: 10px; border-radius: 50%; background: #66bb6a; flex-shrink: 0; animation: live-pulse 1.5s infinite; }
-.home-btn { width: 90%; max-width: 420px; min-height: 76px; background: var(--navy-light); border: 3px solid var(--gold); color: var(--text-light); font-size: 1.25rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
-.home-btn:active { background: var(--gold); color: var(--navy); }
+.home-btn { width: 90%; max-width: 420px; min-height: 76px; background: linear-gradient(180deg, #1e4085 0%, #0d2258 100%); border: 2px solid var(--gold); color: var(--text-light); font-size: 1.25rem; font-weight: bold; border-radius: 14px; cursor: pointer; box-shadow: 0 3px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08); letter-spacing: 0.03em; }
+.home-btn:active { background: var(--gold); color: var(--navy); box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 #btn-check-update { width: 90%; max-width: 420px; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.92rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
 #btn-check-update:active { border-color: var(--gold); color: var(--gold-light); }
 #btn-check-update:disabled { opacity: 0.6; cursor: default; }
@@ -69,6 +74,11 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #home-observer-input { min-height: 52px; font-size: 1.05rem; border-radius: 10px; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.08); color: var(--text-light); padding: 8px 14px; font-family: inherit; }
 #home-observer-input:focus { outline: 2px solid var(--gold); border-color: transparent; }
 #home-observer-input::placeholder { color: #5a6a8a; }
+#home-observer-presets { display: flex; gap: 8px; margin-top: 4px; }
+.observer-preset-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.07); color: var(--text-light); font-size: 1rem; font-weight: bold; cursor: pointer; }
+.observer-preset-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+#btn-pause { padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; border: 2px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; white-space: nowrap; }
+#btn-pause.paused { background: var(--gold); color: var(--navy); }
 
 /* Grid view */
 #view-grid { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -78,11 +88,11 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #sealed-banner { flex-shrink: 0; display: none; background: rgba(212,160,23,0.12); border-bottom: 2px solid rgba(212,160,23,0.4); padding: 8px 14px; font-size: 0.88rem; color: var(--gold-light); text-align: center; }
 #sealed-banner.visible { display: block; }
 #grid-container { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; overflow-y: auto; align-content: start; }
-.element-btn { min-height: 60px; border-radius: 9px; border: none; font-size: 0.88rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px 4px; cursor: pointer; line-height: 1.2; }
-.element-btn.tier-green { background: var(--green); }
-.element-btn.tier-amber { background: var(--amber); }
-.element-btn.tier-red   { background: var(--red); }
-.element-btn.active-pulse { animation: pulse 1s infinite; outline: 3px solid var(--gold-light); box-shadow: 0 0 16px rgba(240,192,64,0.6); }
+.element-btn { min-height: 60px; border-radius: 10px; border: none; font-size: 0.88rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px 4px; cursor: pointer; line-height: 1.2; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.element-btn.tier-green { background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%); }
+.element-btn.tier-amber { background: linear-gradient(180deg, #2196f3 0%, #1565c0 100%); }
+.element-btn.tier-red   { background: linear-gradient(180deg, #ef5350 0%, #c62828 100%); }
+.element-btn.active-pulse { animation: pulse 1s infinite; outline: 3px solid var(--gold-light); box-shadow: 0 0 18px rgba(240,192,64,0.65), inset 0 1px 0 rgba(255,255,255,0.2); }
 @keyframes pulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
 
 /* New Bucket element button */
@@ -94,7 +104,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #td-save-btn:active { background: var(--gold-light); }
 
 /* Process picker overlay */
-#process-overlay { position: fixed; inset: 0; background: var(--navy); z-index: 500; display: none; flex-direction: column; padding: 20px 16px; gap: 14px; overflow-y: auto; }
+#process-overlay { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 25%, #1b3f85 0%, #091d44 100%); z-index: 500; display: none; flex-direction: column; padding: 20px 16px; gap: 14px; overflow-y: auto; }
 #process-overlay.visible { display: flex; }
 #process-overlay-title { color: var(--gold-light); font-size: 1.15rem; font-weight: bold; text-align: center; flex-shrink: 0; letter-spacing: 0.04em; }
 #process-overlay-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -127,14 +137,17 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #log-sub-tabs { flex-shrink: 0; display: flex; background: rgba(0,0,0,0.25); border-bottom: 2px solid rgba(212,160,23,0.3); }
 .log-sub-tab { flex: 1; min-height: 40px; background: transparent; border: none; color: #8a9ab8; font-size: 0.88rem; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .log-sub-tab.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
-#log-action-bar { flex-shrink: 0; display: flex; gap: 8px; padding: 6px 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(212,160,23,0.3); }
-.log-action-btn { flex: 1; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+#log-action-bar { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(212,160,23,0.3); }
+.log-action-btn { flex: 1; min-width: 120px; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
 .log-action-btn.secondary { background: transparent; color: var(--gold-light); }
+.log-action-btn.selected-export { background: #1565c0; border-color: #1565c0; color: #fff; }
 .log-action-btn:disabled { opacity: 0.4; cursor: default; }
+.bucket-checkbox-wrap { display: flex; align-items: center; padding: 0 6px 0 2px; }
+.bucket-checkbox { width: 22px; height: 22px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
 #log-list { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
-.bucket-row { background: var(--navy-light); border: 2px solid var(--gold); border-radius: 12px; padding: 10px 12px; position: relative; cursor: pointer; }
-.bucket-row.exported { border-color: #3a7a3a; }
-.bucket-row.live-bucket { border-color: #f0c040; box-shadow: 0 0 10px rgba(240,192,64,0.25); }
+.bucket-row { background: linear-gradient(180deg, #1a3d78 0%, #122e5e 100%); border: 2px solid var(--gold); border-radius: 14px; padding: 10px 12px; position: relative; cursor: pointer; box-shadow: 0 3px 12px rgba(0,0,0,0.35); }
+.bucket-row.exported { border-color: #3a7a3a; background: linear-gradient(180deg, #183a2a 0%, #102a1e 100%); }
+.bucket-row.live-bucket { border-color: #f0c040; box-shadow: 0 0 14px rgba(240,192,64,0.3), 0 3px 10px rgba(0,0,0,0.3); }
 .bucket-row-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .bucket-row-meta { flex: 1; min-width: 0; }
 .bucket-time-label { color: var(--gold-light); font-weight: bold; font-size: 0.95rem; }
@@ -156,7 +169,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .bucket-action-btn.delete { background: var(--red); color: #fff; }
 .bucket-elements { margin-top: 8px; border-top: 1px solid rgba(212,160,23,0.4); padding-top: 6px; display: none; flex-direction: column; gap: 4px; }
 .bucket-row.expanded .bucket-elements { display: flex; }
-.bucket-element-row { display: flex; justify-content: space-between; font-size: 0.86rem; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); }
+.bucket-element-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); }
+.el-delete-btn { background: none; border: none; color: #e57373; font-size: 1rem; cursor: pointer; padding: 0 2px 0 8px; line-height: 1; flex-shrink: 0; }
 .el-tier-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .empty-log-msg { text-align: center; color: #b9c4d8; padding: 32px 16px; font-size: 1.05rem; }
 
@@ -175,7 +189,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 
 /* Portrait — more vertical room, so make buttons taller */
 @media (orientation: portrait) {
-  .element-btn { min-height: 80px; font-size: 0.92rem; }
+  .element-btn { min-height: 82px; font-size: 0.93rem; }
 }
 
 /* Landscape — short screen, go 6 columns and compress heights */
@@ -187,11 +201,11 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 }
 
 /* Status bar */
-#status-bar { flex-shrink: 0; background: var(--navy-light); border-top: 3px solid var(--gold); padding: 8px 14px; display: none; align-items: center; justify-content: space-between; }
+#status-bar { flex-shrink: 0; background: linear-gradient(to right, #1a3d78, #0f2455); border-top: 3px solid var(--gold); padding: 10px 14px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 -2px 12px rgba(0,0,0,0.3); }
 #status-bar.visible { display: flex; }
-#status-bar.idle { opacity: 0.65; }
-#status-element-name { font-weight: bold; font-size: 1rem; color: var(--text-light); }
-#status-element-time { font-weight: bold; font-size: 1.15rem; color: var(--gold-light); font-family: monospace; }
+#status-bar.idle { opacity: 0.6; }
+#status-element-name { font-weight: bold; font-size: 1.02rem; color: var(--text-light); }
+#status-element-time { font-weight: bold; font-size: 1.28rem; color: var(--gold-light); font-family: monospace; letter-spacing: 0.04em; }
 
 /* Export toast */
 #export-toast { position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); background: #2e7d32; color: #fff; font-weight: bold; font-size: 1rem; padding: 12px 28px; border-radius: 24px; z-index: 2000; box-shadow: 0 4px 20px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
@@ -220,8 +234,14 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <!-- Plant Select -->
 <div class="screen active" id="screen-plant-select">
   <div class="ci-brand-block">
-    <div class="ci-tag-wordmark">TAG</div>
-    <div class="ci-mfg-label">M A N U F A C T U R I N G</div>
+    <div class="ci-logo-wrap">
+      <img src="logo.png" alt="TAG Manufacturing, Inc." class="ci-logo-img"
+           onerror="this.closest('.ci-logo-wrap').style.display='none';document.querySelector('.ci-logo-fallback').style.display='flex';">
+    </div>
+    <div class="ci-logo-fallback">
+      <div class="ci-tag-wordmark">TAG</div>
+      <div class="ci-mfg-label">M A N U F A C T U R I N G</div>
+    </div>
     <div class="ci-rule"></div>
     <div class="ci-dept-label">C O N T I N U O U S &nbsp; I M P R O V E M E N T</div>
     <div class="ci-tool-label">⏱ Time Study</div>
@@ -252,11 +272,19 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     </div>
     <button class="back-btn" id="home-change-plant">Change Plant</button>
   </div>
+  <div class="ci-logo-wrap-sm" style="margin-top:4px;">
+    <img src="logo.png" alt="TAG Manufacturing, Inc." class="ci-logo-img-sm"
+         onerror="this.closest('.ci-logo-wrap-sm').style.display='none';">
+  </div>
   <div id="home-session-info"></div>
   <div id="home-live-banner"><span class="home-live-dot"></span><span id="home-live-text"></span></div>
   <div id="home-observer-wrap">
     <label for="home-observer-input" id="home-observer-label">YOUR NAME (TIMER)</label>
     <input id="home-observer-input" type="text" placeholder="Who is running this study…" autocomplete="off">
+    <div id="home-observer-presets">
+      <button class="observer-preset-btn" data-name="Chase">Chase</button>
+      <button class="observer-preset-btn" data-name="Robert">Robert</button>
+    </div>
   </div>
   <button class="home-btn" id="home-new-bucket">▶ New Bucket</button>
   <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
@@ -301,11 +329,11 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
           </div>
         </div>
         <div class="td-row">
-          <div class="td-field"><label>Frame #</label><input id="td-frame" type="text" inputmode="numeric" placeholder="e.g. 330" autocomplete="off"></div>
-          <div class="td-field"><label>Frame Width</label><input id="td-width" type="text" inputmode="decimal" placeholder="e.g. 24" autocomplete="off"></div>
+          <div class="td-field"><label>Frame #</label><input id="td-frame" type="text" inputmode="numeric" placeholder="e.g. 330" list="dl-frame-number"></div>
+          <div class="td-field"><label>Frame Width</label><input id="td-width" type="text" inputmode="decimal" placeholder="e.g. 24" list="dl-frame-width"></div>
         </div>
         <div class="td-row">
-          <div class="td-field"><label>Operator</label><input id="td-operator" type="text" placeholder="Name" autocomplete="off"></div>
+          <div class="td-field"><label>Operator</label><input id="td-operator" type="text" placeholder="Name" list="dl-operator"></div>
           <div class="td-field"><label># of Obs</label><input id="td-obs" type="number" min="1" value="1" inputmode="numeric"></div>
         </div>
         <div class="td-row" id="td-teeth-row" style="display:none">
@@ -336,6 +364,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   <div id="log-action-bar">
     <button class="log-action-btn" id="log-export-new">Export Unexported</button>
     <button class="log-action-btn secondary" id="log-export-all">Export All</button>
+    <button class="log-action-btn selected-export" id="log-export-selected" style="display:none">Export Selected (<span id="log-selected-count">0</span>)</button>
   </div>
   <div id="log-list"></div>
 </div>
@@ -362,7 +391,10 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <!-- Status bar -->
 <div id="status-bar">
   <span id="status-element-name">Tap an element to begin</span>
-  <span id="status-element-time">–</span>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="status-element-time">–</span>
+    <button id="btn-pause">⏸ PAUSE</button>
+  </div>
 </div>
 
 <!-- Export toast -->
@@ -378,15 +410,15 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     </div>
     <div class="modal-field">
       <label>Frame #</label>
-      <input type="text" id="modal-frame-number" inputmode="numeric" placeholder="e.g. 330">
+      <input type="text" id="modal-frame-number" inputmode="numeric" placeholder="e.g. 330" list="dl-frame-number">
     </div>
     <div class="modal-field">
       <label>Frame Width</label>
-      <input type="text" id="modal-frame-width" inputmode="decimal" placeholder="e.g. 24">
+      <input type="text" id="modal-frame-width" inputmode="decimal" placeholder="e.g. 24" list="dl-frame-width">
     </div>
     <div class="modal-field">
       <label>Operator</label>
-      <input type="text" id="modal-operator">
+      <input type="text" id="modal-operator" list="dl-operator">
     </div>
     <div class="modal-field">
       <label># of Observations</label>
@@ -416,12 +448,18 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 </div>
 
 </div><!-- app -->
+
+<!-- Datalists for header auto-fill (shared by DETAILS panel and Edit modal) -->
+<datalist id="dl-frame-number"></datalist>
+<datalist id="dl-frame-width"></datalist>
+<datalist id="dl-operator"></datalist>
+
 <script>
 /* ── Constants ── */
 const STORAGE_KEY = 'tagTimeStudy_state';
 
 const PROCESSES_BY_PLANT = {
-  'Plant 1':    ['Bucket Roll','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld'],
+  'Plant 1':    ['Roll Bucket Large','Roll Bucket Small','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld','Manual Panel Build','ABB Sides','Cobot Panel Weld','Side Build'],
   'Quick Hitch':['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install'],
   'Pin On':     ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld'],
 };
@@ -435,11 +473,7 @@ function getProcessesForCurrent() {
 function isTeethProcess(p) { return TEETH_PROCESSES.has(p); }
 function isEarProcess(p)   { return EAR_PROCESSES.has(p); }
 
-const PLANT1_ROLL_ELEMENTS = [
-  { name: 'Roll Bucket - Large', tier: 'green' },
-  { name: 'Roll Bucket - Small', tier: 'green' },
-];
-const PLANT2_ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
+const ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
 const COMMON_ELEMENTS = [
   { name: 'Weld',                   tier: 'green' },
   { name: 'Install Teeth',          tier: 'green' },
@@ -458,7 +492,7 @@ const COMMON_ELEMENTS = [
   { name: 'Positioning Bucket',     tier: 'amber' },
   { name: 'Changing Wire',          tier: 'amber' },
   { name: 'Operating Forklift',     tier: 'amber' },
-  { name: 'Arc Gouging',            tier: 'amber' },
+  { name: 'Changeover',             tier: 'amber' },
   { name: 'Training',               tier: 'amber' },
   { name: 'Computer Work',          tier: 'amber' },
   { name: 'Out of Area',            tier: 'red'   },
@@ -478,8 +512,8 @@ const COMMON_ELEMENTS = [
   { name: 'Break',                  tier: 'red'   },
 ];
 
-function getElementsForPlant(plant) {
-  return [...(plant === 'Plant 1' ? PLANT1_ROLL_ELEMENTS : PLANT2_ROLL_ELEMENTS), ...COMMON_ELEMENTS];
+function getElementsForPlant() {
+  return [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
 }
 
 /* ── State ── */
@@ -571,7 +605,7 @@ function updateSessionHomeInfo() {
   const liveBanner = document.getElementById('home-live-banner');
   const liveText   = document.getElementById('home-live-text');
   if (state.activeElement) {
-    liveText.textContent = `Timing: ${state.activeElement.name}`;
+    liveText.textContent = isStudyPaused() ? `⏸ Study Paused` : `Timing: ${state.activeElement.name}`;
     liveBanner.classList.add('visible');
   } else {
     liveBanner.classList.remove('visible');
@@ -582,6 +616,7 @@ function updateSessionHomeInfo() {
 function goToSessionHome() {
   document.getElementById('home-plant-label').textContent = plantDisplayLabel();
   document.getElementById('home-observer-input').value = state.observerName || '';
+  syncObserverPresetHighlight();
   updateSessionHomeInfo();
   showScreen('screen-session-home');
 }
@@ -650,7 +685,64 @@ document.getElementById('home-observer-input').addEventListener('input', () => {
     if (b && !b.sealed) b.observerName = state.observerName;
     saveState();
   }, 400);
+  syncObserverPresetHighlight();
 });
+document.querySelectorAll('.observer-preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const name = btn.dataset.name;
+    state.observerName = name;
+    document.getElementById('home-observer-input').value = name;
+    const b = getCurrentBucket();
+    if (b && !b.sealed) b.observerName = name;
+    saveState();
+    syncObserverPresetHighlight();
+  });
+});
+function syncObserverPresetHighlight() {
+  const cur = (state.observerName || '').trim();
+  document.querySelectorAll('.observer-preset-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.name === cur);
+  });
+}
+
+/* ── Pause (own element) ── */
+const PAUSE_ELEMENT_NAME = 'Study Pause';
+
+function isStudyPaused() {
+  return !!(state.activeElement && state.activeElement.name === PAUSE_ELEMENT_NAME);
+}
+
+function toggleStudyPause() {
+  if (isStudyPaused()) {
+    // End the pause element, return to idle
+    stopActiveElement(Date.now());
+    renderGrid();
+    updateStatusBar();
+  } else {
+    // Stop whatever is running (if anything), start a Study Pause element
+    clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
+    const now = Date.now();
+    stopActiveElement(now);
+    const bucket = ensureBucket();
+    state.activeElement = { name: PAUSE_ELEMENT_NAME, tier: 'red', startTs: now, bucketId: bucket.id, note: '' };
+    saveState();
+    renderGrid();
+    updateStatusBar();
+  }
+}
+
+function updatePauseBtn() {
+  const btn = document.getElementById('btn-pause');
+  if (isStudyPaused()) {
+    btn.textContent = '▶ RESUME';
+    btn.classList.add('paused');
+  } else {
+    btn.textContent = '⏸ PAUSE';
+    btn.classList.remove('paused');
+  }
+}
+
+document.getElementById('btn-pause').addEventListener('click', toggleStudyPause);
 
 /* ── Session Screen ── */
 function goToSession() {
@@ -760,7 +852,7 @@ function renderGrid() {
     banner.classList.remove('visible');
   }
 
-  getElementsForPlant(state.plant).forEach(el => {
+  getElementsForPlant().forEach(el => {
     const btn = document.createElement('button');
     btn.className = `element-btn tier-${el.tier}`;
     btn.textContent = el.name;
@@ -801,6 +893,16 @@ function renderGrid() {
 }
 
 /* ── Timer Details Panel ── */
+function refreshHeaderDataLists() {
+  const uniq = (field) => [...new Set(
+    state.buckets.map(b => (b.header && b.header[field]) || '').filter(v => v.trim())
+  )];
+  [['dl-frame-number','frameNumber'],['dl-frame-width','frameWidth'],['dl-operator','operator']].forEach(([id, field]) => {
+    const dl = document.getElementById(id);
+    dl.innerHTML = uniq(field).map(v => `<option value="${esc(v)}">`).join('');
+  });
+}
+
 function populateTdProcess(selected) {
   const sel = document.getElementById('td-process');
   sel.innerHTML = '<option value="">— Select process —</option>';
@@ -820,6 +922,7 @@ function updateTdConditionals(process) {
 }
 
 function renderTimerDetails() {
+  refreshHeaderDataLists();
   const b = getCurrentBucket();
   const content   = document.getElementById('timer-details-content');
   const summaryEl = document.getElementById('td-summary-text');
@@ -1006,14 +1109,16 @@ function updateStatusBar() {
   const nameEl = document.getElementById('status-element-name');
   const timeEl = document.getElementById('status-element-time');
   if (state.activeElement) {
-    nameEl.textContent = `▶ ${state.activeElement.name}`;
-    timeEl.textContent = formatHMS(Math.max(0, Math.floor((Date.now()-state.activeElement.startTs)/1000)));
+    const elapsedSec = Math.max(0, Math.floor((Date.now() - state.activeElement.startTs) / 1000));
+    nameEl.textContent = isStudyPaused() ? `⏸ Study Paused` : `▶ ${state.activeElement.name}`;
+    timeEl.textContent = formatHMS(elapsedSec);
     bar.classList.remove('idle');
   } else {
     nameEl.textContent = 'Tap an element to begin';
     timeEl.textContent = '–';
     bar.classList.add('idle');
   }
+  updatePauseBtn();
 }
 setInterval(updateStatusBar, 1000);
 
@@ -1077,6 +1182,7 @@ function deleteBucket(bucketId) {
   }
   state.buckets.splice(idx, 1);
   expandedBucketIds.delete(bucketId);
+  selectedBucketIds.delete(bucketId);
   saveState(); renderLog(); renderGrid(); updateSessionHomeInfo();
 }
 
@@ -1118,7 +1224,8 @@ function renderLog() {
     const isLive = state.activeElement && state.activeElement.bucketId === bucket.id;
     const vaSec    = bucket.elements.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
     const nnvaSec  = bucket.elements.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
-    const wasteSec = bucket.elements.filter(e=>e.tier==='red').reduce((s,e)=>s+e.durationSec,0);
+    const wasteSec = bucket.elements.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+    const pauseSec = bucket.elements.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
     const elemCount = bucket.elements.length;
     const isExpanded = expandedBucketIds.has(bucket.id);
 
@@ -1133,8 +1240,10 @@ function renderLog() {
     const expandHint    = elemCount > 0 ? `<span class="expand-hint">${isExpanded?'▲':'▼'} ${elemCount} element${elemCount!==1?'s':''}</span>` : '';
     const noteHint      = noteCount > 0 ? `<span class="tier-chip" style="color:#7ab8f5;">📝 ${noteCount} note${noteCount!==1?'s':''}</span>` : '';
 
+    const isCheckable = !isLive && !bucket.isDraft && bucket.sealed;
     row.innerHTML = `
       <div class="bucket-row-header">
+        ${isCheckable ? `<div class="bucket-checkbox-wrap"><input type="checkbox" class="bucket-checkbox" data-bucket-id="${bucket.id}" ${selectedBucketIds.has(bucket.id) ? 'checked' : ''}></div>` : ''}
         <div class="bucket-row-meta">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
             <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${procBadge}${liveBadge}${draftBadge}${exportedBadge}
@@ -1150,7 +1259,8 @@ function renderLog() {
             <span class="tier-chip"><span class="tier-dot" style="background:var(--green)"></span>VA ${formatMS(vaSec)}</span>
             <span class="tier-chip"><span class="tier-dot" style="background:var(--amber)"></span>Nec ${formatMS(nnvaSec)}</span>
             <span class="tier-chip"><span class="tier-dot" style="background:var(--red)"></span>Waste ${formatMS(wasteSec)}</span>
-            <span class="tier-chip" style="color:#b9c4d8;">Total ${formatMS(vaSec+nnvaSec+wasteSec)}</span>
+            ${pauseSec>0?`<span class="tier-chip" style="color:#b9c4d8;">⏸ ${formatMS(pauseSec)}</span>`:''}
+            <span class="tier-chip" style="color:#b9c4d8;">Total ${formatMS(vaSec+nnvaSec+wasteSec+pauseSec)}</span>
             ${noteHint}${expandHint}
           </div>
         </div>
@@ -1167,10 +1277,13 @@ function renderLog() {
       <div class="bucket-elements">
         ${elemCount === 0
           ? `<div class="bucket-element-row">${bucket.isDraft ? 'Draft — no elements timed yet.' : 'No elements logged yet.'}</div>`
-          : bucket.elements.map(el=>`
+          : bucket.elements.map((el,elIdx)=>`
               <div class="bucket-element-row">
                 <span><span class="el-tier-dot" style="background:${TIER_COLORS[el.tier]}"></span>${esc(el.name)}</span>
-                <span>${formatMS(el.durationSec)} <span style="color:#b9c4d8;">${formatClockTime(el.endTs)}</span></span>
+                <span style="display:flex;align-items:center;gap:6px">
+                  <span>${formatMS(el.durationSec)} <span style="color:#b9c4d8;">${formatClockTime(el.endTs)}</span></span>
+                  <button class="el-delete-btn" data-bucket-id="${bucket.id}" data-el-idx="${elIdx}" title="Delete this element">✕</button>
+                </span>
               </div>${el.note ? `<div class="bucket-element-note">📝 ${esc(el.note)}</div>` : ''}`).join('')}
       </div>`;
 
@@ -1187,17 +1300,77 @@ function renderLog() {
         if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); showExportToast(); }
       });
     }
+    row.querySelectorAll('.el-delete-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const bId = Number(btn.dataset.bucketId);
+        const eIdx = Number(btn.dataset.elIdx);
+        const b = state.buckets.find(bk => bk.id === bId);
+        if (!b) return;
+        const el = b.elements[eIdx];
+        if (!el) return;
+        if (!confirm(`Delete "${el.name}" (${formatMS(el.durationSec)}) from this bucket?`)) return;
+        b.elements.splice(eIdx, 1);
+        saveState();
+        renderLog();
+        renderGrid();
+        updateSessionHomeInfo();
+      });
+    });
     row.querySelector('[data-delete]').addEventListener('click', e => { e.stopPropagation(); deleteBucket(bucket.id); });
+    const cb = row.querySelector('.bucket-checkbox');
+    if (cb) {
+      cb.addEventListener('click', e => {
+        e.stopPropagation();
+        selectedBucketIds.has(bucket.id) ? selectedBucketIds.delete(bucket.id) : selectedBucketIds.add(bucket.id);
+        syncExportSelectedBtn();
+        cb.checked = selectedBucketIds.has(bucket.id);
+      });
+    }
     row.addEventListener('click', () => {
       expandedBucketIds.has(bucket.id) ? expandedBucketIds.delete(bucket.id) : expandedBucketIds.add(bucket.id);
       renderLog();
     });
     list.appendChild(row);
   });
+  syncExportSelectedBtn();
 }
 
-document.getElementById('log-sub-active').addEventListener('click', () => { logSubTab = 'active'; renderLog(); });
-document.getElementById('log-sub-history').addEventListener('click', () => { logSubTab = 'history'; renderLog(); });
+let selectedBucketIds = new Set();
+
+// Called at the bottom of renderLog so every re-render keeps the count in sync
+function syncExportSelectedBtn() {
+  const count = selectedBucketIds.size;
+  const btn = document.getElementById('log-export-selected');
+  const countEl = document.getElementById('log-selected-count');
+  btn.style.display = count > 0 ? '' : 'none';
+  if (countEl) countEl.textContent = count;
+}
+
+document.getElementById('log-sub-active').addEventListener('click', () => {
+  logSubTab = 'active';
+  selectedBucketIds.clear();
+  syncExportSelectedBtn();
+  renderLog();
+});
+document.getElementById('log-sub-history').addEventListener('click', () => {
+  logSubTab = 'history';
+  selectedBucketIds.clear();
+  syncExportSelectedBtn();
+  renderLog();
+});
+
+document.getElementById('log-export-selected').addEventListener('click', () => {
+  const toExport = state.buckets.filter(b => selectedBucketIds.has(b.id) && !b.isDraft && b.sealed);
+  if (!toExport.length) { alert('No valid buckets selected.'); return; }
+  const exported = runExportBuckets(toExport);
+  if (exported) {
+    exported.forEach(b => { b.exportedAt = Date.now(); });
+    selectedBucketIds.clear();
+    syncExportSelectedBtn();
+    saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
+  }
+});
 
 document.getElementById('log-export-new').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
@@ -1219,10 +1392,10 @@ document.getElementById('log-export-all').addEventListener('click', () => {
 const modalOverlay = document.getElementById('modal-overlay');
 let editingBucketId = null;
 
-function populateModalProcessSelect(selected) {
+function populateModalProcessSelect(selected, processes) {
   const sel = document.getElementById('modal-process');
   sel.innerHTML = '<option value="">-- Select Process --</option>';
-  getProcessesForCurrent().forEach(p => {
+  (processes || getProcessesForCurrent()).forEach(p => {
     const opt = document.createElement('option');
     opt.value = p; opt.textContent = p;
     if (p === selected) opt.selected = true;
@@ -1245,10 +1418,14 @@ document.getElementById('modal-process').addEventListener('change', () => {
 function openEditModal(bucketId) {
   const b = state.buckets.find(b => b.id === bucketId);
   if (!b) return;
+  refreshHeaderDataLists();
   editingBucketId = bucketId;
   const h = b.header || {};
   document.getElementById('modal-title').textContent = `Edit: ${bucketTimeLabel(b)}`;
-  populateModalProcessSelect(h.process || '');
+  const bPlant = b.plant || state.plant;
+  const bStream = b.stream || state.stream;
+  const bProcesses = bPlant === 'Plant 1' ? PROCESSES_BY_PLANT['Plant 1'] : (PROCESSES_BY_PLANT[bStream] || []);
+  populateModalProcessSelect(h.process || '', bProcesses);
   document.getElementById('modal-frame-number').value = h.frameNumber || '';
   document.getElementById('modal-frame-width').value  = h.frameWidth  || '';
   document.getElementById('modal-operator').value     = h.operator    || '';
@@ -1309,11 +1486,12 @@ function buildExportRow(bucket) {
   const greenSec = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
   const amberSec = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
   const cycleSec = greenSec + amberSec;
-  const cycleMin = cycleSec > 0 ? +(cycleSec/60).toFixed(4) : 0;
+  const cycleMin = cycleSec > 0 ? +(cycleSec/60).toFixed(4) : '';
   const vaMin    = +(greenSec/60).toFixed(4);
   const nnvaMin  = +(amberSec/60).toFixed(4);
   const preheatSec    = els.filter(e=>e.name==='Preheat Time').reduce((s,e)=>s+e.durationSec,0);
-  const posBucketSec  = els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0);
+  const posBucketEls  = els.filter(e=>e.name==='Positioning Bucket');
+  const posBucketSec  = posBucketEls.reduce((s,e)=>s+e.durationSec,0);
   const numTeeth = h.numTeeth ? Number(h.numTeeth) : 0;
   return {
     date:        formatExportDate(bucket.startTs),
@@ -1325,7 +1503,7 @@ function buildExportRow(bucket) {
     numTeeth:    numTeeth || '',
     earType:     h.earType     || '',
     numObs:      Number(h.numObservations) || 1,
-    notes:       els.filter(e=>e.note).map(e=>`${e.name}: ${e.note}`).join('\n') || h.notes || '',
+    notes:       els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${e.note}`).join('\n') || h.notes || '',
     cycleMin:    cycleMin || '',
     vaMin,
     nnvaMin,
@@ -1333,6 +1511,7 @@ function buildExportRow(bucket) {
     nnvaPct:     cycleMin > 0 ? +(nnvaMin/cycleMin).toFixed(6) : '',
     preheatMin:  preheatSec > 0 ? +(preheatSec/60).toFixed(4) : '',
     posBucketMin:posBucketSec > 0 ? +(posBucketSec/60).toFixed(4) : '',
+    posCount:    posBucketEls.length || '',
     timePTooth:  (numTeeth > 0 && cycleMin > 0) ? +(cycleMin/numTeeth).toFixed(4) : '',
   };
 }
@@ -1344,13 +1523,13 @@ function getColumnsForProcess(processName, plant, stream) {
   const D=r=>r.date, FN=r=>r.frameNum, FW2=r=>r.fwP2, FWR=r=>r.fwRaw,
         OP=r=>r.operator, CY=r=>r.cycleMin, VA=r=>r.vaMin, NV=r=>r.nnvaMin,
         VP=r=>r.vaPct, NP=r=>r.nnvaPct, OB=r=>r.numObs, NO=r=>r.notes,
-        PH=r=>r.preheatMin, PB=r=>r.posBucketMin,
+        PH=r=>r.preheatMin, PB=r=>r.posBucketMin, PC=r=>r.posCount,
         TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType;
 
   if (isP1) {
     // Plant 1 (Large Bucket) — Frame Width stored as plain number in workbook; strip any "in" suffix
     const base = [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP)];
-    const pp   = [c('Preheat Time (min)',PH),c('Positioning Bucket (min)',PB)];
+    const pp   = [c('Preheat Time (min)',PH),c('Positioning Bucket (min)',PB),c('# Times Positioned',PC)];
     const tail = [c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     if (processName === 'Teeth and Logo')
       return [...base,c('Tooth Type',TT),c('# of Teeth',NT),...pp,c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
@@ -1416,6 +1595,51 @@ function boldAllCells(ws) {
   }
 }
 
+function boldFirstRow(ws) {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+    if (!ws[addr]) continue;
+    ws[addr].s = ws[addr].s || {};
+    ws[addr].s.font = { bold: true };
+  }
+}
+
+function styleProcessSheet(ws, cols, numDataRows, plant) {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  // Bold+centered header, centered data rows
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    const isHeader = R === 0;
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[addr]) continue;
+      ws[addr].s = {
+        font: { bold: isHeader },
+        alignment: { horizontal: 'center', vertical: 'center', wrapText: isHeader },
+      };
+    }
+  }
+  // Plant 1: write VA% and NNVA% as Excel formulas so pasting into the workbook
+  // doesn't hardcode values that then stick around if elements are later deleted.
+  if (plant !== 'Plant 1') return;
+  const headers  = cols.map(c => c[0]);
+  const cycleIdx = headers.indexOf('Cycle Time (min)');
+  const vaIdx    = headers.indexOf('VA Time (min)');
+  const nnvaIdx  = headers.indexOf('NNVA Time (min)');
+  const vpIdx    = headers.indexOf('VA %');
+  const nvpIdx   = headers.indexOf('NNVA %');
+  if (cycleIdx < 0 || vpIdx < 0 || nvpIdx < 0) return;
+  for (let i = 0; i < numDataRows; i++) {
+    const er      = i + 2; // Excel row (1-indexed; row 1 = header)
+    const cRef    = XLSX.utils.encode_col(cycleIdx) + er;
+    const vaRef   = XLSX.utils.encode_col(vaIdx)    + er;
+    const nnvaRef = XLSX.utils.encode_col(nnvaIdx)  + er;
+    const style   = { font: { bold: false }, alignment: { horizontal: 'center', vertical: 'center' } };
+    ws[XLSX.utils.encode_cell({ r: i+1, c: vpIdx })]  = { t: 'f', f: `IF(${cRef}=0,"",${vaRef}/${cRef})`,    z: '0.00%', s: style };
+    ws[XLSX.utils.encode_cell({ r: i+1, c: nvpIdx })] = { t: 'f', f: `IF(${cRef}=0,"",${nnvaRef}/${cRef})`, z: '0.00%', s: style };
+  }
+}
+
 // Returns array of buckets that were actually written to the file, or null on failure.
 function runExportBuckets(buckets) {
   if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
@@ -1451,7 +1675,7 @@ function runExportBuckets(buckets) {
     const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
     const ws   = XLSX.utils.aoa_to_sheet(aoa);
     autoFitColumns(ws, aoa);
-    boldAllCells(ws);
+    styleProcessSheet(ws, cols, rows.length, g.plant);
     let sheetName = g.process;
     if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
     XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
@@ -1467,12 +1691,99 @@ function runExportBuckets(buckets) {
     alert(`Exported ${sheetCount} process sheet${sheetCount!==1?'s':''}. Note: ${noProcess.length} bucket${noProcess.length!==1?'s were':' was'} skipped (no process selected).`);
   }
 
-  // Filename includes a per-second timestamp so repeated exports in the same day
-  // NEVER collide and silently overwrite a prior download — this was the cause of
-  // earlier exported buckets vanishing from the tablet's Downloads folder.
-  const plantLabel = plantTagsUsed.size === 1 ? [...plantTagsUsed][0] : 'Mixed';
+  // Build INDEX sheet and prepend it as the first tab so opening the file
+  // immediately shows what processes are inside without hunting through tabs.
   const now = new Date();
   const p2 = n => String(n).padStart(2,'0');
+  const nowStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  const indexAoa = [
+    ['TAG Manufacturing — CI Time Study Export'],
+    [],
+    ['Export Date:', nowStr],
+    ['Plant(s):', [...plantTagsUsed].join(', ')],
+    ['Total Process Sheets:', sheetCount],
+    [],
+    ['Process', 'Sheet Tab', '# Buckets', 'Dates Covered'],
+  ];
+  Object.values(byGroup).forEach(g => {
+    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
+    let sheetName = g.process;
+    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
+    const dates = g.buckets.map(b => b.startTs).sort();
+    const d1 = formatExportDate(dates[0]);
+    const d2 = formatExportDate(dates[dates.length - 1]);
+    const dateRange = d1 === d2 ? d1 : `${d1} – ${d2}`;
+    indexAoa.push([g.process, sheetName.slice(0,31), g.buckets.length, dateRange]);
+  });
+  indexAoa.push([]);
+  indexAoa.push(['NOTE: Use the sheet tabs at the bottom of this window to view each process.']);
+  const wsIndex = XLSX.utils.aoa_to_sheet(indexAoa);
+  wsIndex['!cols'] = [{ wch: 28 }, { wch: 32 }, { wch: 12 }, { wch: 22 }];
+  boldAllCells(wsIndex);
+  // Prepend: insert at position 0 in the workbook
+  wb.SheetNames.unshift('Summary');
+  wb.Sheets['Summary'] = wsIndex;
+
+  // Build "Bucket Detail" sheet — one section per bucket: heading + every element
+  const detailAoa = [];
+  exported.forEach((b, bi) => {
+    if (bi > 0) detailAoa.push([], []); // blank rows between buckets
+    const h = b.header || {};
+    const els = b.elements || [];
+    const cycleSec = els.filter(e => e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+    const vaSec    = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
+    const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+    const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+    const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+    const posCount = els.filter(e=>e.name==='Positioning Bucket').length;
+
+    // Bucket header block
+    detailAoa.push([
+      `Bucket ${bi+1}`,
+      formatExportDate(b.startTs),
+      h.process || '(no process)',
+      h.frameNumber ? `Frame #${h.frameNumber}` : '',
+      h.frameWidth  ? `Width: ${h.frameWidth}"` : '',
+      h.operator    ? `Operator: ${h.operator}` : '',
+      b.observerName ? `Timed by: ${b.observerName}` : '',
+    ]);
+    detailAoa.push(['Element', 'Category', 'Duration', '% of Cycle', 'Notes']);
+
+    els.forEach(el => {
+      const cat = el.name === PAUSE_ELEMENT_NAME ? 'Pause'
+                : el.tier === 'green' ? 'VA'
+                : el.tier === 'amber' ? 'Nec (NNVA)'
+                : 'Waste (NVA)';
+      const pct = (cycleSec > 0 && (el.tier==='green'||el.tier==='amber'))
+        ? `${(el.durationSec/cycleSec*100).toFixed(1)}%` : '';
+      detailAoa.push([el.name, cat, formatMS(el.durationSec), pct, el.note||'']);
+    });
+
+    // Totals row
+    const pctStr = cycleSec > 0
+      ? `VA: ${(vaSec/cycleSec*100).toFixed(1)}%  |  Nec: ${(nnvaSec/cycleSec*100).toFixed(1)}%`
+      : '';
+    detailAoa.push([
+      'TOTALS',
+      '',
+      formatMS(cycleSec),
+      pctStr,
+      `Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`,
+    ]);
+    if (posCount > 0) {
+      const posTotalSec = els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0);
+      detailAoa.push(['POSITIONING', `${posCount}x`, formatMS(posTotalSec), '', '']);
+    }
+  });
+
+  const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
+  wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
+  boldAllCells(wsDetail);
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
+
+  // Filename includes a per-second timestamp so repeated exports in the same day
+  // NEVER collide and silently overwrite a prior download.
+  const plantLabel = plantTagsUsed.size === 1 ? [...plantTagsUsed][0] : 'Mixed';
   const fd = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
   const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
   XLSX.writeFile(wb, `TAG_TimeStudy_${plantLabel}_${fd}_${ft}.xlsx`, { cellStyles: true });
