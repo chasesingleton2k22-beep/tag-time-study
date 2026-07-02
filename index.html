@@ -558,7 +558,10 @@ function cleanupCurrentBucket() {
 function autoCarryProcess() {
   const cur = getCurrentBucket();
   if (!cur || cur.sealed || cur.header.process) return;
-  const prev = state.buckets.filter(b => b.sealed && !b.isDraft && b.id !== cur.id);
+  const prev = state.buckets.filter(b =>
+    b.sealed && !b.isDraft && b.id !== cur.id &&
+    b.plant === cur.plant && b.stream === cur.stream
+  );
   if (!prev.length) return;
   const lastProc = prev[prev.length - 1].header && prev[prev.length - 1].header.process;
   if (lastProc) {
@@ -730,6 +733,12 @@ function toggleStudyPause() {
   } else {
     // Stop whatever is running (if anything), start a Study Pause element
     clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
+    const last = getCurrentBucket();
+    if (!last || last.sealed) {
+      createNewBucket();
+      autoCarryProcess();
+      if (!getCurrentBucket()?.header?.process) { openProcessOverlay(); return; }
+    }
     const now = Date.now();
     stopActiveElement(now);
     const bucket = ensureBucket();
@@ -969,7 +978,7 @@ function renderTimerDetails() {
 
 function saveTimerDetails() {
   const b = getCurrentBucket();
-  if (!b) return;
+  if (!b || b.sealed) return;
   b.header.process         = document.getElementById('td-process').value;
   b.header.frameNumber     = document.getElementById('td-frame').value.trim();
   b.header.frameWidth      = document.getElementById('td-width').value.trim();
@@ -1514,7 +1523,7 @@ function buildExportRow(bucket) {
     numTeeth:    numTeeth || '',
     earType:     h.earType     || '',
     numObs:      Number(h.numObservations) || 1,
-    notes:       els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${e.note}`).join('\n') || h.notes || '',
+    notes:       [...els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${e.note}`), h.notes || ''].filter(Boolean).join('\n'),
     cycleMin:    cycleMin,
     vaMin,
     nnvaMin,
@@ -1572,7 +1581,7 @@ function getColumnsForProcess(processName, plant, stream) {
   // Pin On — mixed: some sheets have "in" data, some raw; no # of Observations
   switch (processName) {
     case 'Bucket Roll':
-      return [c('Date',D),c('Frame #',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     case 'Manual Shell Weld':
       return [c('Date',D),c('Frame #',FN),c('Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     case 'Teeth Install':
@@ -1606,15 +1615,6 @@ function boldAllCells(ws) {
   }
 }
 
-function boldFirstRow(ws) {
-  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-  for (let C = range.s.c; C <= range.e.c; C++) {
-    const addr = XLSX.utils.encode_cell({ r: 0, c: C });
-    if (!ws[addr]) continue;
-    ws[addr].s = ws[addr].s || {};
-    ws[addr].s.font = { bold: true };
-  }
-}
 
 function styleProcessSheet(ws, cols, numDataRows, plant) {
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
@@ -1652,7 +1652,7 @@ function styleProcessSheet(ws, cols, numDataRows, plant) {
   const nnvaIdx  = headers.indexOf('NNVA Time (min)');
   const vpIdx    = headers.indexOf('VA %');
   const nvpIdx   = headers.indexOf('NNVA %');
-  if (cycleIdx < 0 || vpIdx < 0 || nvpIdx < 0) return;
+  if (cycleIdx < 0 || vaIdx < 0 || nnvaIdx < 0 || vpIdx < 0 || nvpIdx < 0) return;
   for (let i = 0; i < numDataRows; i++) {
     const er      = i + 2; // Excel row (1-indexed; row 1 = header)
     const cRef    = XLSX.utils.encode_col(cycleIdx) + er;
@@ -1733,7 +1733,7 @@ function runExportBuckets(buckets) {
     const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
     let sheetName = g.process;
     if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
-    const dates = g.buckets.map(b => b.startTs).sort();
+    const dates = g.buckets.map(b => b.startTs).sort((a,b) => a-b);
     const d1 = formatExportDate(dates[0]);
     const d2 = formatExportDate(dates[dates.length - 1]);
     const dateRange = d1 === d2 ? d1 : `${d1} – ${d2}`;
