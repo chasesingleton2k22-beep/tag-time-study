@@ -1081,7 +1081,11 @@ function onElementTap(el) {
   // discarding the unsaved text in the DOM.
   clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
   const last = getCurrentBucket();
-  if (!last || last.sealed) createNewBucket();
+  if (!last || last.sealed) {
+    createNewBucket();
+    autoCarryProcess();
+    if (!getCurrentBucket()?.header?.process) { openProcessOverlay(); return; }
+  }
   if (state.activeElement && state.activeElement.name === el.name) return;
   const now = Date.now();
   stopActiveElement(now);
