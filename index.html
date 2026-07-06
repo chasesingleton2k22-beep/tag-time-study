@@ -140,6 +140,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .log-action-btn { flex: 1; min-width: 120px; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
 .log-action-btn.secondary { background: transparent; color: var(--gold-light); }
 .log-action-btn.selected-export { background: #1565c0; border-color: #1565c0; color: #fff; }
+.log-action-btn.share-btn { background: #1a6b3c; border-color: #1a6b3c; color: #fff; }
 .log-action-btn:disabled { opacity: 0.4; cursor: default; }
 .bucket-checkbox-wrap { display: flex; align-items: center; padding: 0 6px 0 2px; }
 .bucket-checkbox { width: 22px; height: 22px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
@@ -165,6 +166,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .bucket-action-btn.edit   { background: var(--navy); border: 2px solid var(--gold); color: var(--gold-light); }
 .bucket-action-btn.export { background: var(--gold); color: var(--navy); }
 .bucket-action-btn.export.done { background: #2e5c2e; color: #90ee90; }
+.bucket-action-btn.share { background: #1a6b3c; color: #fff; }
 .bucket-action-btn.delete { background: var(--red); color: #fff; }
 .bucket-elements { margin-top: 8px; border-top: 1px solid rgba(212,160,23,0.4); padding-top: 6px; display: none; flex-direction: column; gap: 4px; }
 .bucket-row.expanded .bucket-elements { display: flex; }
@@ -362,8 +364,11 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   </div>
   <div id="log-action-bar">
     <button class="log-action-btn" id="log-export-new">Export Unexported</button>
+    <button class="log-action-btn share-btn" id="log-share-new">📤 Share Unexported</button>
     <button class="log-action-btn secondary" id="log-export-all">Export All</button>
+    <button class="log-action-btn share-btn secondary" id="log-share-all" style="background:transparent;border-color:#1a6b3c;color:#4caf50;">📤 Share All</button>
     <button class="log-action-btn selected-export" id="log-export-selected" style="display:none">Export Selected (<span id="log-selected-count">0</span>)</button>
+    <button class="log-action-btn share-btn" id="log-share-selected" style="display:none">📤 Share Selected (<span id="log-share-selected-count">0</span>)</button>
   </div>
   <div id="log-list"></div>
 </div>
@@ -1226,8 +1231,11 @@ function renderLog() {
   if (!isHistory) {
     const exportable = buckets.filter(b => !b.isDraft && b.sealed).length;
     const expNewBtn = document.getElementById('log-export-new');
+    const shareNewBtn = document.getElementById('log-share-new');
     expNewBtn.textContent = `Export Unexported${exportable > 0 ? ` (${exportable})` : ''}`;
     expNewBtn.disabled = exportable === 0;
+    shareNewBtn.textContent = `📤 Share Unexported${exportable > 0 ? ` (${exportable})` : ''}`;
+    shareNewBtn.disabled = exportable === 0;
   }
 
   if (buckets.length === 0) {
@@ -1260,7 +1268,7 @@ function renderLog() {
     const expandHint    = elemCount > 0 ? `<span class="expand-hint">${isExpanded?'▲':'▼'} ${elemCount} element${elemCount!==1?'s':''}</span>` : '';
     const noteHint      = noteCount > 0 ? `<span class="tier-chip" style="color:#7ab8f5;">📝 ${noteCount} note${noteCount!==1?'s':''}</span>` : '';
 
-    const isCheckable = !isLive && !bucket.isDraft && bucket.sealed;
+    const isCheckable = !isHistory && !isLive && !bucket.isDraft && bucket.sealed;
     row.innerHTML = `
       <div class="bucket-row-header">
         ${isCheckable ? `<div class="bucket-checkbox-wrap"><input type="checkbox" class="bucket-checkbox" data-bucket-id="${bucket.id}" ${selectedBucketIds.has(bucket.id) ? 'checked' : ''}></div>` : ''}
@@ -1290,7 +1298,8 @@ function renderLog() {
             : bucket.isDraft
               ? `<button class="bucket-action-btn edit" data-resume="${bucket.id}" ${hasLiveBucket ? 'disabled title="Finish the live bucket first"' : ''}>▶ Resume</button>`
               : `<button class="bucket-action-btn edit" data-edit="${bucket.id}">Edit</button>
-                 <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>`}
+                 <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>
+                 <button class="bucket-action-btn share" data-share="${bucket.id}">📤 Share</button>`}
           <button class="bucket-action-btn delete" data-delete="${bucket.id}">Delete</button>
         </div>
       </div>
@@ -1318,6 +1327,12 @@ function renderLog() {
         e.stopPropagation();
         const exported = runExportBuckets([bucket]);
         if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); showExportToast(); }
+      });
+      row.querySelector('[data-share]').addEventListener('click', e => {
+        e.stopPropagation();
+        shareExportBuckets([bucket]).then(exported => {
+          if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); }
+        });
       });
     }
     row.querySelectorAll('.el-delete-btn').forEach(btn => {
@@ -1361,10 +1376,14 @@ let selectedBucketIds = new Set();
 // Called at the bottom of renderLog so every re-render keeps the count in sync
 function syncExportSelectedBtn() {
   const count = selectedBucketIds.size;
-  const btn = document.getElementById('log-export-selected');
-  const countEl = document.getElementById('log-selected-count');
-  btn.style.display = count > 0 ? '' : 'none';
+  const exportBtn = document.getElementById('log-export-selected');
+  const shareBtn  = document.getElementById('log-share-selected');
+  const countEl   = document.getElementById('log-selected-count');
+  const shareCountEl = document.getElementById('log-share-selected-count');
+  exportBtn.style.display = count > 0 ? '' : 'none';
+  shareBtn.style.display  = count > 0 ? '' : 'none';
   if (countEl) countEl.textContent = count;
+  if (shareCountEl) shareCountEl.textContent = count;
 }
 
 document.getElementById('log-sub-active').addEventListener('click', () => {
@@ -1391,6 +1410,18 @@ document.getElementById('log-export-selected').addEventListener('click', () => {
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
 });
+document.getElementById('log-share-selected').addEventListener('click', () => {
+  const toShare = state.buckets.filter(b => selectedBucketIds.has(b.id) && !b.isDraft && b.sealed);
+  if (!toShare.length) { alert('No valid buckets selected.'); return; }
+  shareExportBuckets(toShare).then(exported => {
+    if (exported) {
+      exported.forEach(b => { b.exportedAt = Date.now(); });
+      selectedBucketIds.clear();
+      syncExportSelectedBtn();
+      saveState(); renderLog(); updateSessionHomeInfo();
+    }
+  });
+});
 
 document.getElementById('log-export-new').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
@@ -1400,12 +1431,29 @@ document.getElementById('log-export-new').addEventListener('click', () => {
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
 });
+document.getElementById('log-share-new').addEventListener('click', () => {
+  const toShare = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
+  shareExportBuckets(toShare).then(exported => {
+    if (exported) {
+      exported.forEach(b => { b.exportedAt = Date.now(); });
+      saveState(); renderLog(); updateSessionHomeInfo();
+    }
+  });
+});
 document.getElementById('log-export-all').addEventListener('click', () => {
   const exported = runExportBuckets(state.buckets.filter(b => !b.isDraft && b.sealed));
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
+});
+document.getElementById('log-share-all').addEventListener('click', () => {
+  shareExportBuckets(state.buckets.filter(b => !b.isDraft && b.sealed)).then(exported => {
+    if (exported) {
+      exported.forEach(b => { b.exportedAt = Date.now(); });
+      saveState(); renderLog(); updateSessionHomeInfo();
+    }
+  });
 });
 
 /* ── Edit Modal (log only) ── */
@@ -1819,6 +1867,155 @@ function runExportBuckets(buckets) {
   const fd = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
   const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
   XLSX.writeFile(wb, `TAG_TimeStudy_${fileLabel}_${fd}_${ft}.xlsx`, { cellStyles: true });
+  return exported;
+}
+
+/* ── Share (Web Share API — sends .xlsx as email attachment via OS share sheet) ── */
+async function shareExportBuckets(buckets) {
+  if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
+  if (!buckets || !buckets.length) { alert('No buckets to share.'); return null; }
+
+  // Build the same workbook runExportBuckets would produce, but capture it as a blob
+  // instead of triggering a download. We do this by running the full export logic and
+  // intercepting at the write step.
+  const now = new Date();
+  const p2 = n => String(n).padStart(2,'0');
+  const byGroup = {};
+  const noProcess = [];
+  const exported = [];
+  buckets.forEach(b => {
+    const p = b.header && b.header.process;
+    if (!p) { noProcess.push(b); return; }
+    const plant  = b.plant  || state.plant;
+    const stream = b.stream || state.stream;
+    const key = `${plant}||${stream}||${p}`;
+    (byGroup[key] = byGroup[key] || { plant, stream, process: p, buckets: [] }).buckets.push(b);
+    exported.push(b);
+  });
+
+  const processCounts = {};
+  Object.values(byGroup).forEach(g => { processCounts[g.process] = (processCounts[g.process]||0) + 1; });
+
+  const wb = XLSX.utils.book_new();
+  let sheetCount = 0;
+  const plantTagsUsed = new Set();
+  Object.values(byGroup).forEach(g => {
+    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
+    plantTagsUsed.add(plantTag);
+    const cols = getColumnsForProcess(g.process, g.plant, g.stream);
+    const rows = g.buckets.map(b => buildExportRow(b));
+    const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
+    const ws   = XLSX.utils.aoa_to_sheet(aoa);
+    autoFitColumns(ws, aoa);
+    styleProcessSheet(ws, cols, rows.length, g.plant);
+    let sheetName = g.process;
+    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
+    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
+    sheetCount++;
+  });
+
+  if (sheetCount === 0) {
+    alert(`${noProcess.length} bucket${noProcess.length!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before sharing.`);
+    return null;
+  }
+  if (noProcess.length > 0) {
+    alert(`Sharing ${sheetCount} process sheet${sheetCount!==1?'s':''}. Note: ${noProcess.length} bucket${noProcess.length!==1?'s were':' was'} skipped (no process selected).`);
+  }
+
+  // Build Summary + Bucket Detail sheets (identical logic to runExportBuckets)
+  const nowStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  const indexAoa = [
+    ['TAG Manufacturing — CI Time Study Export'], [],
+    ['Export Date:', nowStr],
+    ['Plant(s):', [...plantTagsUsed].join(', ')],
+    ['Total Process Sheets:', sheetCount], [],
+    ['Process', 'Sheet Tab', '# Buckets', 'Dates Covered'],
+  ];
+  Object.values(byGroup).forEach(g => {
+    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
+    let sheetName = g.process;
+    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
+    const dates = g.buckets.map(b => b.startTs).sort((a,b) => a-b);
+    const d1 = formatExportDate(dates[0]);
+    const d2 = formatExportDate(dates[dates.length-1]);
+    indexAoa.push([g.process, sheetName.slice(0,31), g.buckets.length, d1===d2?d1:`${d1} – ${d2}`]);
+  });
+  indexAoa.push([], ['NOTE: Use the sheet tabs at the bottom of this window to view each process.']);
+  const wsIndex = XLSX.utils.aoa_to_sheet(indexAoa);
+  wsIndex['!cols'] = [{wch:28},{wch:32},{wch:12},{wch:22}];
+  boldAllCells(wsIndex);
+  wb.SheetNames.unshift('Summary');
+  wb.Sheets['Summary'] = wsIndex;
+
+  const detailAoa = [];
+  exported.forEach((b, bi) => {
+    if (bi > 0) detailAoa.push([], []);
+    const h = b.header || {};
+    const els = b.elements || [];
+    const cycleSec = els.filter(e=>e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+    const vaSec    = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
+    const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+    const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+    const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+    const posCount = els.filter(e=>e.name==='Positioning Bucket').length;
+    detailAoa.push([`Bucket ${bi+1}`,formatExportDate(b.startTs),h.process||'(no process)',h.frameNumber?`Frame #${h.frameNumber}`:'',h.frameWidth?`Width: ${h.frameWidth}"`:'',h.operator?`Operator: ${h.operator}`:'',b.observerName?`Timed by: ${b.observerName}`:'']);
+    detailAoa.push(['Element','Category','Duration','% of Cycle','Notes']);
+    els.forEach(el => {
+      const cat = el.name===PAUSE_ELEMENT_NAME?'Pause':el.tier==='green'?'VA':el.tier==='amber'?'Nec (NNVA)':'Waste (NVA)';
+      const pct = (cycleSec>0&&(el.tier==='green'||el.tier==='amber'))?`${(el.durationSec/cycleSec*100).toFixed(1)}%`:'';
+      detailAoa.push([el.name,cat,formatMS(el.durationSec),pct,el.note||'']);
+    });
+    const pctStr = cycleSec>0?`VA: ${(vaSec/cycleSec*100).toFixed(1)}%  |  Nec: ${(nnvaSec/cycleSec*100).toFixed(1)}%`:'';
+    detailAoa.push(['TOTALS','',formatMS(cycleSec),pctStr,`Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`]);
+    if (posCount>0) { const posTotalSec=els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0); detailAoa.push(['POSITIONING',`${posCount}x`,formatMS(posTotalSec),'','']); }
+  });
+  const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
+  wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
+  boldAllCells(wsDetail);
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
+
+  // Build filename
+  const plantTagsArr = [...plantTagsUsed];
+  const uniqueProcs  = [...new Set(Object.values(byGroup).map(g=>g.process))];
+  let fileLabel;
+  if (uniqueProcs.length===1&&plantTagsArr.length===1) {
+    fileLabel = `${uniqueProcs[0].replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')}_${plantTagsArr[0]}`;
+  } else { fileLabel = 'Mixed'; }
+  const fd = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
+  const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
+  const filename = `TAG_TimeStudy_${fileLabel}_${fd}_${ft}.xlsx`;
+
+  // Build human-readable email subject and body
+  const dateStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()}`;
+  const procLabel = uniqueProcs.length === 1
+    ? `${uniqueProcs[0]} (${plantTagsArr[0]})`
+    : `Mixed Export (${plantTagsArr.join(', ')})`;
+  const emailSubject = `TAG Time Study — ${procLabel} — ${dateStr}`;
+  const bucketSummary = Object.values(byGroup).map(g => {
+    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
+    return `${g.process} (${plantTag}): ${g.buckets.length} bucket${g.buckets.length!==1?'s':''}`;
+  }).join('\n');
+  const emailBody = `CI Time Study export attached.\n\nProcess${uniqueProcs.length!==1?'es':''}:\n${bucketSummary}\n\nExported: ${nowStr}`;
+
+  // Try Web Share API with file attachment (works on Android/iOS/iPadOS)
+  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+  const file = new File([buf], filename, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: emailSubject, text: emailBody });
+      // Share succeeded — fall through to return exported
+    } catch(e) {
+      if (e.name === 'AbortError') {
+        // User dismissed the share sheet — do NOT mark buckets as exported
+        return null;
+      }
+      // Any other error: fall back to download so data is not lost
+      XLSX.writeFile(wb, filename, { cellStyles: true });
+    }
+  } else {
+    // Desktop or browser without file-share support — download instead
+    XLSX.writeFile(wb, filename, { cellStyles: true });
+  }
   return exported;
 }
 
