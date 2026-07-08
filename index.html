@@ -39,6 +39,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #screen-plant-select { align-items: center; justify-content: center; gap: 22px; padding: 24px; overflow-y: auto; background: radial-gradient(ellipse at 50% 38%, #1b3f85 0%, #091d44 100%); }
 #screen-stream-select { align-items: center; gap: 24px; padding-bottom: 24px; overflow-y: auto; background: radial-gradient(ellipse at 50% 30%, #1b3f85 0%, #091d44 100%); }
 #screen-stream-select .stream-content { display: flex; flex-direction: column; align-items: center; gap: 24px; flex: 1; justify-content: center; padding: 0 24px; }
+#stream-btn-container { display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%; }
 #screen-plant-select h1, #screen-stream-select h1 { color: var(--gold-light); font-size: 1.8rem; margin-bottom: 8px; text-align: center; }
 
 /* CI Brand block (plant select) */
@@ -69,6 +70,9 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #btn-check-update { width: 90%; max-width: 420px; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.92rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
 #btn-check-update:active { border-color: var(--gold); color: var(--gold-light); }
 #btn-check-update:disabled { opacity: 0.6; cursor: default; }
+#home-data-row { width: 90%; max-width: 420px; display: flex; gap: 8px; }
+#home-data-row button { flex: 1; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.88rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
+#home-data-row button:active { border-color: var(--gold); color: var(--gold-light); }
 #home-observer-wrap { width: 90%; max-width: 420px; display: flex; flex-direction: column; gap: 5px; }
 #home-observer-label { font-size: 0.75rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; }
 #home-observer-input { min-height: 52px; font-size: 1.05rem; border-radius: 10px; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.08); color: var(--text-light); padding: 8px 14px; font-family: inherit; }
@@ -172,6 +176,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .bucket-row.expanded .bucket-elements { display: flex; }
 .bucket-element-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); }
 .el-delete-btn { background: none; border: none; color: #e57373; font-size: 1rem; cursor: pointer; padding: 0 2px 0 8px; line-height: 1; flex-shrink: 0; }
+.el-edit-btn { background: none; border: none; color: #ffd54f; font-size: 0.95rem; cursor: pointer; padding: 0 2px 0 8px; line-height: 1; flex-shrink: 0; }
 .el-tier-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .empty-log-msg { text-align: center; color: #b9c4d8; padding: 32px 16px; font-size: 1.05rem; }
 
@@ -187,6 +192,31 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #element-note-save:active { background: var(--gold-light); }
 #element-note-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
 .bucket-element-note { font-size: 0.82rem; color: #c9d8f0; font-style: italic; padding: 2px 8px 4px 22px; }
+
+/* Custom Process naming sheet */
+#custom-process-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 600; display: none; align-items: flex-end; justify-content: center; }
+#custom-process-overlay.visible { display: flex; }
+#custom-process-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+#custom-process-title { font-size: 0.78rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+#custom-process-hint { font-size: 0.82rem; color: #b9c4d8; margin-top: -6px; }
+#custom-process-input { width: 100%; min-height: 52px; background: rgba(255,255,255,0.1); border: 2px solid rgba(212,160,23,0.4); border-radius: 10px; color: var(--text-light); padding: 10px 12px; font-size: 1.05rem; font-family: inherit; }
+#custom-process-input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+#custom-process-save { min-height: 52px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+#custom-process-save:active { background: var(--gold-light); }
+#custom-process-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
+
+/* Edit Element Duration sheet */
+#edit-duration-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 600; display: none; align-items: flex-end; justify-content: center; }
+#edit-duration-overlay.visible { display: flex; }
+#edit-duration-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+#edit-duration-title { font-size: 0.78rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+#edit-duration-name { color: var(--text-light); text-transform: none; letter-spacing: 0; font-size: 1rem; }
+#edit-duration-hint { font-size: 0.82rem; color: #b9c4d8; margin-top: -6px; }
+#edit-duration-input { width: 100%; min-height: 52px; background: rgba(255,255,255,0.1); border: 2px solid rgba(212,160,23,0.4); border-radius: 10px; color: var(--text-light); padding: 10px 12px; font-size: 1.05rem; font-family: inherit; }
+#edit-duration-input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+#edit-duration-save { min-height: 52px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+#edit-duration-save:active { background: var(--gold-light); }
+#edit-duration-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
 
 /* Portrait — more vertical room, so make buttons taller */
 @media (orientation: portrait) {
@@ -254,13 +284,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <!-- Stream Select -->
 <div class="screen" id="screen-stream-select">
   <div class="topbar">
-    <span class="plant-label">PLANT 2</span>
+    <span class="plant-label" id="stream-plant-label">PLANT</span>
     <button class="back-btn" id="stream-go-back">← Back</button>
   </div>
   <div class="stream-content">
     <h1>SELECT VALUE STREAM</h1>
-    <button class="stream-btn" data-stream="Quick Hitch">QUICK HITCH</button>
-    <button class="stream-btn" data-stream="Pin On">PIN ON</button>
+    <div id="stream-btn-container"></div>
   </div>
 </div>
 
@@ -291,6 +320,11 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
   <button class="home-btn" id="home-view-log">View Log</button>
   <button id="btn-check-update">Check for Update</button>
+  <div id="home-data-row">
+    <button id="btn-backup-data">⬇ Back Up Data</button>
+    <button id="btn-restore-data">⬆ Restore Data</button>
+  </div>
+  <input type="file" id="restore-file-input" accept="application/json,.json" style="display:none">
 </div>
 
 <!-- Session Screen -->
@@ -327,15 +361,19 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
           <div class="td-field td-full">
             <label>Process</label>
             <select id="td-process"><option value="">— Select process —</option></select>
+            <input id="td-process-text" type="text" placeholder="Process name" style="display:none">
           </div>
         </div>
-        <div class="td-row">
+        <div class="td-row" id="td-partnum-row" style="display:none">
+          <div class="td-field td-full"><label>Part Number</label><input id="td-partnum" type="text" placeholder="e.g. 12345" list="dl-part-number" autocomplete="off"></div>
+        </div>
+        <div class="td-row" id="td-frame-row">
           <div class="td-field"><label>Frame #</label><input id="td-frame" type="text" placeholder="e.g. 330Q2" list="dl-frame-number"></div>
           <div class="td-field"><label>Frame Width</label><input id="td-width" type="text" placeholder="e.g. 24" list="dl-frame-width"></div>
         </div>
         <div class="td-row">
           <div class="td-field"><label>Operator</label><input id="td-operator" type="text" placeholder="Name" list="dl-operator"></div>
-          <div class="td-field"><label># of Obs</label><input id="td-obs" type="number" min="1" value="1" inputmode="numeric"></div>
+          <div class="td-field" id="td-obs-field"><label># of Obs</label><input id="td-obs" type="number" min="1" value="1" inputmode="numeric"></div>
         </div>
         <div class="td-row" id="td-teeth-row" style="display:none">
           <div class="td-field"><label>Tooth Type</label><input id="td-tooth-type" type="text" placeholder="optional" autocomplete="off"></div>
@@ -385,6 +423,28 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   </div>
 </div>
 
+<!-- Custom Process Naming Overlay -->
+<div id="custom-process-overlay">
+  <div id="custom-process-modal">
+    <div id="custom-process-title">NAME THIS PROCESS</div>
+    <div id="custom-process-hint">This one-off study will export under exactly the name you type.</div>
+    <input id="custom-process-input" type="text" placeholder="e.g. Special Rework Order #42" autocomplete="off">
+    <button id="custom-process-save">✓ Save &amp; Start Timing</button>
+    <button id="custom-process-cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Edit Element Duration Overlay -->
+<div id="edit-duration-overlay">
+  <div id="edit-duration-modal">
+    <div id="edit-duration-title">EDIT DURATION: <span id="edit-duration-name"></span></div>
+    <div id="edit-duration-hint">Format: mm:ss (e.g. 2:30)</div>
+    <input id="edit-duration-input" type="text" placeholder="m:ss" inputmode="numeric" autocomplete="off">
+    <button id="edit-duration-save">✓ Save Duration</button>
+    <button id="edit-duration-cancel">Cancel</button>
+  </div>
+</div>
+
 <!-- Process Picker Overlay -->
 <div id="process-overlay">
   <div id="process-overlay-title">SELECT PROCESS</div>
@@ -408,12 +468,17 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     <div class="modal-field">
       <label>Process</label>
       <select id="modal-process"></select>
+      <input type="text" id="modal-process-text" placeholder="Process name" style="display:none">
     </div>
-    <div class="modal-field">
+    <div class="modal-field" id="modal-partnum-section" style="display:none">
+      <label>Part Number</label>
+      <input type="text" id="modal-part-number" placeholder="e.g. 12345" list="dl-part-number">
+    </div>
+    <div class="modal-field" id="modal-frame-section">
       <label>Frame #</label>
       <input type="text" id="modal-frame-number" placeholder="e.g. 330Q2" list="dl-frame-number">
     </div>
-    <div class="modal-field">
+    <div class="modal-field" id="modal-width-section">
       <label>Frame Width</label>
       <input type="text" id="modal-frame-width" placeholder="e.g. 24" list="dl-frame-width">
     </div>
@@ -421,7 +486,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <label>Operator</label>
       <input type="text" id="modal-operator" list="dl-operator">
     </div>
-    <div class="modal-field">
+    <div class="modal-field" id="modal-obs-section">
       <label># of Observations</label>
       <input type="number" id="modal-num-obs" min="1" value="1" inputmode="numeric">
     </div>
@@ -454,22 +519,41 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <datalist id="dl-frame-number"></datalist>
 <datalist id="dl-frame-width"></datalist>
 <datalist id="dl-operator"></datalist>
+<datalist id="dl-part-number"></datalist>
 
 <script>
 /* ── Constants ── */
 const STORAGE_KEY = 'tagTimeStudy_state';
 
-const PROCESSES_BY_PLANT = {
-  'Plant 1':    ['Roll Bucket Large','Roll Bucket Small','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld','Manual Panel Build','ABB Sides','Cobot Panel Weld','Side Build'],
-  'Quick Hitch':['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install'],
-  'Pin On':     ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld'],
+const PROCESSES_BY_STREAM = {
+  'Large Bucket': ['Roll Bucket Large','Roll Bucket Small','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld','Manual Panel Build','ABB Sides','Cobot Panel Weld','Side Build'],
+  'Quick Hitch':  ['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install'],
+  'Pin On':       ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld'],
+  'Couplers':     ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
+  'Thumbs':       ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
 };
+// Value streams available per plant. Custom Process is a top-level stream on both plants —
+// it has no fixed process list; the operator names the one-off study when they create a bucket.
+const STREAMS_BY_PLANT = {
+  'Plant 1': ['Large Bucket','Thumbs','Custom Process'],
+  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Custom Process'],
+};
+function isCustomProcessStream(s) { return s === 'Custom Process'; }
+function isCustomProcessCurrent() { return isCustomProcessStream(state.stream); }
 const TEETH_PROCESSES = new Set(['Teeth and Logo','Teeth And Logo','Teeth Install']);
 const EAR_PROCESSES   = new Set(['Ears','Ear & Bushing Install','Ear and Bushing Install']);
 
+// Effective stream for a bucket. Old Plant 1 buckets predate streams -> treat as Large Bucket.
+function bucketStream(b) {
+  return b.stream || (b.plant === 'Plant 1' ? 'Large Bucket' : null);
+}
+// Part-number streams (Couplers, Thumbs) key on Part Number instead of Frame #/Frame Width.
+const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs']);
+function isPartNumberStream(s) { return PART_NUMBER_STREAMS.has(s); }
+function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
+function isPartNumberCurrent() { return isPartNumberStream(state.stream); }
 function getProcessesForCurrent() {
-  if (state.plant === 'Plant 1') return PROCESSES_BY_PLANT['Plant 1'];
-  return PROCESSES_BY_PLANT[state.stream] || [];
+  return PROCESSES_BY_STREAM[state.stream] || [];
 }
 function isTeethProcess(p) { return TEETH_PROCESSES.has(p); }
 function isEarProcess(p)   { return EAR_PROCESSES.has(p); }
@@ -518,7 +602,7 @@ function getElementsForPlant() {
 
 /* ── State ── */
 function emptyHeader() {
-  return { process:'', frameNumber:'', frameWidth:'', operator:'', numObservations:'1', toothType:'', numTeeth:'', earType:'' };
+  return { process:'', frameNumber:'', frameWidth:'', operator:'', numObservations:'1', toothType:'', numTeeth:'', earType:'', partNumber:'' };
 }
 function defaultState() {
   return { plant: null, stream: null, buckets: [], activeElement: null, nextBucketId: 1, observerName: '' };
@@ -563,6 +647,10 @@ function cleanupCurrentBucket() {
 function autoCarryProcess() {
   const cur = getCurrentBucket();
   if (!cur || cur.sealed || cur.header.process) return;
+  // Custom Process is one-off by design — never inherit a prior bucket's typed name.
+  // Each new bucket in this stream must prompt fresh (per Chase: "next time... it just
+  // says custom process again, and you can do it again for multiple different places").
+  if (isCustomProcessStream(cur.stream)) return;
   const prev = state.buckets.filter(b =>
     b.sealed && !b.isDraft && b.id !== cur.id &&
     b.plant === cur.plant && b.stream === cur.stream
@@ -595,14 +683,25 @@ function showScreen(id) {
 /* ── Plant / Stream select ── */
 document.querySelectorAll('.plant-btn').forEach(btn => btn.addEventListener('click', () => {
   state.plant = btn.dataset.plant; state.stream = null; saveState();
-  state.plant === 'Plant 2' ? showScreen('screen-stream-select') : goToSessionHome();
-}));
-document.querySelectorAll('.stream-btn').forEach(btn => btn.addEventListener('click', () => {
-  state.stream = btn.dataset.stream; saveState(); goToSessionHome();
+  goToStreamSelect();
 }));
 
+function renderStreamSelect() {
+  document.getElementById('stream-plant-label').textContent = (state.plant || 'PLANT').toUpperCase();
+  const cont = document.getElementById('stream-btn-container');
+  cont.innerHTML = '';
+  (STREAMS_BY_PLANT[state.plant] || []).forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'stream-btn';
+    btn.textContent = s.toUpperCase();
+    btn.addEventListener('click', () => { state.stream = s; saveState(); goToSessionHome(); });
+    cont.appendChild(btn);
+  });
+}
+function goToStreamSelect() { renderStreamSelect(); showScreen('screen-stream-select'); }
+
 function plantDisplayLabel() {
-  return (state.plant === 'Plant 2' && state.stream) ? `${state.plant} — ${state.stream}` : (state.plant || '');
+  return state.stream ? `${state.plant} — ${state.stream}` : (state.plant || '');
 }
 
 /* ── Session Home ── */
@@ -687,7 +786,7 @@ document.getElementById('home-new-bucket').addEventListener('click', () => {
   createNewBucket();
   autoCarryProcess();
   goToSession();
-  if (!getCurrentBucket()?.header?.process) openProcessOverlay();
+  ensureProcessPicked();
 });
 
 document.getElementById('home-resume-timing').addEventListener('click', goToSession);
@@ -742,12 +841,13 @@ function toggleStudyPause() {
     if (!last || last.sealed) {
       createNewBucket();
       autoCarryProcess();
-      if (!getCurrentBucket()?.header?.process) { openProcessOverlay(); return; }
+      if (!getCurrentBucket()?.header?.process) { ensureProcessPicked(); return; }
     }
     const now = Date.now();
     stopActiveElement(now);
     const bucket = ensureBucket();
     state.activeElement = { name: PAUSE_ELEMENT_NAME, tier: 'red', startTs: now, bucketId: bucket.id, note: '' };
+    syncWakeLock();
     saveState();
     renderGrid();
     updateStatusBar();
@@ -788,6 +888,35 @@ function openProcessOverlay() {
 function closeProcessOverlay() {
   document.getElementById('process-overlay').classList.remove('visible');
 }
+
+// Opens the process picker for normal streams, or the naming sheet for Custom Process.
+function ensureProcessPicked() {
+  if (getCurrentBucket()?.header?.process) return;
+  if (isCustomProcessCurrent()) openCustomProcessOverlay();
+  else openProcessOverlay();
+}
+
+function openCustomProcessOverlay() {
+  const input = document.getElementById('custom-process-input');
+  input.value = '';
+  document.getElementById('custom-process-overlay').classList.add('visible');
+  setTimeout(() => input.focus(), 100);
+}
+function closeCustomProcessOverlay() {
+  document.getElementById('custom-process-overlay').classList.remove('visible');
+}
+document.getElementById('custom-process-save').addEventListener('click', () => {
+  const name = document.getElementById('custom-process-input').value.trim();
+  if (!name) { document.getElementById('custom-process-input').focus(); return; }
+  const b = getCurrentBucket();
+  if (b) { b.header.process = name; saveState(); }
+  closeCustomProcessOverlay();
+  renderGrid();
+});
+document.getElementById('custom-process-cancel').addEventListener('click', closeCustomProcessOverlay);
+document.getElementById('custom-process-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('custom-process-save').click();
+});
 
 document.getElementById('stream-go-back').addEventListener('click', () => showScreen('screen-plant-select'));
 document.getElementById('process-overlay-cancel').addEventListener('click', closeProcessOverlay);
@@ -836,7 +965,8 @@ function bucketSubtitleText() {
   const h = b.header || {};
   const parts = [];
   if (h.process) parts.push(h.process);
-  if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  if (isPartNumberBucket(b)) { if (h.partNumber) parts.push(`Part ${h.partNumber}`); }
+  else if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
   if (h.operator) parts.push(h.operator);
   if (parts.length === 0) return bucketTimeLabel(b);
   return parts.join(' · ');
@@ -907,7 +1037,7 @@ function renderGrid() {
     createNewBucket();
     autoCarryProcess();
     renderGrid();
-    if (!getCurrentBucket()?.header?.process) openProcessOverlay();
+    ensureProcessPicked();
   });
   container.appendChild(nbBtn);
 
@@ -917,12 +1047,29 @@ function renderGrid() {
 /* ── Timer Details Panel ── */
 function refreshHeaderDataLists() {
   const uniq = (field) => [...new Set(
-    state.buckets.map(b => (b.header && b.header[field]) || '').filter(v => v.trim())
+    state.buckets.map(b => String((b.header && b.header[field]) ?? '')).filter(v => v.trim())
   )];
-  [['dl-frame-number','frameNumber'],['dl-frame-width','frameWidth'],['dl-operator','operator']].forEach(([id, field]) => {
+  [['dl-frame-number','frameNumber'],['dl-frame-width','frameWidth'],['dl-operator','operator'],['dl-part-number','partNumber']].forEach(([id, field]) => {
     const dl = document.getElementById(id);
-    dl.innerHTML = uniq(field).map(v => `<option value="${esc(v)}">`).join('');
+    if (dl) dl.innerHTML = uniq(field).map(v => `<option value="${esc(v)}">`).join('');
   });
+}
+
+// Details-panel summary line, aware of part-number vs frame/width streams.
+function tdSummaryText(h) {
+  const parts = [];
+  if (h.process) parts.push(h.process);
+  if (isPartNumberCurrent()) { if (h.partNumber) parts.push(`Part ${h.partNumber}`); }
+  else if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  if (h.operator) parts.push(h.operator);
+  return parts.length ? parts.join(' · ') : '— tap to fill in details…';
+}
+// Toggle Details-panel fields for part-number streams (Part Number vs Frame #/Width/# of Obs).
+function updateTdStreamFields() {
+  const pn = isPartNumberCurrent();
+  document.getElementById('td-partnum-row').style.display = pn ? 'grid' : 'none';
+  document.getElementById('td-frame-row').style.display   = pn ? 'none' : 'grid';
+  document.getElementById('td-obs-field').style.display   = pn ? 'none' : 'flex';
 }
 
 function populateTdProcess(selected) {
@@ -943,6 +1090,13 @@ function updateTdConditionals(process) {
   document.getElementById('td-ear-row').style.display   = isEar   ? 'grid' : 'none';
 }
 
+// Custom Process has no fixed list — show a free-text field instead of the process dropdown.
+function updateTdProcessMode() {
+  const isCustom = isCustomProcessCurrent();
+  document.getElementById('td-process').style.display      = isCustom ? 'none' : '';
+  document.getElementById('td-process-text').style.display = isCustom ? '' : 'none';
+}
+
 function renderTimerDetails() {
   refreshHeaderDataLists();
   const b = getCurrentBucket();
@@ -957,36 +1111,41 @@ function renderTimerDetails() {
   if (!b) {
     summaryEl.textContent = 'No active bucket';
     document.getElementById('td-process').innerHTML = '<option value="">— Select process —</option>';
-    ['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type']
+    ['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-partnum','td-process-text']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = id === 'td-obs' ? '1' : ''; });
     updateTdConditionals('');
+    updateTdStreamFields();
+    updateTdProcessMode();
     return;
   }
 
   const h = b.header || {};
   populateTdProcess(h.process || '');
+  document.getElementById('td-process-text').value = h.process || '';
   document.getElementById('td-frame').value      = h.frameNumber || '';
   document.getElementById('td-width').value      = h.frameWidth  || '';
+  document.getElementById('td-partnum').value    = h.partNumber  || '';
   document.getElementById('td-operator').value   = h.operator    || '';
   document.getElementById('td-obs').value        = h.numObservations || '1';
   document.getElementById('td-tooth-type').value = h.toothType   || '';
   document.getElementById('td-num-teeth').value  = h.numTeeth    || '';
   document.getElementById('td-ear-type').value   = h.earType     || '';
   updateTdConditionals(h.process || '');
+  updateTdStreamFields();
+  updateTdProcessMode();
 
-  const parts = [];
-  if (h.process) parts.push(h.process);
-  if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
-  if (h.operator) parts.push(h.operator);
-  summaryEl.textContent = parts.length ? parts.join(' · ') : '— tap to fill in frame, operator…';
+  summaryEl.textContent = tdSummaryText(h);
 }
 
 function saveTimerDetails() {
   const b = getCurrentBucket();
   if (!b || b.sealed) return;
-  b.header.process         = document.getElementById('td-process').value;
+  b.header.process         = isCustomProcessCurrent()
+    ? document.getElementById('td-process-text').value.trim()
+    : document.getElementById('td-process').value;
   b.header.frameNumber     = document.getElementById('td-frame').value.trim();
   b.header.frameWidth      = document.getElementById('td-width').value.trim();
+  b.header.partNumber      = document.getElementById('td-partnum').value.trim();
   b.header.operator        = document.getElementById('td-operator').value.trim();
   b.header.numObservations = document.getElementById('td-obs').value || '1';
   b.header.toothType       = document.getElementById('td-tooth-type').value.trim();
@@ -994,13 +1153,8 @@ function saveTimerDetails() {
   b.header.earType         = document.getElementById('td-ear-type').value.trim();
   saveState();
   updateSessionBucketLabel();
-  const h = b.header;
-  const parts = [];
-  if (h.process) parts.push(h.process);
-  if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
-  if (h.operator) parts.push(h.operator);
   const summaryEl = document.getElementById('td-summary-text');
-  if (summaryEl) summaryEl.textContent = parts.length ? parts.join(' · ') : '— tap to fill in frame, operator…';
+  if (summaryEl) summaryEl.textContent = tdSummaryText(b.header);
 }
 
 function scheduleTimerDetailsSave() {
@@ -1026,7 +1180,7 @@ document.getElementById('td-process').addEventListener('change', () => {
   saveTimerDetails();
 });
 
-['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type']
+['td-frame','td-width','td-partnum','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-process-text']
   .forEach(id => document.getElementById(id).addEventListener('input', scheduleTimerDetailsSave));
 
 /* ── Element Note Modal (long-press on active element) ── */
@@ -1098,13 +1252,14 @@ function onElementTap(el) {
   if (!last || last.sealed) {
     createNewBucket();
     autoCarryProcess();
-    if (!getCurrentBucket()?.header?.process) { openProcessOverlay(); return; }
+    if (!getCurrentBucket()?.header?.process) { ensureProcessPicked(); return; }
   }
   if (state.activeElement && state.activeElement.name === el.name) return;
   const now = Date.now();
   stopActiveElement(now);
   const bucket = ensureBucket();
   state.activeElement = { name: el.name, tier: el.tier, startTs: now, bucketId: bucket.id, note: '' };
+  syncWakeLock();
   saveState();
   renderGrid();
   updateStatusBar();
@@ -1122,6 +1277,7 @@ function stopActiveElement(endTs) {
     });
   }
   state.activeElement = null;
+  syncWakeLock();
   saveState();
 }
 
@@ -1146,6 +1302,30 @@ function updateStatusBar() {
   }
 }
 setInterval(updateStatusBar, 1000);
+
+/* ── Keep screen awake while an element is timing ── */
+let wakeLock = null;
+let wakeLockWanted = false;
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator) || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { /* denied, unsupported, or document hidden — timing still works, just may sleep */ }
+}
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+// Call after every state.activeElement set/clear to start or stop holding the wake lock.
+function syncWakeLock() {
+  wakeLockWanted = !!state.activeElement;
+  if (wakeLockWanted) acquireWakeLock(); else releaseWakeLock();
+}
+// Wake locks are released by the browser when the tab is hidden — re-acquire on return
+// if timing was still active, so backgrounding the tablet briefly doesn't lose the lock.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && wakeLockWanted) acquireWakeLock();
+});
 
 
 /* ── Export toast ── */
@@ -1186,6 +1366,13 @@ function resumeDraft(bucketId) {
   const [b] = state.buckets.splice(idx, 1);
   b.sealed = false; b.isDraft = false;
   state.buckets.push(b);
+  // The Log screen isn't scoped to the current plant/stream — a draft can belong to a
+  // totally different one than whatever is currently selected. Every UI decision on the
+  // session screen (process list, Part Number vs Frame/Width fields, topbar label) reads
+  // state.plant/state.stream, not the bucket's own, so the session context must switch to
+  // match the resumed bucket or the Details panel ends up showing the wrong fields entirely.
+  state.plant  = b.plant  || state.plant;
+  state.stream = bucketStream(b) || state.stream;
   timerDetailsOpen = true;
   saveState();
   goToSession();
@@ -1203,13 +1390,64 @@ function deleteBucket(bucketId) {
   const typed = prompt(`Delete bucket "${label}" (${elCount} element${elCount!==1?'s':''} timed, ${bucket.exportedAt ? 'already exported' : 'NOT exported'})?\n\nThis cannot be undone. Type DELETE to confirm.`);
   if (typed === null || typed.trim().toUpperCase() !== 'DELETE') return;
   if (state.activeElement && state.activeElement.bucketId === bucketId) {
-    state.activeElement = null; updateStatusBar();
+    state.activeElement = null; syncWakeLock(); updateStatusBar();
   }
   state.buckets.splice(idx, 1);
   expandedBucketIds.delete(bucketId);
   selectedBucketIds.delete(bucketId);
   saveState(); renderLog(); renderGrid(); updateSessionHomeInfo();
 }
+
+/* ── Edit Element Duration (Log) ── */
+let editingDurationBucketId = null;
+let editingDurationElIdx = null;
+
+// Accepts "m:ss", "mm:ss", or a plain number of seconds. Returns whole seconds, or null if invalid.
+function parseDurationInput(str) {
+  const s = String(str || '').trim();
+  if (!s) return null;
+  const m = s.match(/^(\d+):([0-5]?\d)$/);
+  if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  return null;
+}
+
+function openEditDurationOverlay(bucketId, elIdx) {
+  const b = state.buckets.find(bk => bk.id === bucketId);
+  const el = b && b.elements[elIdx];
+  if (!el) return;
+  editingDurationBucketId = bucketId;
+  editingDurationElIdx = elIdx;
+  document.getElementById('edit-duration-name').textContent = el.name;
+  const input = document.getElementById('edit-duration-input');
+  input.value = formatMS(el.durationSec);
+  document.getElementById('edit-duration-overlay').classList.add('visible');
+  setTimeout(() => { input.focus(); input.select(); }, 100);
+}
+function closeEditDurationOverlay() {
+  document.getElementById('edit-duration-overlay').classList.remove('visible');
+  editingDurationBucketId = null;
+  editingDurationElIdx = null;
+}
+document.getElementById('edit-duration-save').addEventListener('click', () => {
+  const input = document.getElementById('edit-duration-input');
+  const sec = parseDurationInput(input.value);
+  if (sec === null || sec < 0) { input.focus(); input.select(); return; }
+  const b = state.buckets.find(bk => bk.id === editingDurationBucketId);
+  const el = b && b.elements[editingDurationElIdx];
+  if (el) {
+    el.durationSec = sec;
+    saveState();
+    renderLog();
+    renderGrid();
+    updateSessionHomeInfo();
+  }
+  closeEditDurationOverlay();
+});
+document.getElementById('edit-duration-cancel').addEventListener('click', closeEditDurationOverlay);
+document.getElementById('edit-duration-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('edit-duration-save').click();
+});
 
 function renderLog() {
   const list = document.getElementById('log-list');
@@ -1277,10 +1515,12 @@ function renderLog() {
             <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${procBadge}${liveBadge}${draftBadge}${exportedBadge}
           </div>
           <div class="bucket-fields">
-            <span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
-            <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>
+            ${isPartNumberBucket(bucket)
+              ? `<span><span class="lbl">Part #:</span> ${esc(h.partNumber)||'—'}</span>`
+              : `<span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
+                 <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>`}
             <span><span class="lbl">Operator:</span> ${esc(h.operator)||'—'}</span>
-            ${h.numObservations && h.numObservations!=='1' ? `<span><span class="lbl">Obs:</span> ${esc(h.numObservations)}</span>` : ''}
+            ${!isPartNumberBucket(bucket) && h.numObservations && h.numObservations!=='1' ? `<span><span class="lbl">Obs:</span> ${esc(h.numObservations)}</span>` : ''}
             ${bucket.observerName ? `<span><span class="lbl">Timed by:</span> ${esc(bucket.observerName)}</span>` : ''}
           </div>
           <div class="bucket-tier-bar">
@@ -1311,6 +1551,7 @@ function renderLog() {
                 <span><span class="el-tier-dot" style="background:${TIER_COLORS[el.tier]}"></span>${esc(el.name)}</span>
                 <span style="display:flex;align-items:center;gap:6px">
                   <span>${formatMS(el.durationSec)} <span style="color:#b9c4d8;">${formatClockTime(el.endTs)}</span></span>
+                  <button class="el-edit-btn" data-bucket-id="${bucket.id}" data-el-idx="${elIdx}" title="Edit this element's duration">✎</button>
                   <button class="el-delete-btn" data-bucket-id="${bucket.id}" data-el-idx="${elIdx}" title="Delete this element">✕</button>
                 </span>
               </div>${el.note ? `<div class="bucket-element-note">📝 ${esc(el.note)}</div>` : ''}`).join('')}
@@ -1335,6 +1576,12 @@ function renderLog() {
         });
       });
     }
+    row.querySelectorAll('.el-edit-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        openEditDurationOverlay(Number(btn.dataset.bucketId), Number(btn.dataset.elIdx));
+      });
+    });
     row.querySelectorAll('.el-delete-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -1479,6 +1726,20 @@ function updateModalConditionals(process) {
   document.getElementById('modal-ear-section').style.display         = isEar   ? 'flex' : 'none';
 }
 
+// Part-number streams show Part Number; frame/width streams show Frame #/Width/# of Obs.
+function updateModalStreamFields(pn) {
+  document.getElementById('modal-partnum-section').style.display = pn ? 'flex' : 'none';
+  document.getElementById('modal-frame-section').style.display   = pn ? 'none' : 'flex';
+  document.getElementById('modal-width-section').style.display   = pn ? 'none' : 'flex';
+  document.getElementById('modal-obs-section').style.display     = pn ? 'none' : 'flex';
+}
+
+// Custom Process has no fixed list — show a free-text field instead of the process dropdown.
+function updateModalProcessMode(isCustom) {
+  document.getElementById('modal-process').style.display      = isCustom ? 'none' : '';
+  document.getElementById('modal-process-text').style.display = isCustom ? '' : 'none';
+}
+
 document.getElementById('modal-process').addEventListener('change', () => {
   updateModalConditionals(document.getElementById('modal-process').value);
 });
@@ -1490,10 +1751,11 @@ function openEditModal(bucketId) {
   editingBucketId = bucketId;
   const h = b.header || {};
   document.getElementById('modal-title').textContent = `Edit: ${bucketTimeLabel(b)}`;
-  const bPlant = b.plant || state.plant;
-  const bStream = b.stream || state.stream;
-  const bProcesses = bPlant === 'Plant 1' ? PROCESSES_BY_PLANT['Plant 1'] : (PROCESSES_BY_PLANT[bStream] || []);
+  const bStream = bucketStream(b) || state.stream;
+  const bProcesses = PROCESSES_BY_STREAM[bStream] || [];
   populateModalProcessSelect(h.process || '', bProcesses);
+  document.getElementById('modal-process-text').value = h.process || '';
+  document.getElementById('modal-part-number').value  = h.partNumber  || '';
   document.getElementById('modal-frame-number').value = h.frameNumber || '';
   document.getElementById('modal-frame-width').value  = h.frameWidth  || '';
   document.getElementById('modal-operator').value     = h.operator    || '';
@@ -1503,6 +1765,8 @@ function openEditModal(bucketId) {
   document.getElementById('modal-ear-type').value     = h.earType     || '';
   document.getElementById('modal-notes').value        = h.notes       || '';
   updateModalConditionals(h.process || '');
+  updateModalStreamFields(isPartNumberStream(bStream));
+  updateModalProcessMode(isCustomProcessStream(bStream));
   modalOverlay.classList.add('active');
 }
 
@@ -1513,8 +1777,12 @@ modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) clo
 document.getElementById('modal-save-log-edit').addEventListener('click', () => {
   const b = state.buckets.find(b => b.id === editingBucketId);
   if (b) {
+    const bStream = bucketStream(b) || state.stream;
     b.header = {
-      process:         document.getElementById('modal-process').value,
+      process:         isCustomProcessStream(bStream)
+                          ? document.getElementById('modal-process-text').value.trim()
+                          : document.getElementById('modal-process').value,
+      partNumber:      document.getElementById('modal-part-number').value.trim(),
       frameNumber:     document.getElementById('modal-frame-number').value.trim(),
       frameWidth:      document.getElementById('modal-frame-width').value.trim(),
       operator:        document.getElementById('modal-operator').value.trim(),
@@ -1538,11 +1806,6 @@ function stripInSuffix(w) {
   const s = String(w||'').trim();
   return s.toLowerCase().endsWith('in') ? s.slice(0,-2) : s;
 }
-function ensureInSuffix(w) {
-  const s = String(w||'').trim();
-  if (!s) return '';
-  return (s.toLowerCase().endsWith('in') ? s.slice(0,-2) : s) + 'in';
-}
 function formatExportDate(ts) {
   const d = new Date(ts);
   return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
@@ -1561,11 +1824,15 @@ function buildExportRow(bucket) {
   const posBucketEls  = els.filter(e=>e.name==='Positioning Bucket');
   const posBucketSec  = posBucketEls.reduce((s,e)=>s+e.durationSec,0);
   const numTeeth = h.numTeeth ? Number(h.numTeeth) : 0;
+  // Frame width: strip any stray "in" and emit as a real number so it matches the
+  // (now numeric) workbook cells cleanly on paste; keep as text only if non-numeric.
+  const fwStripped = stripInSuffix(h.frameWidth);
+  const fwOut = (fwStripped !== '' && !isNaN(fwStripped)) ? Number(fwStripped) : fwStripped;
   return {
     date:        formatExportDate(bucket.startTs),
     frameNum:    h.frameNumber || '',
-    fwP2:        ensureInSuffix(h.frameWidth),
-    fwRaw:       stripInSuffix(h.frameWidth),
+    partNum:     h.partNumber  || '',
+    fwRaw:       fwOut,
     operator:    h.operator    || '',
     toothType:   h.toothType   || '',
     numTeeth:    numTeeth || '',
@@ -1588,11 +1855,22 @@ function getColumnsForProcess(processName, plant, stream) {
   const isP1 = plant === 'Plant 1';
   const isQH = stream === 'Quick Hitch';
   const c = (h, fn) => [h, fn];
-  const D=r=>r.date, FN=r=>r.frameNum, FW2=r=>r.fwP2, FWR=r=>r.fwRaw,
+  const D=r=>r.date, FN=r=>r.frameNum, FWR=r=>r.fwRaw,
         OP=r=>r.operator, CY=r=>r.cycleMin, VA=r=>r.vaMin, NV=r=>r.nnvaMin,
         VP=r=>r.vaPct, NP=r=>r.nnvaPct, OB=r=>r.numObs, NO=r=>r.notes,
         PH=r=>r.preheatMin, PB=r=>r.posBucketMin, PC=r=>r.posCount,
-        TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType;
+        TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType,
+        PN=r=>r.partNum;
+
+  // Part-number streams (Couplers, Thumbs) — no frame/width; keyed on Part Number.
+  if (isPartNumberStream(stream)) {
+    return [c('Date',D),c('Part Number',PN),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+  }
+
+  // Custom Process — one-off study; generic frame/width schema, same shape on both plants.
+  if (isCustomProcessStream(stream)) {
+    return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+  }
 
   if (isP1) {
     // Plant 1 (Large Bucket) — Frame Width stored as plain number in workbook; strip any "in" suffix
@@ -1607,41 +1885,37 @@ function getColumnsForProcess(processName, plant, stream) {
   }
 
   if (isQH) {
-    // Quick Hitch — all sheets use "Frame Width (in)" header + has # of Observations
-    // Ear & Bushing Install: header is "Frame Width (in)" but data values are raw numbers (no "in")
+    // Quick Hitch — all sheets: plain-number Frame Width + a # of Observations column
     switch (processName) {
       case 'Bucket Roll':
-        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+        return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
       case 'Manual Shell Weld':
-        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+        return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
       case 'Teeth And Logo':
-        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Tooth Type',TT),c('Operator',OP),c('# of Teeth',NT),c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+        return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Tooth Type',TT),c('Operator',OP),c('# of Teeth',NT),c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
       case 'Teeth Weld':
-        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+        return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
       case 'Ear & Bushing Install':
-        // Column header says "Frame Width (in)" but actual cell values are raw numbers like "12", "24"
-        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FWR),c('Ear Type',ET),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+        return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Ear Type',ET),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
       default:
-        return [c('Date',D),c('Frame #',FN),c('Frame Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
+        return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
     }
   }
 
-  // Pin On — mixed: some sheets have "in" data, some raw; no # of Observations
+  // Pin On — plain-number Frame Width throughout
   switch (processName) {
     case 'Bucket Roll':
-      return [c('Date',D),c('Frame #',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
     case 'Manual Shell Weld':
-      return [c('Date',D),c('Frame #',FN),c('Width (in)',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     case 'Teeth Install':
-      // Frame Width data is raw numbers ("24", "12") — use FWR
-      return [c('Date',D),c('Frame Size',FN),c('Frame Width',FWR),c('Tooth Type',TT),c('Operator',OP),c('Number of Teeth',NT),c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Tooth Type',TT),c('Operator',OP),c('Number of Teeth',NT),c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     case 'Ear and Bushing Install':
-      // Frame Width data is raw numbers ("18", "12") — use FWR
-      return [c('Date',D),c('Frame #',FN),c('Width (in)',FWR),c('Ear Type',ET),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Ear Type',ET),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     case 'Final Weld':
-      return [c('Date',D),c('Frame Size',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     default:
-      return [c('Date',D),c('Frame #',FN),c('Frame Width',FW2),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+      return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
   }
 }
 
@@ -1664,7 +1938,7 @@ function boldAllCells(ws) {
 }
 
 
-function styleProcessSheet(ws, cols, numDataRows, plant) {
+function styleProcessSheet(ws, cols, numDataRows, plant, stream) {
   const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
   // Bold+centered header, centered data rows
   for (let R = range.s.r; R <= range.e.r; R++) {
@@ -1691,9 +1965,12 @@ function styleProcessSheet(ws, cols, numDataRows, plant) {
       });
     }
   }
-  // Plant 1: write VA% and NNVA% as Excel formulas so pasting into the workbook
-  // doesn't hardcode values that then stick around if elements are later deleted.
-  if (plant !== 'Plant 1') return;
+  // Plant 1 (frame/width) sheets: write VA% and NNVA% as Excel formulas so pasting into
+  // the workbook doesn't hardcode values that stick around if elements are later deleted.
+  // Part-number sheets (Couplers/Thumbs) and Custom Process sheets (no real workbook to
+  // paste into) use plain % values instead — so skip the formula path for those.
+  const isPartNumberSheet = cols.some(c => c[0] === 'Part Number');
+  if (plant !== 'Plant 1' || isPartNumberSheet || isCustomProcessStream(stream)) return;
   const headers  = cols.map(c => c[0]);
   const cycleIdx = headers.indexOf('Cycle Time (min)');
   const vaIdx    = headers.indexOf('VA Time (min)');
@@ -1712,14 +1989,20 @@ function styleProcessSheet(ws, cols, numDataRows, plant) {
   }
 }
 
-// Returns array of buckets that were actually written to the file, or null on failure.
-function runExportBuckets(buckets) {
-  if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
-  if (!buckets || !buckets.length) { alert('No buckets to export.'); return null; }
+// Excel sheet tab names can't contain \ / ? * [ ] : — strip them for free-typed
+// Custom Process names before they become a sheet tab (the cell VALUE keeps the exact
+// typed text; only the tab name is sanitized).
+function sanitizeSheetNameChars(name) {
+  const s = String(name || '').replace(/[\\/?*\[\]:]/g, '-').trim();
+  return s || 'Custom';
+}
 
+// Builds the full export workbook (process sheets + Summary + Bucket Detail) shared by
+// both the download and share paths. Silent — callers handle alerts and output.
+// Returns { wb, exported, sheetCount, noProcessCount, filename, emailSubject, emailBody }.
+function buildExportWorkbook(buckets) {
   // Group by (plant + stream + process) — each bucket carries its OWN plant/stream
-  // stamped at creation time, so re-exporting old history after a plant switch
-  // always uses the correct column schema instead of whatever plant is selected now.
+  // stamped at creation, so re-exporting old history always uses the correct schema.
   const byGroup = {};
   const noProcess = [];
   const exported = [];
@@ -1727,297 +2010,320 @@ function runExportBuckets(buckets) {
     const p = b.header && b.header.process;
     if (!p) { noProcess.push(b); return; }
     const plant  = b.plant  || state.plant;
-    const stream = b.stream || state.stream;
+    // Legacy Plant 1 buckets predate streams (b.stream is null) — resolve to Large Bucket
+    // the same way bucketStream() does, rather than falling back to whatever stream is
+    // CURRENTLY selected in the UI (which may be a totally different session/plant).
+    const stream = b.stream || (plant === 'Plant 1' ? 'Large Bucket' : state.stream);
     const key = `${plant}||${stream}||${p}`;
     (byGroup[key] = byGroup[key] || { plant, stream, process: p, buckets: [] }).buckets.push(b);
     exported.push(b);
   });
 
+  // Key collision-detection on the SANITIZED name, not the raw one — two different custom
+  // process names can sanitize to the same tab name (e.g. "A/B" and "A:B" both become "A-B"),
+  // and the raw name wouldn't see them as duplicates, letting them collide anyway.
   const processCounts = {};
-  Object.values(byGroup).forEach(g => { processCounts[g.process] = (processCounts[g.process]||0) + 1; });
+  Object.values(byGroup).forEach(g => {
+    const key = sanitizeSheetNameChars(g.process);
+    processCounts[key] = (processCounts[key] || 0) + 1;
+  });
+  // Plant 1 now has multiple streams (Large Bucket, Thumbs, Custom Process) that can share
+  // process names (e.g. "Bushing Install" exists in both Large Bucket and Thumbs) — keep the
+  // legacy 'P1' tag for Large Bucket so existing exports/filenames don't change, but give other
+  // Plant 1 streams their own tag so same-named processes never collide on one sheet name.
+  const groupTag = g => {
+    if (g.plant === 'Plant 2') return `P2_${(g.stream||'').replace(/ /g,'')}`;
+    return (g.stream && g.stream !== 'Large Bucket') ? `P1_${g.stream.replace(/ /g,'')}` : 'P1';
+  };
+  // Last-resort safety net: even with the tag above, two Custom Process names in the exact
+  // same plant+stream can still sanitize to an identical string. Never let that crash the
+  // export — append a numeric suffix until the name is actually unique in this workbook.
+  function uniqueSheetName(candidate) {
+    let name = candidate.slice(0, 31);
+    let n = 2;
+    while (wb.SheetNames.includes(name)) {
+      const suffix = ` (${n})`;
+      name = candidate.slice(0, 31 - suffix.length) + suffix;
+      n++;
+    }
+    return name;
+  }
 
   const wb = XLSX.utils.book_new();
   let sheetCount = 0;
   const plantTagsUsed = new Set();
   Object.values(byGroup).forEach(g => {
-    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
-    plantTagsUsed.add(plantTag);
+    plantTagsUsed.add(groupTag(g));
     const cols = getColumnsForProcess(g.process, g.plant, g.stream);
     const rows = g.buckets.map(b => buildExportRow(b));
     const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
     const ws   = XLSX.utils.aoa_to_sheet(aoa);
     autoFitColumns(ws, aoa);
-    styleProcessSheet(ws, cols, rows.length, g.plant);
-    let sheetName = g.process;
-    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
-    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
+    styleProcessSheet(ws, cols, rows.length, g.plant, g.stream);
+    const safeProc = sanitizeSheetNameChars(g.process);
+    let sheetName = safeProc;
+    if (processCounts[safeProc] > 1) sheetName = `${safeProc} (${groupTag(g)})`;
+    // Store the ACTUAL name used so the Summary sheet below reports the real tab name,
+    // even if uniqueSheetName had to append a disambiguating suffix.
+    g.finalSheetName = uniqueSheetName(sheetName);
+    XLSX.utils.book_append_sheet(wb, ws, g.finalSheetName);
     sheetCount++;
   });
 
-  if (sheetCount === 0) {
-    alert(`${noProcess.length} bucket${noProcess.length!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before exporting.`);
-    return null;
-  }
-
-  if (noProcess.length > 0) {
-    alert(`Exported ${sheetCount} process sheet${sheetCount!==1?'s':''}. Note: ${noProcess.length} bucket${noProcess.length!==1?'s were':' was'} skipped (no process selected).`);
-  }
-
-  // Build INDEX sheet and prepend it as the first tab so opening the file
-  // immediately shows what processes are inside without hunting through tabs.
   const now = new Date();
   const p2 = n => String(n).padStart(2,'0');
   const nowStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
-  const indexAoa = [
-    ['TAG Manufacturing — CI Time Study Export'],
-    [],
-    ['Export Date:', nowStr],
-    ['Plant(s):', [...plantTagsUsed].join(', ')],
-    ['Total Process Sheets:', sheetCount],
-    [],
-    ['Process', 'Sheet Tab', '# Buckets', 'Dates Covered'],
-  ];
-  Object.values(byGroup).forEach(g => {
-    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
-    let sheetName = g.process;
-    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
-    const dates = g.buckets.map(b => b.startTs).sort((a,b) => a-b);
-    const d1 = formatExportDate(dates[0]);
-    const d2 = formatExportDate(dates[dates.length - 1]);
-    const dateRange = d1 === d2 ? d1 : `${d1} – ${d2}`;
-    indexAoa.push([g.process, sheetName.slice(0,31), g.buckets.length, dateRange]);
-  });
-  indexAoa.push([]);
-  indexAoa.push(['NOTE: Use the sheet tabs at the bottom of this window to view each process.']);
-  const wsIndex = XLSX.utils.aoa_to_sheet(indexAoa);
-  wsIndex['!cols'] = [{ wch: 28 }, { wch: 32 }, { wch: 12 }, { wch: 22 }];
-  boldAllCells(wsIndex);
-  // Prepend: insert at position 0 in the workbook
-  wb.SheetNames.unshift('Summary');
-  wb.Sheets['Summary'] = wsIndex;
 
-  // Build "Bucket Detail" sheet — one section per bucket: heading + every element
-  const detailAoa = [];
-  exported.forEach((b, bi) => {
-    if (bi > 0) detailAoa.push([], []); // blank rows between buckets
-    const h = b.header || {};
-    const els = b.elements || [];
-    const cycleSec = els.filter(e => e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
-    const vaSec    = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
-    const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
-    const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
-    const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
-    const posCount = els.filter(e=>e.name==='Positioning Bucket').length;
-
-    // Bucket header block
-    detailAoa.push([
-      `Bucket ${bi+1}`,
-      formatExportDate(b.startTs),
-      h.process || '(no process)',
-      h.frameNumber ? `Frame #${h.frameNumber}` : '',
-      h.frameWidth  ? `Width: ${h.frameWidth}"` : '',
-      h.operator    ? `Operator: ${h.operator}` : '',
-      b.observerName ? `Timed by: ${b.observerName}` : '',
-    ]);
-    detailAoa.push(['Element', 'Category', 'Duration', '% of Cycle', 'Notes']);
-
-    els.forEach(el => {
-      const cat = el.name === PAUSE_ELEMENT_NAME ? 'Pause'
-                : el.tier === 'green' ? 'VA'
-                : el.tier === 'amber' ? 'Nec (NNVA)'
-                : 'Waste (NVA)';
-      const pct = (cycleSec > 0 && (el.tier==='green'||el.tier==='amber'))
-        ? `${(el.durationSec/cycleSec*100).toFixed(1)}%` : '';
-      detailAoa.push([el.name, cat, formatMS(el.durationSec), pct, el.note||'']);
+  if (sheetCount > 0) {
+    // Summary tab (prepended so opening the file shows what's inside)
+    const indexAoa = [
+      ['TAG Manufacturing — CI Time Study Export'],
+      [],
+      ['Export Date:', nowStr],
+      ['Plant(s):', [...plantTagsUsed].join(', ')],
+      ['Total Process Sheets:', sheetCount],
+      [],
+      ['Process', 'Sheet Tab', '# Buckets', 'Dates Covered'],
+    ];
+    Object.values(byGroup).forEach(g => {
+      const dates = g.buckets.map(b => b.startTs).sort((a,b) => a-b);
+      const d1 = formatExportDate(dates[0]);
+      const d2 = formatExportDate(dates[dates.length - 1]);
+      indexAoa.push([g.process, g.finalSheetName, g.buckets.length, d1 === d2 ? d1 : `${d1} – ${d2}`]);
     });
+    indexAoa.push([]);
+    indexAoa.push(['NOTE: Use the sheet tabs at the bottom of this window to view each process.']);
+    const wsIndex = XLSX.utils.aoa_to_sheet(indexAoa);
+    wsIndex['!cols'] = [{ wch: 28 }, { wch: 32 }, { wch: 12 }, { wch: 22 }];
+    boldAllCells(wsIndex);
+    wb.SheetNames.unshift('Summary');
+    wb.Sheets['Summary'] = wsIndex;
 
-    // Totals row
-    const pctStr = cycleSec > 0
-      ? `VA: ${(vaSec/cycleSec*100).toFixed(1)}%  |  Nec: ${(nnvaSec/cycleSec*100).toFixed(1)}%`
-      : '';
-    detailAoa.push([
-      'TOTALS',
-      '',
-      formatMS(cycleSec),
-      pctStr,
-      `Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`,
-    ]);
-    if (posCount > 0) {
-      const posTotalSec = els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0);
-      detailAoa.push(['POSITIONING', `${posCount}x`, formatMS(posTotalSec), '', '']);
-    }
-  });
+    // Bucket Detail tab — one section per bucket
+    const detailAoa = [];
+    exported.forEach((b, bi) => {
+      if (bi > 0) detailAoa.push([], []);
+      const h = b.header || {};
+      const els = b.elements || [];
+      const cycleSec = els.filter(e => e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+      const vaSec    = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
+      const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+      const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+      const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
+      const posCount = els.filter(e=>e.name==='Positioning Bucket').length;
+      const pnBucket = isPartNumberBucket(b);
 
-  const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
-  wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
-  boldAllCells(wsDetail);
-  XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
+      detailAoa.push([
+        `Bucket ${bi+1}`,
+        formatExportDate(b.startTs),
+        h.process || '(no process)',
+        pnBucket ? (h.partNumber ? `Part #: ${h.partNumber}` : '') : (h.frameNumber ? `Frame #${h.frameNumber}` : ''),
+        pnBucket ? '' : (h.frameWidth ? `Width: ${h.frameWidth}"` : ''),
+        h.operator    ? `Operator: ${h.operator}` : '',
+        b.observerName ? `Timed by: ${b.observerName}` : '',
+      ]);
+      detailAoa.push(['Element', 'Category', 'Duration', '% of Cycle', 'Notes']);
 
-  // Filename includes a per-second timestamp so repeated exports in the same day
-  // NEVER collide and silently overwrite a prior download.
+      els.forEach(el => {
+        const cat = el.name === PAUSE_ELEMENT_NAME ? 'Pause'
+                  : el.tier === 'green' ? 'VA'
+                  : el.tier === 'amber' ? 'Nec (NNVA)'
+                  : 'Waste (NVA)';
+        const pct = (cycleSec > 0 && (el.tier==='green'||el.tier==='amber'))
+          ? `${(el.durationSec/cycleSec*100).toFixed(1)}%` : '';
+        detailAoa.push([el.name, cat, formatMS(el.durationSec), pct, el.note||'']);
+      });
+
+      const pctStr = cycleSec > 0
+        ? `VA: ${(vaSec/cycleSec*100).toFixed(1)}%  |  Nec: ${(nnvaSec/cycleSec*100).toFixed(1)}%`
+        : '';
+      detailAoa.push([
+        'TOTALS', '', formatMS(cycleSec), pctStr,
+        `Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`,
+      ]);
+      if (posCount > 0) {
+        const posTotalSec = els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0);
+        detailAoa.push(['POSITIONING', `${posCount}x`, formatMS(posTotalSec), '', '']);
+      }
+    });
+    const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
+    wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
+    boldAllCells(wsDetail);
+    XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
+  }
+
+  // Filename + email text (per-second timestamp so repeated exports never collide)
   const plantTagsArr = [...plantTagsUsed];
   const uniqueProcs  = [...new Set(Object.values(byGroup).map(g => g.process))];
   let fileLabel;
   if (uniqueProcs.length === 1 && plantTagsArr.length === 1) {
-    const procSlug = uniqueProcs[0].replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-    fileLabel = `${procSlug}_${plantTagsArr[0]}`;
+    fileLabel = `${uniqueProcs[0].replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '')}_${plantTagsArr[0]}`;
   } else {
     fileLabel = 'Mixed';
   }
   const fd = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
   const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
-  XLSX.writeFile(wb, `TAG_TimeStudy_${fileLabel}_${fd}_${ft}.xlsx`, { cellStyles: true });
-  return exported;
+  const filename = `TAG_TimeStudy_${fileLabel}_${fd}_${ft}.xlsx`;
+
+  const dateStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()}`;
+  const procLabel = uniqueProcs.length === 1
+    ? `${uniqueProcs[0]} (${plantTagsArr[0]})`
+    : `Mixed Export (${plantTagsArr.join(', ')})`;
+  const emailSubject = `TAG Time Study — ${procLabel} — ${dateStr}`;
+  const bucketSummary = Object.values(byGroup).map(g =>
+    `${g.process} (${groupTag(g)}): ${g.buckets.length} bucket${g.buckets.length!==1?'s':''}`).join('\n');
+  const emailBody = `CI Time Study export attached.\n\nProcess${uniqueProcs.length!==1?'es':''}:\n${bucketSummary}\n\nExported: ${nowStr}`;
+
+  return { wb, exported, sheetCount, noProcessCount: noProcess.length, filename, emailSubject, emailBody };
+}
+
+// Downloads the export .xlsx. Returns buckets written, or null on failure.
+function runExportBuckets(buckets) {
+  if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
+  if (!buckets || !buckets.length) { alert('No buckets to export.'); return null; }
+  const built = buildExportWorkbook(buckets);
+  if (built.sheetCount === 0) {
+    alert(`${built.noProcessCount} bucket${built.noProcessCount!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before exporting.`);
+    return null;
+  }
+  if (built.noProcessCount > 0) {
+    alert(`Exported ${built.sheetCount} process sheet${built.sheetCount!==1?'s':''}. Note: ${built.noProcessCount} bucket${built.noProcessCount!==1?'s were':' was'} skipped (no process selected).`);
+  }
+  XLSX.writeFile(built.wb, built.filename, { cellStyles: true });
+  return built.exported;
 }
 
 /* ── Share (Web Share API — sends .xlsx as email attachment via OS share sheet) ── */
 async function shareExportBuckets(buckets) {
   if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
   if (!buckets || !buckets.length) { alert('No buckets to share.'); return null; }
-
-  // Build the same workbook runExportBuckets would produce, but capture it as a blob
-  // instead of triggering a download. We do this by running the full export logic and
-  // intercepting at the write step.
-  const now = new Date();
-  const p2 = n => String(n).padStart(2,'0');
-  const byGroup = {};
-  const noProcess = [];
-  const exported = [];
-  buckets.forEach(b => {
-    const p = b.header && b.header.process;
-    if (!p) { noProcess.push(b); return; }
-    const plant  = b.plant  || state.plant;
-    const stream = b.stream || state.stream;
-    const key = `${plant}||${stream}||${p}`;
-    (byGroup[key] = byGroup[key] || { plant, stream, process: p, buckets: [] }).buckets.push(b);
-    exported.push(b);
-  });
-
-  const processCounts = {};
-  Object.values(byGroup).forEach(g => { processCounts[g.process] = (processCounts[g.process]||0) + 1; });
-
-  const wb = XLSX.utils.book_new();
-  let sheetCount = 0;
-  const plantTagsUsed = new Set();
-  Object.values(byGroup).forEach(g => {
-    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
-    plantTagsUsed.add(plantTag);
-    const cols = getColumnsForProcess(g.process, g.plant, g.stream);
-    const rows = g.buckets.map(b => buildExportRow(b));
-    const aoa  = [cols.map(c=>c[0]), ...rows.map(r=>cols.map(c=>c[1](r)))];
-    const ws   = XLSX.utils.aoa_to_sheet(aoa);
-    autoFitColumns(ws, aoa);
-    styleProcessSheet(ws, cols, rows.length, g.plant);
-    let sheetName = g.process;
-    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
-    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
-    sheetCount++;
-  });
-
-  if (sheetCount === 0) {
-    alert(`${noProcess.length} bucket${noProcess.length!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before sharing.`);
+  const built = buildExportWorkbook(buckets);
+  if (built.sheetCount === 0) {
+    alert(`${built.noProcessCount} bucket${built.noProcessCount!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before sharing.`);
     return null;
   }
-  if (noProcess.length > 0) {
-    alert(`Sharing ${sheetCount} process sheet${sheetCount!==1?'s':''}. Note: ${noProcess.length} bucket${noProcess.length!==1?'s were':' was'} skipped (no process selected).`);
+  if (built.noProcessCount > 0) {
+    alert(`Sharing ${built.sheetCount} process sheet${built.sheetCount!==1?'s':''}. Note: ${built.noProcessCount} bucket${built.noProcessCount!==1?'s were':' was'} skipped (no process selected).`);
   }
-
-  // Build Summary + Bucket Detail sheets (identical logic to runExportBuckets)
-  const nowStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
-  const indexAoa = [
-    ['TAG Manufacturing — CI Time Study Export'], [],
-    ['Export Date:', nowStr],
-    ['Plant(s):', [...plantTagsUsed].join(', ')],
-    ['Total Process Sheets:', sheetCount], [],
-    ['Process', 'Sheet Tab', '# Buckets', 'Dates Covered'],
-  ];
-  Object.values(byGroup).forEach(g => {
-    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
-    let sheetName = g.process;
-    if (processCounts[g.process] > 1) sheetName = `${g.process} (${plantTag})`;
-    const dates = g.buckets.map(b => b.startTs).sort((a,b) => a-b);
-    const d1 = formatExportDate(dates[0]);
-    const d2 = formatExportDate(dates[dates.length-1]);
-    indexAoa.push([g.process, sheetName.slice(0,31), g.buckets.length, d1===d2?d1:`${d1} – ${d2}`]);
-  });
-  indexAoa.push([], ['NOTE: Use the sheet tabs at the bottom of this window to view each process.']);
-  const wsIndex = XLSX.utils.aoa_to_sheet(indexAoa);
-  wsIndex['!cols'] = [{wch:28},{wch:32},{wch:12},{wch:22}];
-  boldAllCells(wsIndex);
-  wb.SheetNames.unshift('Summary');
-  wb.Sheets['Summary'] = wsIndex;
-
-  const detailAoa = [];
-  exported.forEach((b, bi) => {
-    if (bi > 0) detailAoa.push([], []);
-    const h = b.header || {};
-    const els = b.elements || [];
-    const cycleSec = els.filter(e=>e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
-    const vaSec    = els.filter(e=>e.tier==='green').reduce((s,e)=>s+e.durationSec,0);
-    const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
-    const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
-    const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
-    const posCount = els.filter(e=>e.name==='Positioning Bucket').length;
-    detailAoa.push([`Bucket ${bi+1}`,formatExportDate(b.startTs),h.process||'(no process)',h.frameNumber?`Frame #${h.frameNumber}`:'',h.frameWidth?`Width: ${h.frameWidth}"`:'',h.operator?`Operator: ${h.operator}`:'',b.observerName?`Timed by: ${b.observerName}`:'']);
-    detailAoa.push(['Element','Category','Duration','% of Cycle','Notes']);
-    els.forEach(el => {
-      const cat = el.name===PAUSE_ELEMENT_NAME?'Pause':el.tier==='green'?'VA':el.tier==='amber'?'Nec (NNVA)':'Waste (NVA)';
-      const pct = (cycleSec>0&&(el.tier==='green'||el.tier==='amber'))?`${(el.durationSec/cycleSec*100).toFixed(1)}%`:'';
-      detailAoa.push([el.name,cat,formatMS(el.durationSec),pct,el.note||'']);
-    });
-    const pctStr = cycleSec>0?`VA: ${(vaSec/cycleSec*100).toFixed(1)}%  |  Nec: ${(nnvaSec/cycleSec*100).toFixed(1)}%`:'';
-    detailAoa.push(['TOTALS','',formatMS(cycleSec),pctStr,`Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`]);
-    if (posCount>0) { const posTotalSec=els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0); detailAoa.push(['POSITIONING',`${posCount}x`,formatMS(posTotalSec),'','']); }
-  });
-  const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
-  wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
-  boldAllCells(wsDetail);
-  XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
-
-  // Build filename
-  const plantTagsArr = [...plantTagsUsed];
-  const uniqueProcs  = [...new Set(Object.values(byGroup).map(g=>g.process))];
-  let fileLabel;
-  if (uniqueProcs.length===1&&plantTagsArr.length===1) {
-    fileLabel = `${uniqueProcs[0].replace(/[^A-Za-z0-9]+/g,'_').replace(/^_+|_+$/g,'')}_${plantTagsArr[0]}`;
-  } else { fileLabel = 'Mixed'; }
-  const fd = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}`;
-  const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
-  const filename = `TAG_TimeStudy_${fileLabel}_${fd}_${ft}.xlsx`;
-
-  // Build human-readable email subject and body
-  const dateStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()}`;
-  const procLabel = uniqueProcs.length === 1
-    ? `${uniqueProcs[0]} (${plantTagsArr[0]})`
-    : `Mixed Export (${plantTagsArr.join(', ')})`;
-  const emailSubject = `TAG Time Study — ${procLabel} — ${dateStr}`;
-  const bucketSummary = Object.values(byGroup).map(g => {
-    const plantTag = g.plant === 'Plant 2' ? `P2_${(g.stream||'').replace(/ /g,'')}` : 'P1';
-    return `${g.process} (${plantTag}): ${g.buckets.length} bucket${g.buckets.length!==1?'s':''}`;
-  }).join('\n');
-  const emailBody = `CI Time Study export attached.\n\nProcess${uniqueProcs.length!==1?'es':''}:\n${bucketSummary}\n\nExported: ${nowStr}`;
 
   // Try Web Share API with file attachment (works on Android/iOS/iPadOS)
-  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-  const file = new File([buf], filename, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const buf = XLSX.write(built.wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
+  const file = new File([buf], built.filename, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: emailSubject, text: emailBody });
+      await navigator.share({ files: [file], title: built.emailSubject, text: built.emailBody });
       // Share succeeded — fall through to return exported
     } catch(e) {
-      if (e.name === 'AbortError') {
-        // User dismissed the share sheet — do NOT mark buckets as exported
-        return null;
-      }
-      // Any other error: fall back to download so data is not lost
-      XLSX.writeFile(wb, filename, { cellStyles: true });
+      if (e.name === 'AbortError') return null; // user dismissed — do NOT mark exported
+      XLSX.writeFile(built.wb, built.filename, { cellStyles: true }); // other error: fall back to download
     }
   } else {
-    // Desktop or browser without file-share support — download instead
-    XLSX.writeFile(wb, filename, { cellStyles: true });
+    XLSX.writeFile(built.wb, built.filename, { cellStyles: true }); // desktop/no file-share support
   }
-  return exported;
+  return built.exported;
 }
+
+/* ── Backup / Restore (all data, JSON) ── */
+document.getElementById('btn-backup-data').addEventListener('click', () => {
+  const payload = { app: 'TAG Time Study', backupVersion: 1, exportedAt: Date.now(), state };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const p2 = n => String(n).padStart(2, '0');
+  const stamp = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}_${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `TAG_TimeStudy_Backup_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('btn-restore-data').addEventListener('click', () => {
+  document.getElementById('restore-file-input').click();
+});
+
+// Merge: append the backup's buckets (fresh IDs, so they never collide with current ones),
+// skipping anything that looks like an exact duplicate already in this device's history.
+function mergeImportedBuckets(incomingBuckets) {
+  let added = 0, skipped = 0;
+  const newOnes = [];
+  incomingBuckets.forEach(ib => {
+    const isDupe = state.buckets.some(b =>
+      b.startTs === ib.startTs &&
+      (b.header && b.header.process) === (ib.header && ib.header.process) &&
+      (b.elements || []).length === (ib.elements || []).length
+    );
+    if (isDupe) { skipped++; return; }
+    const clone = JSON.parse(JSON.stringify(ib));
+    clone.id = state.nextBucketId++;
+    newOnes.push(clone);
+    added++;
+  });
+  // getCurrentBucket() is "whichever bucket is last in the array" — if a live/unsealed
+  // session bucket is sitting there (e.g. a timer kept running after "Home"), imported
+  // buckets must land BEFORE it, not after, or the app would silently start treating an
+  // imported bucket as the active session instead of the one actually being timed.
+  const last = state.buckets[state.buckets.length - 1];
+  if (last && !last.sealed) {
+    state.buckets.splice(state.buckets.length - 1, 0, ...newOnes);
+  } else {
+    state.buckets.push(...newOnes);
+  }
+  saveState();
+  return { added, skipped };
+}
+
+document.getElementById('restore-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = ''; // reset so re-selecting the same file fires change again
+  if (!file) return;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch (err) {
+    alert('That file could not be read — it may be corrupted or not a TAG Time Study backup.');
+    return;
+  }
+  const incoming = (parsed && parsed.state) ? parsed.state : parsed; // tolerate a raw state object too
+  if (!incoming || !Array.isArray(incoming.buckets)) {
+    alert('That file does not look like a TAG Time Study backup (no buckets found in it).');
+    return;
+  }
+
+  const incomingCount = incoming.buckets.length;
+  const currentCount = state.buckets.length;
+  const wantMerge = confirm(
+    `This backup has ${incomingCount} bucket${incomingCount!==1?'s':''}.\n` +
+    `Your device currently has ${currentCount} bucket${currentCount!==1?'s':''}.\n\n` +
+    `OK = MERGE the backup into your current data (recommended — nothing is deleted)\n` +
+    `Cancel = choose to REPLACE everything instead, or back out`
+  );
+
+  if (wantMerge) {
+    const { added, skipped } = mergeImportedBuckets(incoming.buckets);
+    renderGrid(); renderLog(); updateSessionHomeInfo();
+    alert(`Merged: added ${added} bucket${added!==1?'s':''}${skipped ? `, skipped ${skipped} likely duplicate${skipped!==1?'s':''}` : ''}.`);
+    return;
+  }
+
+  const wantReplace = confirm(
+    `Instead, REPLACE ALL current data on this device with this backup's ${incomingCount} bucket${incomingCount!==1?'s':''}?\n\n` +
+    `This permanently discards your current ${currentCount} bucket${currentCount!==1?'s':''}. This cannot be undone.`
+  );
+  if (!wantReplace) return;
+  const typed = prompt(`Type REPLACE to confirm discarding your current ${currentCount} bucket${currentCount!==1?'s':''} and loading the backup instead.`);
+  if (typed === null || typed.trim().toUpperCase() !== 'REPLACE') return;
+
+  const safeState = Object.assign(defaultState(), incoming);
+  const maxId = safeState.buckets.reduce((m, b) => Math.max(m, b.id || 0), 0);
+  safeState.nextBucketId = Math.max(safeState.nextBucketId || 1, maxId + 1);
+  safeState.activeElement = null; // never resume a stranger's in-progress timer on reload
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(safeState));
+  window.location.reload();
+});
 
 /* ── Service Worker ── */
 let swRegistration = null;
@@ -2075,8 +2381,8 @@ if (state.activeElement) {
 // stream from scratch every time.
 if (!state.plant) {
   showScreen('screen-plant-select');
-} else if (state.plant === 'Plant 2' && !state.stream) {
-  showScreen('screen-stream-select');
+} else if (!state.stream) {
+  goToStreamSelect();
 } else {
   goToSessionHome();
 }
