@@ -2266,16 +2266,11 @@ if (state.activeElement) {
   }
 }
 
-// Resume wherever the session actually was — losing your place after a
-// forced reload (e.g. an app update) shouldn't mean re-picking plant and
-// stream from scratch every time.
-if (!state.plant) {
-  showScreen('screen-plant-select');
-} else if (!state.stream) {
-  goToStreamSelect();
-} else {
-  goToSessionHome();
-}
+// Always start fresh at the Plant / Stream picker on load — a clear, obvious entry
+// screen every time the app opens, rather than silently resuming the last session
+// (decided 2026-07-08). Any bucket that was still actively timing was already sealed
+// safely above; this only changes which screen shows first, never any saved data.
+showScreen('screen-plant-select');
 updateStatusBar();
 </script>
 </body>
