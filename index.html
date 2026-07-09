@@ -70,9 +70,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #btn-check-update { width: 90%; max-width: 420px; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.92rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
 #btn-check-update:active { border-color: var(--gold); color: var(--gold-light); }
 #btn-check-update:disabled { opacity: 0.6; cursor: default; }
-#home-data-row { width: 90%; max-width: 420px; display: flex; gap: 8px; }
-#home-data-row button { flex: 1; min-height: 50px; background: transparent; border: 2px solid #5a6a8a; color: #8a9ab8; font-size: 0.88rem; font-weight: bold; border-radius: 12px; cursor: pointer; }
-#home-data-row button:active { border-color: var(--gold); color: var(--gold-light); }
 #home-observer-wrap { width: 90%; max-width: 420px; display: flex; flex-direction: column; gap: 5px; }
 #home-observer-label { font-size: 0.75rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; }
 #home-observer-input { min-height: 52px; font-size: 1.05rem; border-radius: 10px; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.08); color: var(--text-light); padding: 8px 14px; font-family: inherit; }
@@ -320,11 +317,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
   <button class="home-btn" id="home-view-log">View Log</button>
   <button id="btn-check-update">Check for Update</button>
-  <div id="home-data-row">
-    <button id="btn-backup-data">⬇ Back Up Data</button>
-    <button id="btn-restore-data">⬆ Restore Data</button>
-  </div>
-  <input type="file" id="restore-file-input" accept="application/json,.json" style="display:none">
 </div>
 
 <!-- Session Screen -->
@@ -2222,108 +2214,6 @@ async function shareExportBuckets(buckets) {
   }
   return built.exported;
 }
-
-/* ── Backup / Restore (all data, JSON) ── */
-document.getElementById('btn-backup-data').addEventListener('click', () => {
-  const payload = { app: 'TAG Time Study', backupVersion: 1, exportedAt: Date.now(), state };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const now = new Date();
-  const p2 = n => String(n).padStart(2, '0');
-  const stamp = `${now.getFullYear()}${p2(now.getMonth()+1)}${p2(now.getDate())}_${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `TAG_TimeStudy_Backup_${stamp}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-});
-
-document.getElementById('btn-restore-data').addEventListener('click', () => {
-  document.getElementById('restore-file-input').click();
-});
-
-// Merge: append the backup's buckets (fresh IDs, so they never collide with current ones),
-// skipping anything that looks like an exact duplicate already in this device's history.
-function mergeImportedBuckets(incomingBuckets) {
-  let added = 0, skipped = 0;
-  const newOnes = [];
-  incomingBuckets.forEach(ib => {
-    const isDupe = state.buckets.some(b =>
-      b.startTs === ib.startTs &&
-      (b.header && b.header.process) === (ib.header && ib.header.process) &&
-      (b.elements || []).length === (ib.elements || []).length
-    );
-    if (isDupe) { skipped++; return; }
-    const clone = JSON.parse(JSON.stringify(ib));
-    clone.id = state.nextBucketId++;
-    newOnes.push(clone);
-    added++;
-  });
-  // getCurrentBucket() is "whichever bucket is last in the array" — if a live/unsealed
-  // session bucket is sitting there (e.g. a timer kept running after "Home"), imported
-  // buckets must land BEFORE it, not after, or the app would silently start treating an
-  // imported bucket as the active session instead of the one actually being timed.
-  const last = state.buckets[state.buckets.length - 1];
-  if (last && !last.sealed) {
-    state.buckets.splice(state.buckets.length - 1, 0, ...newOnes);
-  } else {
-    state.buckets.push(...newOnes);
-  }
-  saveState();
-  return { added, skipped };
-}
-
-document.getElementById('restore-file-input').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = ''; // reset so re-selecting the same file fires change again
-  if (!file) return;
-
-  let parsed;
-  try {
-    parsed = JSON.parse(await file.text());
-  } catch (err) {
-    alert('That file could not be read — it may be corrupted or not a TAG Time Study backup.');
-    return;
-  }
-  const incoming = (parsed && parsed.state) ? parsed.state : parsed; // tolerate a raw state object too
-  if (!incoming || !Array.isArray(incoming.buckets)) {
-    alert('That file does not look like a TAG Time Study backup (no buckets found in it).');
-    return;
-  }
-
-  const incomingCount = incoming.buckets.length;
-  const currentCount = state.buckets.length;
-  const wantMerge = confirm(
-    `This backup has ${incomingCount} bucket${incomingCount!==1?'s':''}.\n` +
-    `Your device currently has ${currentCount} bucket${currentCount!==1?'s':''}.\n\n` +
-    `OK = MERGE the backup into your current data (recommended — nothing is deleted)\n` +
-    `Cancel = choose to REPLACE everything instead, or back out`
-  );
-
-  if (wantMerge) {
-    const { added, skipped } = mergeImportedBuckets(incoming.buckets);
-    renderGrid(); renderLog(); updateSessionHomeInfo();
-    alert(`Merged: added ${added} bucket${added!==1?'s':''}${skipped ? `, skipped ${skipped} likely duplicate${skipped!==1?'s':''}` : ''}.`);
-    return;
-  }
-
-  const wantReplace = confirm(
-    `Instead, REPLACE ALL current data on this device with this backup's ${incomingCount} bucket${incomingCount!==1?'s':''}?\n\n` +
-    `This permanently discards your current ${currentCount} bucket${currentCount!==1?'s':''}. This cannot be undone.`
-  );
-  if (!wantReplace) return;
-  const typed = prompt(`Type REPLACE to confirm discarding your current ${currentCount} bucket${currentCount!==1?'s':''} and loading the backup instead.`);
-  if (typed === null || typed.trim().toUpperCase() !== 'REPLACE') return;
-
-  const safeState = Object.assign(defaultState(), incoming);
-  const maxId = safeState.buckets.reduce((m, b) => Math.max(m, b.id || 0), 0);
-  safeState.nextBucketId = Math.max(safeState.nextBucketId || 1, maxId + 1);
-  safeState.activeElement = null; // never resume a stranger's in-progress timer on reload
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(safeState));
-  window.location.reload();
-});
 
 /* ── Service Worker ── */
 let swRegistration = null;
