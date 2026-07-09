@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tag-time-study-v60';
+const CACHE_NAME = 'tag-time-study-v61';
 
 const CORE_ASSETS = ['./', './index.html', './logo.png'];
 const CDN_SHEETJS = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
@@ -28,9 +28,13 @@ self.addEventListener('fetch', e => {
   const isCDN  = url.origin !== self.location.origin;
 
   if (isHTML) {
-    // Network-first for HTML: always try to fetch fresh, fall back to cache
+    // Network-first for HTML: always try to fetch fresh, fall back to cache.
+    // cache:'no-store' forces this past the browser's own HTTP cache — without it,
+    // "network-first" can still silently hand back a stale cached response instead
+    // of actually reaching the server, which is exactly why updates can appear to
+    // not exist even right after a fresh push.
     e.respondWith(
-      fetch(e.request).then(response => {
+      fetch(e.request, { cache: 'no-store' }).then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
