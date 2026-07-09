@@ -141,7 +141,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .log-action-btn { flex: 1; min-width: 120px; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
 .log-action-btn.secondary { background: transparent; color: var(--gold-light); }
 .log-action-btn.selected-export { background: #1565c0; border-color: #1565c0; color: #fff; }
-.log-action-btn.share-btn { background: #1a6b3c; border-color: #1a6b3c; color: #fff; }
 .log-action-btn:disabled { opacity: 0.4; cursor: default; }
 .bucket-checkbox-wrap { display: flex; align-items: center; padding: 0 6px 0 2px; }
 .bucket-checkbox { width: 22px; height: 22px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
@@ -167,7 +166,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .bucket-action-btn.edit   { background: var(--navy); border: 2px solid var(--gold); color: var(--gold-light); }
 .bucket-action-btn.export { background: var(--gold); color: var(--navy); }
 .bucket-action-btn.export.done { background: #2e5c2e; color: #90ee90; }
-.bucket-action-btn.share { background: #1a6b3c; color: #fff; }
 .bucket-action-btn.delete { background: var(--red); color: #fff; }
 .bucket-elements { margin-top: 8px; border-top: 1px solid rgba(212,160,23,0.4); padding-top: 6px; display: none; flex-direction: column; gap: 4px; }
 .bucket-row.expanded .bucket-elements { display: flex; }
@@ -313,7 +311,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <button class="observer-preset-btn" data-name="Robert">Robert</button>
     </div>
   </div>
-  <button class="home-btn" id="home-new-bucket">▶ New Bucket</button>
+  <button class="home-btn" id="home-new-bucket">▶ New Cycle</button>
   <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
   <button class="home-btn" id="home-view-log">View Log</button>
   <button id="btn-check-update">Check for Update</button>
@@ -327,7 +325,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <div class="topbar-subtitle" id="session-bucket-label"></div>
     </div>
     <div class="topbar-right">
-      <button id="btn-end-bucket">END BUCKET</button>
+      <button id="btn-end-bucket">END CYCLE</button>
       <button class="back-btn" id="session-go-home">Home</button>
     </div>
   </div>
@@ -394,11 +392,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   </div>
   <div id="log-action-bar">
     <button class="log-action-btn" id="log-export-new">Export Unexported</button>
-    <button class="log-action-btn share-btn" id="log-share-new">📤 Share Unexported</button>
     <button class="log-action-btn secondary" id="log-export-all">Export All</button>
-    <button class="log-action-btn share-btn secondary" id="log-share-all" style="background:transparent;border-color:#1a6b3c;color:#4caf50;">📤 Share All</button>
     <button class="log-action-btn selected-export" id="log-export-selected" style="display:none">Export Selected (<span id="log-selected-count">0</span>)</button>
-    <button class="log-action-btn share-btn" id="log-share-selected" style="display:none">📤 Share Selected (<span id="log-share-selected-count">0</span>)</button>
   </div>
   <div id="log-list"></div>
 </div>
@@ -456,7 +451,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <!-- Edit Modal (log editing only) -->
 <div id="modal-overlay">
   <div id="bucket-modal">
-    <h2 id="modal-title">Edit Bucket</h2>
+    <h2 id="modal-title">Edit Cycle</h2>
     <div class="modal-field">
       <label>Process</label>
       <select id="modal-process"></select>
@@ -611,7 +606,7 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
-    alert('WARNING: Could not save — your tablet storage may be full. This bucket\'s data may not be saved. Export what you can now.');
+    alert('WARNING: Could not save — your tablet storage may be full. This cycle\'s data may not be saved. Export what you can now.');
   }
 }
 
@@ -702,7 +697,7 @@ function updateSessionHomeInfo() {
   const drafts = state.buckets.filter(b => b.isDraft);
   const n = completed.length;
   const unexported = completed.filter(b => !b.exportedAt).length;
-  let txt = n === 0 ? 'No buckets logged yet' : `${n} bucket${n!==1?'s':''} logged`;
+  let txt = n === 0 ? 'No cycles logged yet' : `${n} cycle${n!==1?'s':''} logged`;
   if (n > 0 && unexported > 0) txt += ` · ${unexported} not yet exported`;
   if (n > 0 && unexported === 0) txt += ' · all exported ✓';
   if (drafts.length > 0) txt += ` · ${drafts.length} draft${drafts.length!==1?'s':''}`;
@@ -736,7 +731,7 @@ document.getElementById('home-change-plant').addEventListener('click', () => {
   // always uses that stamp, so old buckets never need to be deleted just
   // because the current plant selection changes.
   if (state.activeElement) {
-    if (!confirm(`You are timing "${state.activeElement.name}". Changing plant will stop this timer and seal the current bucket. Continue?`)) return;
+    if (!confirm(`You are timing "${state.activeElement.name}". Changing plant will stop this timer and seal the current cycle. Continue?`)) return;
   }
   const last = getCurrentBucket();
   if (last && !last.sealed) {
@@ -953,7 +948,7 @@ function bucketTimeLabel(bucket) {
 
 function bucketSubtitleText() {
   const b = getCurrentBucket();
-  if (!b) return 'No active bucket';
+  if (!b) return 'No active cycle';
   const h = b.header || {};
   const parts = [];
   if (h.process) parts.push(h.process);
@@ -978,7 +973,7 @@ function renderGrid() {
   const isSealed = last && last.sealed;
   const banner = document.getElementById('sealed-banner');
   if (isSealed) {
-    banner.textContent = `✓ ${bucketTimeLabel(last)} ended — tap an element or NEW BUCKET to continue`;
+    banner.textContent = `✓ ${bucketTimeLabel(last)} ended — tap an element or NEW CYCLE to continue`;
     banner.classList.add('visible');
   } else {
     banner.textContent = '';
@@ -1008,7 +1003,7 @@ function renderGrid() {
   // NEW BUCKET button as last element
   const nbBtn = document.createElement('button');
   nbBtn.className = 'element-btn new-bucket-el-btn';
-  nbBtn.innerHTML = '+ NEW<br>BUCKET';
+  nbBtn.innerHTML = '+ NEW<br>CYCLE';
   nbBtn.addEventListener('click', () => {
     clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
     stopActiveElement(Date.now());
@@ -1101,7 +1096,7 @@ function renderTimerDetails() {
   content.classList.toggle('open', timerDetailsOpen);
 
   if (!b) {
-    summaryEl.textContent = 'No active bucket';
+    summaryEl.textContent = 'No active cycle';
     document.getElementById('td-process').innerHTML = '<option value="">— Select process —</option>';
     ['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-partnum','td-process-text']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = id === 'td-obs' ? '1' : ''; });
@@ -1379,7 +1374,7 @@ function deleteBucket(bucketId) {
   // This is the ONLY way bucket data can be deleted in this app. Requires
   // typing DELETE rather than a plain OK/Cancel — a single mis-tap must
   // never be able to destroy a day's worth of timing data again.
-  const typed = prompt(`Delete bucket "${label}" (${elCount} element${elCount!==1?'s':''} timed, ${bucket.exportedAt ? 'already exported' : 'NOT exported'})?\n\nThis cannot be undone. Type DELETE to confirm.`);
+  const typed = prompt(`Delete cycle "${label}" (${elCount} element${elCount!==1?'s':''} timed, ${bucket.exportedAt ? 'already exported' : 'NOT exported'})?\n\nThis cannot be undone. Type DELETE to confirm.`);
   if (typed === null || typed.trim().toUpperCase() !== 'DELETE') return;
   if (state.activeElement && state.activeElement.bucketId === bucketId) {
     state.activeElement = null; syncWakeLock(); updateStatusBar();
@@ -1461,17 +1456,14 @@ function renderLog() {
   if (!isHistory) {
     const exportable = buckets.filter(b => !b.isDraft && b.sealed).length;
     const expNewBtn = document.getElementById('log-export-new');
-    const shareNewBtn = document.getElementById('log-share-new');
     expNewBtn.textContent = `Export Unexported${exportable > 0 ? ` (${exportable})` : ''}`;
     expNewBtn.disabled = exportable === 0;
-    shareNewBtn.textContent = `📤 Share Unexported${exportable > 0 ? ` (${exportable})` : ''}`;
-    shareNewBtn.disabled = exportable === 0;
   }
 
   if (buckets.length === 0) {
     list.innerHTML = isHistory
-      ? '<div class="empty-log-msg">No exported buckets yet.<br><small style="color:#7a8aaa;">Exported buckets appear here.</small></div>'
-      : '<div class="empty-log-msg">No buckets yet.<br><small style="color:#7a8aaa;">Tap New Bucket to start timing.</small></div>';
+      ? '<div class="empty-log-msg">No exported cycles yet.<br><small style="color:#7a8aaa;">Exported cycles appear here.</small></div>'
+      : '<div class="empty-log-msg">No cycles yet.<br><small style="color:#7a8aaa;">Tap New Cycle to start timing.</small></div>';
     return;
   }
 
@@ -1528,10 +1520,9 @@ function renderLog() {
           ${isLive
             ? `<button class="bucket-action-btn edit" data-jumpin="${bucket.id}">▶ Jump In</button>`
             : bucket.isDraft
-              ? `<button class="bucket-action-btn edit" data-resume="${bucket.id}" ${hasLiveBucket ? 'disabled title="Finish the live bucket first"' : ''}>▶ Resume</button>`
+              ? `<button class="bucket-action-btn edit" data-resume="${bucket.id}" ${hasLiveBucket ? 'disabled title="Finish the live cycle first"' : ''}>▶ Resume</button>`
               : `<button class="bucket-action-btn edit" data-edit="${bucket.id}">Edit</button>
-                 <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>
-                 <button class="bucket-action-btn share" data-share="${bucket.id}">📤 Share</button>`}
+                 <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>`}
           <button class="bucket-action-btn delete" data-delete="${bucket.id}">Delete</button>
         </div>
       </div>
@@ -1561,12 +1552,6 @@ function renderLog() {
         const exported = runExportBuckets([bucket]);
         if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); showExportToast(); }
       });
-      row.querySelector('[data-share]').addEventListener('click', e => {
-        e.stopPropagation();
-        shareExportBuckets([bucket]).then(exported => {
-          if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); }
-        });
-      });
     }
     row.querySelectorAll('.el-edit-btn').forEach(btn => {
       btn.addEventListener('click', e => {
@@ -1583,7 +1568,7 @@ function renderLog() {
         if (!b) return;
         const el = b.elements[eIdx];
         if (!el) return;
-        if (!confirm(`Delete "${el.name}" (${formatMS(el.durationSec)}) from this bucket?`)) return;
+        if (!confirm(`Delete "${el.name}" (${formatMS(el.durationSec)}) from this cycle?`)) return;
         b.elements.splice(eIdx, 1);
         saveState();
         renderLog();
@@ -1616,13 +1601,9 @@ let selectedBucketIds = new Set();
 function syncExportSelectedBtn() {
   const count = selectedBucketIds.size;
   const exportBtn = document.getElementById('log-export-selected');
-  const shareBtn  = document.getElementById('log-share-selected');
   const countEl   = document.getElementById('log-selected-count');
-  const shareCountEl = document.getElementById('log-share-selected-count');
   exportBtn.style.display = count > 0 ? '' : 'none';
-  shareBtn.style.display  = count > 0 ? '' : 'none';
   if (countEl) countEl.textContent = count;
-  if (shareCountEl) shareCountEl.textContent = count;
 }
 
 document.getElementById('log-sub-active').addEventListener('click', () => {
@@ -1649,18 +1630,6 @@ document.getElementById('log-export-selected').addEventListener('click', () => {
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
 });
-document.getElementById('log-share-selected').addEventListener('click', () => {
-  const toShare = state.buckets.filter(b => selectedBucketIds.has(b.id) && !b.isDraft && b.sealed);
-  if (!toShare.length) { alert('No valid buckets selected.'); return; }
-  shareExportBuckets(toShare).then(exported => {
-    if (exported) {
-      exported.forEach(b => { b.exportedAt = Date.now(); });
-      selectedBucketIds.clear();
-      syncExportSelectedBtn();
-      saveState(); renderLog(); updateSessionHomeInfo();
-    }
-  });
-});
 
 document.getElementById('log-export-new').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
@@ -1670,29 +1639,12 @@ document.getElementById('log-export-new').addEventListener('click', () => {
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
 });
-document.getElementById('log-share-new').addEventListener('click', () => {
-  const toShare = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
-  shareExportBuckets(toShare).then(exported => {
-    if (exported) {
-      exported.forEach(b => { b.exportedAt = Date.now(); });
-      saveState(); renderLog(); updateSessionHomeInfo();
-    }
-  });
-});
 document.getElementById('log-export-all').addEventListener('click', () => {
   const exported = runExportBuckets(state.buckets.filter(b => !b.isDraft && b.sealed));
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
-});
-document.getElementById('log-share-all').addEventListener('click', () => {
-  shareExportBuckets(state.buckets.filter(b => !b.isDraft && b.sealed)).then(exported => {
-    if (exported) {
-      exported.forEach(b => { b.exportedAt = Date.now(); });
-      saveState(); renderLog(); updateSessionHomeInfo();
-    }
-  });
 });
 
 /* ── Edit Modal (log only) ── */
@@ -1989,9 +1941,9 @@ function sanitizeSheetNameChars(name) {
   return s || 'Custom';
 }
 
-// Builds the full export workbook (process sheets + Summary + Bucket Detail) shared by
-// both the download and share paths. Silent — callers handle alerts and output.
-// Returns { wb, exported, sheetCount, noProcessCount, filename, emailSubject, emailBody }.
+// Builds the full export workbook (process sheets + Summary + Bucket Detail).
+// Silent — callers handle alerts and output.
+// Returns { wb, exported, sheetCount, noProcessCount, filename }.
 function buildExportWorkbook(buckets) {
   // Group by (plant + stream + process) — each bucket carries its OWN plant/stream
   // stamped at creation, so re-exporting old history always uses the correct schema.
@@ -2144,7 +2096,7 @@ function buildExportWorkbook(buckets) {
     XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
   }
 
-  // Filename + email text (per-second timestamp so repeated exports never collide)
+  // Filename (per-second timestamp so repeated exports never collide)
   const plantTagsArr = [...plantTagsUsed];
   const uniqueProcs  = [...new Set(Object.values(byGroup).map(g => g.process))];
   let fileLabel;
@@ -2157,16 +2109,7 @@ function buildExportWorkbook(buckets) {
   const ft = `${p2(now.getHours())}${p2(now.getMinutes())}${p2(now.getSeconds())}`;
   const filename = `TAG_TimeStudy_${fileLabel}_${fd}_${ft}.xlsx`;
 
-  const dateStr = `${p2(now.getMonth()+1)}/${p2(now.getDate())}/${now.getFullYear()}`;
-  const procLabel = uniqueProcs.length === 1
-    ? `${uniqueProcs[0]} (${plantTagsArr[0]})`
-    : `Mixed Export (${plantTagsArr.join(', ')})`;
-  const emailSubject = `TAG Time Study — ${procLabel} — ${dateStr}`;
-  const bucketSummary = Object.values(byGroup).map(g =>
-    `${g.process} (${groupTag(g)}): ${g.buckets.length} bucket${g.buckets.length!==1?'s':''}`).join('\n');
-  const emailBody = `CI Time Study export attached.\n\nProcess${uniqueProcs.length!==1?'es':''}:\n${bucketSummary}\n\nExported: ${nowStr}`;
-
-  return { wb, exported, sheetCount, noProcessCount: noProcess.length, filename, emailSubject, emailBody };
+  return { wb, exported, sheetCount, noProcessCount: noProcess.length, filename };
 }
 
 // Downloads the export .xlsx. Returns buckets written, or null on failure.
@@ -2182,36 +2125,6 @@ function runExportBuckets(buckets) {
     alert(`Exported ${built.sheetCount} process sheet${built.sheetCount!==1?'s':''}. Note: ${built.noProcessCount} bucket${built.noProcessCount!==1?'s were':' was'} skipped (no process selected).`);
   }
   XLSX.writeFile(built.wb, built.filename, { cellStyles: true });
-  return built.exported;
-}
-
-/* ── Share (Web Share API — sends .xlsx as email attachment via OS share sheet) ── */
-async function shareExportBuckets(buckets) {
-  if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
-  if (!buckets || !buckets.length) { alert('No buckets to share.'); return null; }
-  const built = buildExportWorkbook(buckets);
-  if (built.sheetCount === 0) {
-    alert(`${built.noProcessCount} bucket${built.noProcessCount!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before sharing.`);
-    return null;
-  }
-  if (built.noProcessCount > 0) {
-    alert(`Sharing ${built.sheetCount} process sheet${built.sheetCount!==1?'s':''}. Note: ${built.noProcessCount} bucket${built.noProcessCount!==1?'s were':' was'} skipped (no process selected).`);
-  }
-
-  // Try Web Share API with file attachment (works on Android/iOS/iPadOS)
-  const buf = XLSX.write(built.wb, { bookType: 'xlsx', type: 'array', cellStyles: true });
-  const file = new File([buf], built.filename, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title: built.emailSubject, text: built.emailBody });
-      // Share succeeded — fall through to return exported
-    } catch(e) {
-      if (e.name === 'AbortError') return null; // user dismissed — do NOT mark exported
-      XLSX.writeFile(built.wb, built.filename, { cellStyles: true }); // other error: fall back to download
-    }
-  } else {
-    XLSX.writeFile(built.wb, built.filename, { cellStyles: true }); // desktop/no file-share support
-  }
   return built.exported;
 }
 
