@@ -285,6 +285,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   <div class="stream-content">
     <h1>SELECT VALUE STREAM</h1>
     <div id="stream-btn-container"></div>
+    <button class="home-btn" id="stream-view-log">View Log</button>
   </div>
 </div>
 
@@ -325,6 +326,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <div class="topbar-subtitle" id="session-bucket-label"></div>
     </div>
     <div class="topbar-right">
+      <button class="back-btn" id="session-view-log">Log</button>
       <button id="btn-end-bucket">END CYCLE</button>
       <button class="back-btn" id="session-go-home">Home</button>
     </div>
@@ -384,7 +386,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <div class="screen" id="screen-log">
   <div class="topbar">
     <span class="plant-label">SESSION LOG</span>
-    <button class="back-btn" id="log-go-home">← Home</button>
+    <button class="back-btn" id="log-go-home">← Back</button>
   </div>
   <div id="log-sub-tabs">
     <button class="log-sub-tab active" id="log-sub-active">ACTIVE</button>
@@ -668,11 +670,16 @@ function createNewBucket() {
 }
 
 /* ── Screen navigation ── */
-const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select','screen-session-home','screen-log']);
+const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select','screen-session-home']);
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  document.getElementById('status-bar').classList.toggle('visible', !SCREENS_WITHOUT_STATUS.has(id));
+  // The Log screen is now reachable while actively timing (View Log from the
+  // session screen) — keep the running-timer status bar visible there too so
+  // the operator can still see the clock while browsing, but only when a
+  // timer is actually live; otherwise it'd show a stale "Tap an element..." bar.
+  const showStatusBar = id === 'screen-log' ? !!state.activeElement : !SCREENS_WITHOUT_STATUS.has(id);
+  document.getElementById('status-bar').classList.toggle('visible', showStatusBar);
 }
 
 /* ── Plant / Stream select ── */
@@ -785,7 +792,9 @@ document.getElementById('home-new-bucket').addEventListener('click', () => {
 });
 
 document.getElementById('home-resume-timing').addEventListener('click', goToSession);
-document.getElementById('home-view-log').addEventListener('click', goToLogScreen);
+document.getElementById('home-view-log').addEventListener('click', goToLogFromSessionHome);
+document.getElementById('stream-view-log').addEventListener('click', goToLogFromStreamSelect);
+document.getElementById('session-view-log').addEventListener('click', goToLogFromSession);
 
 let observerNameSaveTimer = null;
 document.getElementById('home-observer-input').addEventListener('input', () => {
@@ -857,10 +866,21 @@ function goToSession() {
   showScreen('screen-session');
 }
 
+// Log can be reached from more than one screen (Session Home, Stream Select
+// before a stream is even picked, and now the live timing screen) — remember
+// which one so "← Home" can return to the right place instead of always
+// landing on Session Home, which would render wrong/blank without a stream
+// selected yet, or would stop showing the live timer.
+let logReturnScreen = 'session-home'; // 'session-home' | 'stream-select' | 'session'
 function goToLogScreen() {
   renderLog();
   showScreen('screen-log');
 }
+function goToLogFromSessionHome() { logReturnScreen = 'session-home'; goToLogScreen(); }
+function goToLogFromStreamSelect() { logReturnScreen = 'stream-select'; goToLogScreen(); }
+// Viewing the log while actively timing must NOT stop the running element —
+// state.activeElement is left untouched, it just keeps counting in the background.
+function goToLogFromSession() { logReturnScreen = 'session'; goToLogScreen(); }
 
 function openProcessOverlay() {
   const grid = document.getElementById('process-overlay-grid');
@@ -915,7 +935,11 @@ document.getElementById('custom-process-input').addEventListener('keydown', e =>
 
 document.getElementById('stream-go-back').addEventListener('click', () => showScreen('screen-plant-select'));
 document.getElementById('process-overlay-cancel').addEventListener('click', closeProcessOverlay);
-document.getElementById('log-go-home').addEventListener('click', goToSessionHome);
+document.getElementById('log-go-home').addEventListener('click', () => {
+  if (logReturnScreen === 'stream-select') goToStreamSelect();
+  else if (logReturnScreen === 'session') goToSession();
+  else goToSessionHome();
+});
 
 document.getElementById('session-go-home').addEventListener('click', () => {
   if (state.activeElement) {
