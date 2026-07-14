@@ -596,11 +596,19 @@ function defaultState() {
 }
 let state = loadState();
 function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return defaultState();
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultState();
     return Object.assign(defaultState(), JSON.parse(raw));
-  } catch(e) { return defaultState(); }
+  } catch(e) {
+    // Corrupted save (e.g. tablet lost power mid-write). Stash the unreadable raw
+    // string under a separate key BEFORE returning a blank state — otherwise the
+    // next saveState() call would silently overwrite it, destroying any chance of
+    // manual recovery. Loudly warn instead of silently starting over with no data.
+    try { localStorage.setItem(STORAGE_KEY + '_corrupted_backup', raw); } catch (e2) { /* best effort */ }
+    alert('WARNING: Your saved time study data could not be read (it may be corrupted). Starting with a blank log so you can keep working — the unreadable data was NOT deleted and may be recoverable. Contact Chase before doing anything else if you had unsaved cycles.');
+    return defaultState();
+  }
 }
 function saveState() {
   try {
@@ -1336,7 +1344,7 @@ function formatMS(s) { const p=n=>String(n).padStart(2,'0'); return `${p(Math.fl
 function formatClockTime(ts) { return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 function formatDate(ts) { return new Date(ts).toLocaleDateString([],{month:'short',day:'numeric'}); }
 
-function resumeDraft(bucketId) {
+function resumeBucket(bucketId) {
   // Seal any current unsealed bucket first
   const current = getCurrentBucket();
   if (current && !current.sealed && current.id !== bucketId) {
@@ -1347,12 +1355,20 @@ function resumeDraft(bucketId) {
     else if (hasHeader && current.elements.length === 0) { current.isDraft = true; current.sealed = true; }
     else { current.sealed = true; current.isDraft = false; }
   }
-  // Move the draft to end of array and unseal it
+  // Move the bucket to end of array and unseal it
   const idx = state.buckets.findIndex(b => b.id === bucketId);
   if (idx === -1) return;
   const [b] = state.buckets.splice(idx, 1);
   b.sealed = false; b.isDraft = false;
+  // A previously exported bucket that's being reopened is about to gain new
+  // timed elements, which the old export doesn't contain — clear the exported
+  // stamp so the Log correctly flags it as needing a fresh export again.
+  b.exportedAt = null;
   state.buckets.push(b);
+  // This bucket is leaving the checkable/sealed set — drop any stale bulk-export
+  // selection so the "Export Selected" count doesn't keep counting a bucket that's
+  // now live again.
+  selectedBucketIds.delete(bucketId);
   // The Log screen isn't scoped to the current plant/stream — a draft can belong to a
   // totally different one than whatever is currently selected. Every UI decision on the
   // session screen (process list, Part Number vs Frame/Width fields, topbar label) reads
@@ -1519,9 +1535,10 @@ function renderLog() {
         <div class="bucket-row-btns">
           ${isLive
             ? `<button class="bucket-action-btn edit" data-jumpin="${bucket.id}">▶ Jump In</button>`
-            : bucket.isDraft
+            : (bucket.isDraft || !bucket.sealed)
               ? `<button class="bucket-action-btn edit" data-resume="${bucket.id}" ${hasLiveBucket ? 'disabled title="Finish the live cycle first"' : ''}>▶ Resume</button>`
-              : `<button class="bucket-action-btn edit" data-edit="${bucket.id}">Edit</button>
+              : `<button class="bucket-action-btn edit" data-resume="${bucket.id}" ${hasLiveBucket ? 'disabled title="Finish the live cycle first"' : ''}>▶ Resume</button>
+                 <button class="bucket-action-btn edit" data-edit="${bucket.id}">Edit</button>
                  <button class="bucket-action-btn export ${bucket.exportedAt?'done':''}" data-export="${bucket.id}">${bucket.exportedAt?'✓ Re-export':'Export'}</button>`}
           <button class="bucket-action-btn delete" data-delete="${bucket.id}">Delete</button>
         </div>
@@ -1542,12 +1559,13 @@ function renderLog() {
 
     if (isLive) {
       row.querySelector('[data-jumpin]').addEventListener('click', e => { e.stopPropagation(); goToSession(); });
-    } else if (bucket.isDraft) {
-      const resumeBtn = row.querySelector('[data-resume]');
-      if (resumeBtn && !resumeBtn.disabled) resumeBtn.addEventListener('click', e => { e.stopPropagation(); resumeDraft(bucket.id); });
     } else {
-      row.querySelector('[data-edit]').addEventListener('click', e => { e.stopPropagation(); openEditModal(bucket.id); });
-      row.querySelector('[data-export]').addEventListener('click', e => {
+      const resumeBtn = row.querySelector('[data-resume]');
+      if (resumeBtn && !resumeBtn.disabled) resumeBtn.addEventListener('click', e => { e.stopPropagation(); resumeBucket(bucket.id); });
+      const editBtn = row.querySelector('[data-edit]');
+      if (editBtn) editBtn.addEventListener('click', e => { e.stopPropagation(); openEditModal(bucket.id); });
+      const exportBtn = row.querySelector('[data-export]');
+      if (exportBtn) exportBtn.addEventListener('click', e => {
         e.stopPropagation();
         const exported = runExportBuckets([bucket]);
         if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); showExportToast(); }
@@ -1621,7 +1639,7 @@ document.getElementById('log-sub-history').addEventListener('click', () => {
 
 document.getElementById('log-export-selected').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => selectedBucketIds.has(b.id) && !b.isDraft && b.sealed);
-  if (!toExport.length) { alert('No valid buckets selected.'); return; }
+  if (!toExport.length) { alert('No valid cycles selected.'); return; }
   const exported = runExportBuckets(toExport);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
@@ -1941,7 +1959,7 @@ function sanitizeSheetNameChars(name) {
   return s || 'Custom';
 }
 
-// Builds the full export workbook (process sheets + Summary + Bucket Detail).
+// Builds the full export workbook (process sheets + Summary + Cycle Detail).
 // Silent — callers handle alerts and output.
 // Returns { wb, exported, sheetCount, noProcessCount, filename }.
 function buildExportWorkbook(buckets) {
@@ -1958,7 +1976,10 @@ function buildExportWorkbook(buckets) {
     // the same way bucketStream() does, rather than falling back to whatever stream is
     // CURRENTLY selected in the UI (which may be a totally different session/plant).
     const stream = b.stream || (plant === 'Plant 1' ? 'Large Bucket' : state.stream);
-    const key = `${plant}||${stream}||${p}`;
+    // Custom Process names are free-typed, so group by a case/whitespace-normalized key —
+    // otherwise "Teeth Install" and "teeth install" would land on two separate sheets
+    // instead of consolidating, defeating the point of grouping same-process studies together.
+    const key = `${plant}||${stream}||${p.trim().toLowerCase()}`;
     (byGroup[key] = byGroup[key] || { plant, stream, process: p, buckets: [] }).buckets.push(b);
     exported.push(b);
   });
@@ -1982,10 +2003,14 @@ function buildExportWorkbook(buckets) {
   // Last-resort safety net: even with the tag above, two Custom Process names in the exact
   // same plant+stream can still sanitize to an identical string. Never let that crash the
   // export — append a numeric suffix until the name is actually unique in this workbook.
+  // 'Summary' and 'Cycle Detail' are reserved for the meta sheets appended after this loop
+  // runs (so they wouldn't show up in wb.SheetNames yet) — a Custom Process typed as exactly
+  // one of those names would otherwise silently overwrite or crash on the meta sheet later.
+  const RESERVED_SHEET_NAMES = ['Summary', 'Cycle Detail'];
   function uniqueSheetName(candidate) {
     let name = candidate.slice(0, 31);
     let n = 2;
-    while (wb.SheetNames.includes(name)) {
+    while (wb.SheetNames.includes(name) || RESERVED_SHEET_NAMES.includes(name)) {
       const suffix = ` (${n})`;
       name = candidate.slice(0, 31 - suffix.length) + suffix;
       n++;
@@ -2027,7 +2052,7 @@ function buildExportWorkbook(buckets) {
       ['Plant(s):', [...plantTagsUsed].join(', ')],
       ['Total Process Sheets:', sheetCount],
       [],
-      ['Process', 'Sheet Tab', '# Buckets', 'Dates Covered'],
+      ['Process', 'Sheet Tab', '# Cycles', 'Dates Covered'],
     ];
     Object.values(byGroup).forEach(g => {
       const dates = g.buckets.map(b => b.startTs).sort((a,b) => a-b);
@@ -2043,7 +2068,7 @@ function buildExportWorkbook(buckets) {
     wb.SheetNames.unshift('Summary');
     wb.Sheets['Summary'] = wsIndex;
 
-    // Bucket Detail tab — one section per bucket
+    // Cycle Detail tab — one section per bucket
     const detailAoa = [];
     exported.forEach((b, bi) => {
       if (bi > 0) detailAoa.push([], []);
@@ -2058,7 +2083,7 @@ function buildExportWorkbook(buckets) {
       const pnBucket = isPartNumberBucket(b);
 
       detailAoa.push([
-        `Bucket ${bi+1}`,
+        `Cycle ${bi+1}`,
         formatExportDate(b.startTs),
         h.process || '(no process)',
         pnBucket ? (h.partNumber ? `Part #: ${h.partNumber}` : '') : (h.frameNumber ? `Frame #${h.frameNumber}` : ''),
@@ -2093,7 +2118,7 @@ function buildExportWorkbook(buckets) {
     const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
     wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
     boldAllCells(wsDetail);
-    XLSX.utils.book_append_sheet(wb, wsDetail, 'Bucket Detail');
+    XLSX.utils.book_append_sheet(wb, wsDetail, 'Cycle Detail');
   }
 
   // Filename (per-second timestamp so repeated exports never collide)
@@ -2115,14 +2140,14 @@ function buildExportWorkbook(buckets) {
 // Downloads the export .xlsx. Returns buckets written, or null on failure.
 function runExportBuckets(buckets) {
   if (typeof XLSX === 'undefined') { alert('Export library not loaded. Connect to internet once to cache it, then retry.'); return null; }
-  if (!buckets || !buckets.length) { alert('No buckets to export.'); return null; }
+  if (!buckets || !buckets.length) { alert('No cycles to export.'); return null; }
   const built = buildExportWorkbook(buckets);
   if (built.sheetCount === 0) {
-    alert(`${built.noProcessCount} bucket${built.noProcessCount!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before exporting.`);
+    alert(`${built.noProcessCount} cycle${built.noProcessCount!==1?'s have':' has'} no process selected. Open the DETAILS panel and pick a process before exporting.`);
     return null;
   }
   if (built.noProcessCount > 0) {
-    alert(`Exported ${built.sheetCount} process sheet${built.sheetCount!==1?'s':''}. Note: ${built.noProcessCount} bucket${built.noProcessCount!==1?'s were':' was'} skipped (no process selected).`);
+    alert(`Exported ${built.sheetCount} process sheet${built.sheetCount!==1?'s':''}. Note: ${built.noProcessCount} cycle${built.noProcessCount!==1?'s were':' was'} skipped (no process selected).`);
   }
   XLSX.writeFile(built.wb, built.filename, { cellStyles: true });
   return built.exported;
