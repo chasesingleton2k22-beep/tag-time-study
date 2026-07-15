@@ -427,8 +427,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <div id="edit-duration-overlay">
   <div id="edit-duration-modal">
     <div id="edit-duration-title">EDIT DURATION: <span id="edit-duration-name"></span></div>
-    <div id="edit-duration-hint">Format: mm:ss (e.g. 2:30)</div>
-    <input id="edit-duration-input" type="text" placeholder="m:ss" inputmode="numeric" autocomplete="off">
+    <div id="edit-duration-hint">Format: mm:ss (e.g. 2:30) — or type +/-mm:ss to add/remove time (e.g. -2:00)</div>
+    <input id="edit-duration-input" type="text" placeholder="m:ss or -m:ss" inputmode="numeric" autocomplete="off">
     <button id="edit-duration-save">✓ Save Duration</button>
     <button id="edit-duration-cancel">Cancel</button>
   </div>
@@ -557,12 +557,14 @@ const COMMON_ELEMENTS = [
   { name: 'Unloading Parts',        tier: 'amber' },
   { name: 'Preheat Time',           tier: 'amber' },
   { name: 'Adjusting Parts',        tier: 'amber' },
+  { name: 'Adjusting Ladder',       tier: 'amber' },
   { name: 'Paperwork',              tier: 'amber' },
   { name: 'Operating Crane',        tier: 'amber' },
   { name: 'Placing Parts in Jig',   tier: 'amber' },
   { name: 'Cleaning Jig',           tier: 'amber' },
   { name: 'Cleaning Welding Lead',  tier: 'amber' },
   { name: 'Positioning Bucket',     tier: 'amber' },
+  { name: 'Positioning Operator',   tier: 'amber' },
   { name: 'Changing Wire',          tier: 'amber' },
   { name: 'Operating Forklift',     tier: 'amber' },
   { name: 'Changeover',             tier: 'amber' },
@@ -1429,14 +1431,22 @@ function deleteBucket(bucketId) {
 let editingDurationBucketId = null;
 let editingDurationElIdx = null;
 
-// Accepts "m:ss", "mm:ss", or a plain number of seconds. Returns whole seconds, or null if invalid.
-function parseDurationInput(str) {
-  const s = String(str || '').trim();
-  if (!s) return null;
+// Accepts an absolute "m:ss"/"mm:ss"/plain number of seconds, OR a signed delta
+// ("+m:ss"/"-m:ss"/"+ss"/"-ss") applied relative to currentSec — so shaving "2 minutes"
+// off a mistimed element is "-2:00" instead of having to compute and retype the whole
+// new total. Returns whole seconds (deltas clamped to >= 0), or null if invalid.
+function parseDurationInput(str, currentSec) {
+  const raw = String(str || '').trim();
+  if (!raw) return null;
+  const signMatch = raw.match(/^([+-])\s*(.+)$/);
+  const sign = signMatch ? (signMatch[1] === '-' ? -1 : 1) : null;
+  const s = signMatch ? signMatch[2] : raw;
+  let sec;
   const m = s.match(/^(\d+):([0-5]?\d)$/);
-  if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-  if (/^\d+$/.test(s)) return parseInt(s, 10);
-  return null;
+  if (m) sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  else if (/^\d+$/.test(s)) sec = parseInt(s, 10);
+  else return null;
+  return sign === null ? sec : Math.max(0, (currentSec || 0) + sign * sec);
 }
 
 function openEditDurationOverlay(bucketId, elIdx) {
@@ -1458,10 +1468,10 @@ function closeEditDurationOverlay() {
 }
 document.getElementById('edit-duration-save').addEventListener('click', () => {
   const input = document.getElementById('edit-duration-input');
-  const sec = parseDurationInput(input.value);
-  if (sec === null || sec < 0) { input.focus(); input.select(); return; }
   const b = state.buckets.find(bk => bk.id === editingDurationBucketId);
   const el = b && b.elements[editingDurationElIdx];
+  const sec = parseDurationInput(input.value, el ? el.durationSec : 0);
+  if (sec === null || sec < 0) { input.focus(); input.select(); return; }
   if (el) {
     el.durationSec = sec;
     saveState();
