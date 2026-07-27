@@ -88,7 +88,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #sealed-banner { flex-shrink: 0; display: none; background: rgba(212,160,23,0.12); border-bottom: 2px solid rgba(212,160,23,0.4); padding: 8px 14px; font-size: 0.88rem; color: var(--gold-light); text-align: center; }
 #sealed-banner.visible { display: block; }
 #grid-container { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; overflow-y: auto; align-content: start; }
-.element-btn { min-height: 60px; border-radius: 10px; border: none; font-size: 0.88rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 5px 4px; cursor: pointer; line-height: 1.2; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.element-btn { min-height: 60px; border-radius: 10px; border: none; font-size: 1.08rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px 3px; cursor: pointer; line-height: 1.12; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 .element-btn.tier-green { background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%); }
 .element-btn.tier-amber { background: linear-gradient(180deg, #2196f3 0%, #1565c0 100%); }
 .element-btn.tier-red   { background: linear-gradient(180deg, #ef5350 0%, #c62828 100%); }
@@ -215,13 +215,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 
 /* Portrait — more vertical room, so make buttons taller */
 @media (orientation: portrait) {
-  .element-btn { min-height: 82px; font-size: 0.93rem; }
+  .element-btn { min-height: 82px; font-size: 1.3rem; }
 }
 
 /* Landscape — short screen, go 6 columns and compress heights */
 @media (orientation: landscape) and (max-height: 600px) {
   #grid-container { grid-template-columns: repeat(6, 1fr); }
-  .element-btn { min-height: 48px; font-size: 0.78rem; }
+  .element-btn { min-height: 48px; font-size: 1rem; }
   #timer-details-toggle { min-height: 30px; }
   #grid-legend { padding: 2px 8px; }
 }
@@ -2165,10 +2165,24 @@ function buildExportWorkbook(buckets) {
     const elementsAoa = [
       ['Cycle #', 'Date', 'Process', 'Operator', 'Timed By', 'Element', 'Category', 'Duration (min)', 'Duration (mm:ss)', '% of Cycle', 'Notes'],
     ];
+    // Keyed by cycle||plant||stream||process||element, NOT element alone. Two reasons:
+    // (1) a mixed export (e.g. "Export All" spanning several processes/plants/streams —
+    // bucket history is kept permanent across plant switches, so this is routine) can
+    // easily reuse an element name ("Weld") or even a process name ("Bushing Install"
+    // exists in both Large Bucket and Thumbs) across unrelated cycles; (2) per Chase,
+    // even within ONE process, different observations (different operators/parts) must
+    // stay broken out separately rather than folded into one grand total, so the totals
+    // block can actually be used to compare cycles against each other.
+    const elementTotals = new Map(); // "cycle||plant||stream||process||element" -> {...}
+    const elementGrandTotals = new Map(); // element name -> total sec (drives sort order only)
     exported.forEach((b, bi) => {
       const h = b.header || {};
       const els = b.elements || [];
       const cycleSec = els.filter(e => e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+      const proc = h.process || '(no process)';
+      const plant = b.plant || state.plant || '';
+      const stream = bucketStream(b) || '';
+      const cycleNum = bi + 1;
       els.forEach(el => {
         const cat = el.name === PAUSE_ELEMENT_NAME ? 'Pause'
                   : el.tier === 'green' ? 'VA'
@@ -2177,10 +2191,18 @@ function buildExportWorkbook(buckets) {
         const pct = (cycleSec > 0 && (el.tier==='green'||el.tier==='amber'))
           ? Math.round(el.durationSec/cycleSec*1000)/10 : '';
         elementsAoa.push([
-          bi + 1, new Date(b.startTs), h.process || '(no process)',
+          cycleNum, new Date(b.startTs), proc,
           h.operator || '', b.observerName || '',
           el.name, cat, Math.round(el.durationSec/60*100)/100, formatMS(el.durationSec), pct, el.note || '',
         ]);
+        const key = `${cycleNum}||${plant}||${stream}||${proc}||${el.name}`;
+        const agg = elementTotals.get(key) || {
+          cycleNum, date: new Date(b.startTs), process: proc, operator: h.operator || '',
+          name: el.name, sec: 0, count: 0,
+        };
+        agg.sec += el.durationSec; agg.count += 1;
+        elementTotals.set(key, agg);
+        elementGrandTotals.set(el.name, (elementGrandTotals.get(el.name) || 0) + el.durationSec);
       });
     });
     const wsElements = XLSX.utils.aoa_to_sheet(elementsAoa);
@@ -2202,7 +2224,41 @@ function buildExportWorkbook(buckets) {
       const addr = XLSX.utils.encode_cell({ r: R, c: 1 });
       if (wsElements[addr] && wsElements[addr].t === 'n') wsElements[addr].z = 'mm/dd/yyyy';
     }
+    // AutoFilter must be set BEFORE the totals block below is appended, so it stays
+    // scoped to just the flat data table — otherwise filtering/sorting the data would
+    // also sweep up the totals rows sitting underneath it.
     wsElements['!autofilter'] = { ref: wsElements['!ref'] };
+
+    // "Element Totals" block — broken out PER OBSERVATION (per cycle), not one grand
+    // total, so different operators/parts/cycles can actually be compared against each
+    // other instead of being blended into a single number. Grouped by element (biggest
+    // overall time-sink first), then by cycle within that element, so e.g. every cycle's
+    // "Positioning Bucket" total lines up together for an easy side-by-side comparison.
+    const sortedTotals = [...elementTotals.values()].sort((a, b) => {
+      const grand = elementGrandTotals.get(b.name) - elementGrandTotals.get(a.name);
+      return grand !== 0 ? grand : a.cycleNum - b.cycleNum;
+    });
+    const totalsAoa = [
+      ['ELEMENT TOTALS (per observation)'],
+      ['Element', 'Cycle #', 'Date', 'Process', 'Operator', 'Total Duration (min)', 'Total Duration (mm:ss)', 'Occurrences'],
+      ...sortedTotals.map(agg => [agg.name, agg.cycleNum, agg.date, agg.process, agg.operator,
+        Math.round(agg.sec/60*100)/100, formatMS(agg.sec), agg.count]),
+    ];
+    const totalsStartRow = elRange.e.r + 3; // leave 2 blank rows after the flat table
+    XLSX.utils.sheet_add_aoa(wsElements, totalsAoa, { origin: { r: totalsStartRow, c: 5 } });
+    [totalsStartRow, totalsStartRow + 1].forEach(R => {
+      for (let C = 5; C <= 12; C++) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: C });
+        if (wsElements[addr]) wsElements[addr].s = { font: { bold: true }, alignment: { horizontal: 'center' } };
+      }
+    });
+    // Date column in the totals block (col 7 = H) is also a real Date object — same
+    // mm/dd/yyyy formatting fix as the main table's Date column, for the same reason.
+    for (let R = totalsStartRow + 2; R < totalsStartRow + totalsAoa.length; R++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: 7 });
+      if (wsElements[addr] && wsElements[addr].t === 'n') wsElements[addr].z = 'mm/dd/yyyy';
+    }
+    wsElements['!ref'] = XLSX.utils.encode_range({ s: elRange.s, e: { r: totalsStartRow + totalsAoa.length - 1, c: Math.max(elRange.e.c, 12) } });
     XLSX.utils.book_append_sheet(wb, wsElements, 'Elements');
   }
 
