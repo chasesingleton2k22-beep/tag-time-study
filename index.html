@@ -2037,10 +2037,11 @@ function buildExportWorkbook(buckets) {
   // Last-resort safety net: even with the tag above, two Custom Process names in the exact
   // same plant+stream can still sanitize to an identical string. Never let that crash the
   // export — append a numeric suffix until the name is actually unique in this workbook.
-  // 'Summary' and 'Cycle Detail' are reserved for the meta sheets appended after this loop
-  // runs (so they wouldn't show up in wb.SheetNames yet) — a Custom Process typed as exactly
-  // one of those names would otherwise silently overwrite or crash on the meta sheet later.
-  const RESERVED_SHEET_NAMES = ['Summary', 'Cycle Detail'];
+  // 'Summary', 'Elements', and 'Cycle Detail' are reserved for the meta sheets appended
+  // after this loop runs (so they wouldn't show up in wb.SheetNames yet) — a Custom Process
+  // typed as exactly one of those names would otherwise silently overwrite or crash on the
+  // meta sheet later.
+  const RESERVED_SHEET_NAMES = ['Summary', 'Elements', 'Cycle Detail'];
   function uniqueSheetName(candidate) {
     let name = candidate.slice(0, 31);
     let n = 2;
@@ -2153,6 +2154,56 @@ function buildExportWorkbook(buckets) {
     wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
     boldAllCells(wsDetail);
     XLSX.utils.book_append_sheet(wb, wsDetail, 'Cycle Detail');
+
+    // "Elements" tab — Cycle Detail above is a printed report (a header block per cycle,
+    // blank separator rows, text-formatted times) which is exactly why Excel's AutoFilter
+    // can't be applied to it cleanly and Duration can't be summed — filtering needs ONE
+    // header row over a flat rectangle of real data, not several repeating sections. This
+    // sheet is that flat table: one row per timed element across every cycle in this export,
+    // with Duration and % of Cycle as real numbers (not "mm:ss"/"12.3%" text) so filtering
+    // down to e.g. "Positioning Bucket" and reading the Excel status-bar sum just works.
+    const elementsAoa = [
+      ['Cycle #', 'Date', 'Process', 'Operator', 'Timed By', 'Element', 'Category', 'Duration (min)', 'Duration (mm:ss)', '% of Cycle', 'Notes'],
+    ];
+    exported.forEach((b, bi) => {
+      const h = b.header || {};
+      const els = b.elements || [];
+      const cycleSec = els.filter(e => e.tier==='green'||e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
+      els.forEach(el => {
+        const cat = el.name === PAUSE_ELEMENT_NAME ? 'Pause'
+                  : el.tier === 'green' ? 'VA'
+                  : el.tier === 'amber' ? 'Nec (NNVA)'
+                  : 'Waste (NVA)';
+        const pct = (cycleSec > 0 && (el.tier==='green'||el.tier==='amber'))
+          ? Math.round(el.durationSec/cycleSec*1000)/10 : '';
+        elementsAoa.push([
+          bi + 1, new Date(b.startTs), h.process || '(no process)',
+          h.operator || '', b.observerName || '',
+          el.name, cat, Math.round(el.durationSec/60*100)/100, formatMS(el.durationSec), pct, el.note || '',
+        ]);
+      });
+    });
+    const wsElements = XLSX.utils.aoa_to_sheet(elementsAoa);
+    autoFitColumns(wsElements, elementsAoa);
+    // autoFitColumns measures String(value).length — for a real Date object that's the
+    // full JS toString() ("Wed Jul 16 2026 00:00:00 GMT...", 40+ chars), not the short
+    // "mm/dd/yyyy" it will actually display as. Override with a sane fixed width instead.
+    wsElements['!cols'][1] = { wch: 12 };
+    const elRange = XLSX.utils.decode_range(wsElements['!ref']);
+    for (let C = elRange.s.c; C <= elRange.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (wsElements[addr]) wsElements[addr].s = { font: { bold: true }, alignment: { horizontal: 'center' } };
+    }
+    // Write Date as a real Excel date (not formatted text) so management gets native
+    // AutoFilter date grouping/"Before"/"After"/"Between" filters and correct chronological
+    // sort — a text column like "07/16/2026" only supports alphabetical filtering, which
+    // silently sorts/groups wrong across year boundaries.
+    for (let R = 1; R <= elRange.e.r; R++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: 1 });
+      if (wsElements[addr] && wsElements[addr].t === 'n') wsElements[addr].z = 'mm/dd/yyyy';
+    }
+    wsElements['!autofilter'] = { ref: wsElements['!ref'] };
+    XLSX.utils.book_append_sheet(wb, wsElements, 'Elements');
   }
 
   // Filename (per-second timestamp so repeated exports never collide)
