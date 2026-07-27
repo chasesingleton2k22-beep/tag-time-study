@@ -88,7 +88,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #sealed-banner { flex-shrink: 0; display: none; background: rgba(212,160,23,0.12); border-bottom: 2px solid rgba(212,160,23,0.4); padding: 8px 14px; font-size: 0.88rem; color: var(--gold-light); text-align: center; }
 #sealed-banner.visible { display: block; }
 #grid-container { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; overflow-y: auto; align-content: start; }
-.element-btn { min-height: 60px; border-radius: 10px; border: none; font-size: 1.08rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px 3px; cursor: pointer; line-height: 1.12; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+.element-btn { min-height: 78px; border-radius: 10px; border: none; font-size: 1.25rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px 3px; cursor: pointer; line-height: 1.12; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+/* Label-length font tiers (assigned by elementSizeClass()) — short names get to be
+   big and fill the square; longer ones step down only as far as needed to still fit. */
+.element-btn.el-xl { font-size: 2.4rem; }
+.element-btn.el-lg { font-size: 1.95rem; }
+.element-btn.el-md { font-size: 1.6rem; }
+.element-btn.el-sm { font-size: 1.25rem; }
 .element-btn.tier-green { background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%); }
 .element-btn.tier-amber { background: linear-gradient(180deg, #2196f3 0%, #1565c0 100%); }
 .element-btn.tier-red   { background: linear-gradient(180deg, #ef5350 0%, #c62828 100%); }
@@ -215,13 +221,21 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 
 /* Portrait — more vertical room, so make buttons taller */
 @media (orientation: portrait) {
-  .element-btn { min-height: 82px; font-size: 1.3rem; }
+  .element-btn { min-height: 92px; font-size: 1.62rem; }
+  .element-btn.el-xl { font-size: 3.1rem; }
+  .element-btn.el-lg { font-size: 2.4rem; }
+  .element-btn.el-md { font-size: 2rem; }
+  .element-btn.el-sm { font-size: 1.62rem; }
 }
 
 /* Landscape — short screen, go 6 columns and compress heights */
 @media (orientation: landscape) and (max-height: 600px) {
   #grid-container { grid-template-columns: repeat(6, 1fr); }
-  .element-btn { min-height: 48px; font-size: 1rem; }
+  .element-btn { min-height: 52px; font-size: 1.05rem; }
+  .element-btn.el-xl { font-size: 1.9rem; }
+  .element-btn.el-lg { font-size: 1.55rem; }
+  .element-btn.el-md { font-size: 1.15rem; }
+  .element-btn.el-sm { font-size: 1.05rem; }
   #timer-details-toggle { min-height: 30px; }
   #grid-legend { padding: 2px 8px; }
 }
@@ -998,6 +1012,30 @@ function updateSessionBucketLabel() {
 }
 
 /* ── Grid ── */
+// Picks a font-size tier from the label text itself, so short names ("Weld") can be
+// huge and fill their square while long ones ("Looking for Supervisor") step down just
+// enough to still fit — WITHOUT measuring anything at runtime. An earlier attempt did
+// measure each button's rendered height and shrink until it fit; that depends on layout
+// having settled (and on the page actually compositing frames), which is fragile and
+// effectively untestable. These tiers are derived from the fixed element list plus the
+// grid's known column width, and every name was verified to fit by text-width math.
+// Tiers key off the LONGEST WORD (sets the minimum width one line can be) and the
+// TOTAL length (drives how many wrapped lines are needed).
+function elementSizeClass(label) {
+  const n = String(label || '').replace(/<br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+  const words = n.split(' ');
+  const longest = words.reduce((m, w) => Math.max(m, w.length), 0);
+  const total = n.length;
+  // Word count matters as much as length: the two biggest tiers assume the label sits on
+  // ONE line, so a two-word label at that size wraps and blows past the button height
+  // (verified — "Form Part"/"Torch Work" needed 94px in a 92px box). Multi-word labels
+  // therefore start at el-md, where two wrapped lines still fit comfortably.
+  if (words.length === 1 && total <= 6  && longest <= 6)  return 'el-xl';  // Weld, Break, Rework
+  if (words.length === 1 && total <= 10 && longest <= 9)  return 'el-lg';  // Waiting, Training, Paperwork
+  if (total <= 16 && longest <= 11) return 'el-md';  // Fabrication, Form Part, Operating Crane
+  return 'el-sm';                                    // Looking for Supervisor, Positioning Operator
+}
+
 function renderGrid() {
   updateSessionBucketLabel();
   const container = document.getElementById('grid-container');
@@ -1016,7 +1054,7 @@ function renderGrid() {
 
   getElementsForPlant().forEach(el => {
     const btn = document.createElement('button');
-    btn.className = `element-btn tier-${el.tier}`;
+    btn.className = `element-btn tier-${el.tier} ${elementSizeClass(el.name)}`;
     btn.textContent = el.name;
     if (state.activeElement && state.activeElement.name === el.name) btn.classList.add('active-pulse');
     btn.addEventListener('click', () => onElementTap(el));
@@ -1026,8 +1064,9 @@ function renderGrid() {
 
   // PAUSE button — bright orange, toggles study pause
   const pBtn = document.createElement('button');
-  pBtn.className = `element-btn pause-el-btn${isStudyPaused() ? ' active-pulse' : ''}`;
-  pBtn.textContent = isStudyPaused() ? '▶ RESUME' : '⏸ PAUSE';
+  const pauseLabel = isStudyPaused() ? '▶ RESUME' : '⏸ PAUSE';
+  pBtn.className = `element-btn pause-el-btn ${elementSizeClass(pauseLabel)}${isStudyPaused() ? ' active-pulse' : ''}`;
+  pBtn.textContent = pauseLabel;
   pBtn.addEventListener('click', () => {
     clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
     toggleStudyPause();
@@ -1036,7 +1075,7 @@ function renderGrid() {
 
   // NEW BUCKET button as last element
   const nbBtn = document.createElement('button');
-  nbBtn.className = 'element-btn new-bucket-el-btn';
+  nbBtn.className = 'element-btn new-bucket-el-btn ' + elementSizeClass('+ NEW CYCLE');
   nbBtn.innerHTML = '+ NEW<br>CYCLE';
   nbBtn.addEventListener('click', () => {
     clearTimeout(timerDetailsSaveTimer); saveTimerDetails();
