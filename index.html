@@ -161,6 +161,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .log-action-btn { flex: 1; min-width: 120px; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: var(--gold); color: var(--navy); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
 .log-action-btn.secondary { background: transparent; color: var(--gold-light); }
 .log-action-btn.selected-export { background: #1565c0; border-color: #1565c0; color: #fff; }
+.log-action-btn.selected-delete { background: var(--red); border-color: var(--red); color: #fff; }
 .log-action-btn:disabled { opacity: 0.4; cursor: default; }
 .bucket-checkbox-wrap { display: flex; align-items: center; padding: 0 6px 0 2px; }
 .bucket-checkbox { width: 22px; height: 22px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
@@ -438,6 +439,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     <button class="log-action-btn" id="log-export-new">Export Unexported</button>
     <button class="log-action-btn secondary" id="log-export-all">Export All</button>
     <button class="log-action-btn selected-export" id="log-export-selected" style="display:none">Export Selected (<span id="log-selected-count">0</span>)</button>
+    <button class="log-action-btn selected-delete" id="log-delete-selected" style="display:none">Delete Selected (<span id="log-delete-count">0</span>)</button>
   </div>
   <div id="log-list"></div>
 </div>
@@ -1588,9 +1590,14 @@ function renderLog() {
     ? state.buckets.filter(b => b.exportedAt)
     : state.buckets.filter(b => !b.exportedAt);
 
-  // Action bar: only show on active tab
+  // Action bar: the export-only actions (Unexported/All/Selected) only make sense on
+  // the Active tab, but Delete Selected must work on both — Chase wants to be able to
+  // multi-select and clean up cycles regardless of which tab they're sitting in, so
+  // the bar itself stays visible on History too, just with only Delete Selected in it.
   const actionBar = document.getElementById('log-action-bar');
-  actionBar.style.display = isHistory ? 'none' : 'flex';
+  actionBar.style.display = 'flex';
+  document.getElementById('log-export-new').style.display = isHistory ? 'none' : '';
+  document.getElementById('log-export-all').style.display = isHistory ? 'none' : '';
 
   if (!isHistory) {
     const exportable = buckets.filter(b => !b.isDraft && b.sealed).length;
@@ -1629,7 +1636,9 @@ function renderLog() {
     const expandHint    = elemCount > 0 ? `<span class="expand-hint">${isExpanded?'▲':'▼'} ${elemCount} element${elemCount!==1?'s':''}</span>` : '';
     const noteHint      = noteCount > 0 ? `<span class="tier-chip" style="color:#7ab8f5;">📝 ${noteCount} note${noteCount!==1?'s':''}</span>` : '';
 
-    const isCheckable = !isHistory && !isLive && !bucket.isDraft && bucket.sealed;
+    // Every row is checkable now — draft, live, sealed, exported/history — so a batch
+    // clean-up pass can select any mix of them at once and delete them together.
+    const isCheckable = true;
     row.innerHTML = `
       <div class="bucket-row-header">
         ${isCheckable ? `<div class="bucket-checkbox-wrap"><input type="checkbox" class="bucket-checkbox" data-bucket-id="${bucket.id}" ${selectedBucketIds.has(bucket.id) ? 'checked' : ''}></div>` : ''}
@@ -1723,7 +1732,7 @@ function renderLog() {
       cb.addEventListener('click', e => {
         e.stopPropagation();
         selectedBucketIds.has(bucket.id) ? selectedBucketIds.delete(bucket.id) : selectedBucketIds.add(bucket.id);
-        syncExportSelectedBtn();
+        syncBulkActionButtons();
         cb.checked = selectedBucketIds.has(bucket.id);
       });
     }
@@ -1733,30 +1742,39 @@ function renderLog() {
     });
     list.appendChild(row);
   });
-  syncExportSelectedBtn();
+  syncBulkActionButtons();
 }
 
 let selectedBucketIds = new Set();
 
 // Called at the bottom of renderLog so every re-render keeps the count in sync
-function syncExportSelectedBtn() {
+function syncBulkActionButtons() {
   const count = selectedBucketIds.size;
+  const isHistory = logSubTab === 'history';
+  // Export Selected stays Active-tab-only (re-exporting an already-exported cycle
+  // isn't what this button is for) — Delete Selected works on both tabs, since
+  // cleaning up old cycles is just as relevant to History as to Active.
   const exportBtn = document.getElementById('log-export-selected');
-  const countEl   = document.getElementById('log-selected-count');
-  exportBtn.style.display = count > 0 ? '' : 'none';
-  if (countEl) countEl.textContent = count;
+  const exportCountEl = document.getElementById('log-selected-count');
+  exportBtn.style.display = (count > 0 && !isHistory) ? '' : 'none';
+  if (exportCountEl) exportCountEl.textContent = count;
+
+  const deleteBtn = document.getElementById('log-delete-selected');
+  const deleteCountEl = document.getElementById('log-delete-count');
+  deleteBtn.style.display = count > 0 ? '' : 'none';
+  if (deleteCountEl) deleteCountEl.textContent = count;
 }
 
 document.getElementById('log-sub-active').addEventListener('click', () => {
   logSubTab = 'active';
   selectedBucketIds.clear();
-  syncExportSelectedBtn();
+  syncBulkActionButtons();
   renderLog();
 });
 document.getElementById('log-sub-history').addEventListener('click', () => {
   logSubTab = 'history';
   selectedBucketIds.clear();
-  syncExportSelectedBtn();
+  syncBulkActionButtons();
   renderLog();
 });
 
@@ -1767,9 +1785,30 @@ document.getElementById('log-export-selected').addEventListener('click', () => {
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
     selectedBucketIds.clear();
-    syncExportSelectedBtn();
+    syncBulkActionButtons();
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
   }
+});
+
+document.getElementById('log-delete-selected').addEventListener('click', () => {
+  const toDelete = state.buckets.filter(b => selectedBucketIds.has(b.id));
+  if (!toDelete.length) { alert('No cycles selected.'); return; }
+  const totalElements = toDelete.reduce((s, b) => s + b.elements.length, 0);
+  const includesLive = state.activeElement && toDelete.some(b => b.id === state.activeElement.bucketId);
+  // Same typed-confirmation bar as the single-cycle delete — bulk deleting is the
+  // same irreversible action just done to more cycles at once, so it gets the same
+  // "type DELETE" safeguard, not a weaker plain OK/Cancel.
+  const typed = prompt(
+    `Delete ${toDelete.length} cycle${toDelete.length!==1?'s':''} (${totalElements} element${totalElements!==1?'s':''} total)?` +
+    (includesLive ? `\n\nWARNING: one of these is currently being timed — its timer will stop.` : '') +
+    `\n\nThis cannot be undone. Type DELETE to confirm.`
+  );
+  if (typed === null || typed.trim().toUpperCase() !== 'DELETE') return;
+  if (includesLive) { state.activeElement = null; syncWakeLock(); updateStatusBar(); }
+  const idsToDelete = new Set(toDelete.map(b => b.id));
+  state.buckets = state.buckets.filter(b => !idsToDelete.has(b.id));
+  idsToDelete.forEach(id => { expandedBucketIds.delete(id); selectedBucketIds.delete(id); });
+  saveState(); renderLog(); renderGrid(); updateSessionHomeInfo();
 });
 
 document.getElementById('log-export-new').addEventListener('click', () => {
