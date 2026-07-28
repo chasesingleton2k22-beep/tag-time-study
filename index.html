@@ -78,7 +78,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #home-observer-presets { display: flex; gap: 8px; margin-top: 4px; }
 .observer-preset-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid rgba(212,160,23,0.5); background: rgba(255,255,255,0.07); color: var(--text-light); font-size: 1rem; font-weight: bold; cursor: pointer; }
 .observer-preset-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
-.pause-el-btn { background: linear-gradient(180deg, #ff8000 0%, #cc4a00 100%) !important; border: 2px solid #ffb347 !important; color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,0.45); }
+/* order: with dense packing, these two must stay placed dead last regardless of
+   any gap elsewhere in the grid — without this, dense packing could pull Pause or
+   New Cycle backward into an earlier gap, and people have muscle memory for them
+   being the last two buttons. Giving them a later `order` than every timing element
+   (which are all the default order: 0) means they're only placed once everything
+   else already has a spot, so they land wherever the grid actually ends. */
+.pause-el-btn { order: 1; background: linear-gradient(180deg, #ff8000 0%, #cc4a00 100%) !important; border: 2px solid #ffb347 !important; color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,0.45); }
 
 /* Grid view */
 #view-grid { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
@@ -87,7 +93,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 #sealed-banner { flex-shrink: 0; display: none; background: rgba(212,160,23,0.12); border-bottom: 2px solid rgba(212,160,23,0.4); padding: 8px 14px; font-size: 0.88rem; color: var(--gold-light); text-align: center; }
 #sealed-banner.visible { display: block; }
-#grid-container { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px; overflow-y: auto; align-content: start; }
+/* grid-auto-flow: dense backfills gaps left by 2-column-wide (el-sm) buttons with
+   later, narrower buttons instead of leaving that space empty forever — the default
+   "sparse" packing just skips to a new row when a wide item doesn't fit what's left
+   of the current one, and never looks back. This is what actually closes the gaps;
+   the element order below (wide-first per tier) just means dense rarely has to pull
+   anything far out of reading order to do it. */
+#grid-container { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-flow: row dense; gap: 6px; padding: 6px; overflow-y: auto; align-content: start; }
 .element-btn { min-height: 78px; border-radius: 10px; border: none; font-size: 1.25rem; font-weight: bold; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px 3px; cursor: pointer; line-height: 1.12; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 6px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
 /* Label-length font tiers (assigned by elementSizeClass()) — short names get to be
    big and fill the square; longer ones step down only as far as needed to still fit. */
@@ -102,7 +114,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 @keyframes pulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.5); } }
 
 /* New Bucket element button */
-.new-bucket-el-btn { background: var(--navy-light) !important; border: 2px solid var(--gold) !important; color: var(--gold-light) !important; }
+.new-bucket-el-btn { order: 2; background: var(--navy-light) !important; border: 2px solid var(--gold) !important; color: var(--gold-light) !important; }
 .new-bucket-el-btn:active { background: var(--gold) !important; color: var(--navy) !important; }
 
 /* Timer details SAVE button */
@@ -124,11 +136,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 
 /* Timer Details collapsible panel */
 #timer-details-panel { flex-shrink: 0; background: rgba(0,0,0,0.15); border-bottom: 1px solid rgba(212,160,23,0.22); }
-#timer-details-toggle { width: 100%; min-height: 36px; background: none; border: none; color: var(--text-light); display: flex; align-items: center; padding: 0 12px; gap: 8px; cursor: pointer; }
-#timer-details-toggle:active { background: rgba(212,160,23,0.1); }
-.td-label-text { font-size: 0.71rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; flex-shrink: 0; }
-#td-summary-text { flex: 1; font-size: 0.78rem; color: #8a9ab8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.td-chevron { font-size: 0.68rem; color: var(--gold); flex-shrink: 0; }
+/* Was a 36px sliver that read as plain text, not a tappable control — bigger, a gold
+   tint, and a real border so it visibly reads as its own expandable bar. */
+#timer-details-toggle { width: 100%; min-height: 52px; background: rgba(212,160,23,0.1); border: none; border-bottom: 2px solid rgba(212,160,23,0.35); color: var(--text-light); display: flex; align-items: center; padding: 0 14px; gap: 10px; cursor: pointer; }
+#timer-details-toggle:active { background: rgba(212,160,23,0.22); }
+.td-label-text { font-size: 0.95rem; font-weight: bold; color: var(--gold); letter-spacing: 0.06em; flex-shrink: 0; }
+#td-summary-text { flex: 1; font-size: 0.82rem; color: #8a9ab8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.td-chevron { font-size: 1.2rem; color: var(--gold); flex-shrink: 0; }
 #timer-details-content { padding: 8px 10px 6px; display: none; flex-direction: column; gap: 6px; }
 #timer-details-content.open { display: flex; }
 .td-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -246,7 +260,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
      offline estimate was off by 2px at this breakpoint and clipped two labels.
      True safe max at 700/1024/1280px: 23/29/37px. */
   .element-btn.el-sm { font-size: clamp(13px, calc(9px + 1.8vw), 35px); }
-  #timer-details-toggle { min-height: 30px; }
+  #timer-details-toggle { min-height: 40px; }
   #grid-legend { padding: 2px 8px; }
 }
 
@@ -320,7 +334,10 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <div class="plant-label" id="home-plant-label"></div>
       <div class="topbar-subtitle">Continuous Improvement · TAG Mfg</div>
     </div>
-    <button class="back-btn" id="home-change-plant">Change Plant</button>
+    <div class="topbar-right">
+      <button class="back-btn" id="home-change-stream">Change Stream</button>
+      <button class="back-btn" id="home-change-plant">Change Plant</button>
+    </div>
   </div>
   <div class="ci-logo-wrap-sm" style="margin-top:4px;">
     <img src="logo.png" alt="TAG Manufacturing, Inc." class="ci-logo-img-sm"
@@ -573,11 +590,22 @@ function isTeethProcess(p) { return TEETH_PROCESSES.has(p); }
 function isEarProcess(p)   { return EAR_PROCESSES.has(p); }
 
 const ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
+// Grouped by tier (green/amber/red), and within each tier the 2-column-wide labels
+// (el-sm in elementSizeClass — the ones with a long single word) come first. That
+// puts them right after each tier's own row break, where they have the most room to
+// land cleanly, so grid-auto-flow: dense rarely has to pull a later item out of
+// reading order just to close a gap they leave behind.
 const COMMON_ELEMENTS = [
   { name: 'Weld',                   tier: 'green' },
   { name: 'Fabrication',            tier: 'green' },
   { name: 'Machining Part',         tier: 'green' },
   { name: 'Form Part',              tier: 'green' },
+  // amber — wide first
+  { name: 'Placing Parts in Jig',   tier: 'amber' },
+  { name: 'Cleaning Welding Lead',  tier: 'amber' },
+  { name: 'Positioning Bucket',     tier: 'amber' },
+  { name: 'Positioning Operator',   tier: 'amber' },
+  { name: 'Operating Forklift',     tier: 'amber' },
   { name: 'Loading Parts',          tier: 'amber' },
   { name: 'Unloading Parts',        tier: 'amber' },
   { name: 'Preheat Time',           tier: 'amber' },
@@ -585,30 +613,26 @@ const COMMON_ELEMENTS = [
   { name: 'Adjusting Ladder',       tier: 'amber' },
   { name: 'Paperwork',              tier: 'amber' },
   { name: 'Operating Crane',        tier: 'amber' },
-  { name: 'Placing Parts in Jig',   tier: 'amber' },
   { name: 'Cleaning Jig',           tier: 'amber' },
-  { name: 'Cleaning Welding Lead',  tier: 'amber' },
-  { name: 'Positioning Bucket',     tier: 'amber' },
-  { name: 'Positioning Operator',   tier: 'amber' },
   { name: 'Changing Wire',          tier: 'amber' },
-  { name: 'Operating Forklift',     tier: 'amber' },
   { name: 'Changeover',             tier: 'amber' },
   { name: 'Training',               tier: 'amber' },
   { name: 'Computer Work',          tier: 'amber' },
-  { name: 'Out of Area',            tier: 'red'   },
+  // red — wide first
   { name: 'Spray Paint Bucket',     tier: 'red'   },
   { name: 'Searching For Parts',    tier: 'red'   },
-  { name: 'Restroom',               tier: 'red'   },
   { name: 'Looking for Supervisor', tier: 'red'   },
+  { name: 'Sanding / Grinding',     tier: 'red'   },
+  { name: 'Visiting with Others',   tier: 'red'   },
+  { name: 'Out of Area',            tier: 'red'   },
+  { name: 'Restroom',               tier: 'red'   },
   { name: 'Misc. Idle Time',        tier: 'red'   },
   { name: 'Waiting',                tier: 'red'   },
   { name: 'Fixing Welder',          tier: 'red'   },
   { name: 'Checking Phone',         tier: 'red'   },
-  { name: 'Sanding / Grinding',     tier: 'red'   },
   { name: 'Rework',                 tier: 'red'   },
   { name: 'Torch Work',             tier: 'red'   },
   { name: 'Cleaning Area',          tier: 'red'   },
-  { name: 'Visiting with Others',   tier: 'red'   },
   { name: 'Break',                  tier: 'red'   },
 ];
 
@@ -772,53 +796,54 @@ function goToSessionHome() {
   showScreen('screen-session-home');
 }
 
+// Seals (or discards, if truly empty) the current in-progress bucket, stopping its
+// timer first if something is actively running. Shared by every action that leaves
+// the current session context (Change Plant, Change Stream, New Cycle) since they
+// all need the same "don't lose in-progress data" handling.
+// NOTE: bucket history is permanent — each bucket is stamped with its own plant/
+// stream at creation (see createNewBucket/ensureBucket) and export always uses that
+// stamp, so old buckets never need to be deleted just because the current
+// plant/stream selection changes.
+function sealCurrentBucketIfUnsealed() {
+  const last = getCurrentBucket();
+  if (!last || last.sealed) return;
+  stopActiveElement(Date.now());
+  updateStatusBar();
+  const h = last.header || {};
+  const hasHeader = !!(h.process || h.frameNumber || h.frameWidth || h.operator);
+  if (!hasHeader && last.elements.length === 0) {
+    state.buckets.pop(); // truly empty — nothing to keep
+  } else if (hasHeader && last.elements.length === 0) {
+    last.isDraft = true; last.sealed = true; // header only — keep as draft
+  } else {
+    last.sealed = true; last.isDraft = false; // has timing — seal normally
+  }
+  saveState();
+}
+
 document.getElementById('home-change-plant').addEventListener('click', () => {
-  // NOTE: this used to wipe state.buckets entirely, deleting ALL history —
-  // including already-exported buckets — every time someone changed plants.
-  // Bucket history is now permanent: each bucket is stamped with its own
-  // plant/stream at creation (see createNewBucket/ensureBucket) and export
-  // always uses that stamp, so old buckets never need to be deleted just
-  // because the current plant selection changes.
   if (state.activeElement) {
     if (!confirm(`You are timing "${state.activeElement.name}". Changing plant will stop this timer and seal the current cycle. Continue?`)) return;
   }
-  const last = getCurrentBucket();
-  if (last && !last.sealed) {
-    stopActiveElement(Date.now());
-    updateStatusBar();
-    const h = last.header || {};
-    const hasHeader = !!(h.process || h.frameNumber || h.frameWidth || h.operator);
-    if (!hasHeader && last.elements.length === 0) {
-      state.buckets.pop(); // truly empty — nothing to keep
-    } else if (hasHeader && last.elements.length === 0) {
-      last.isDraft = true; last.sealed = true; // header only — keep as draft
-    } else {
-      last.sealed = true; last.isDraft = false; // has timing — seal normally
-    }
-  }
+  sealCurrentBucketIfUnsealed();
   state.plant = null;
   state.stream = null;
   saveState();
   showScreen('screen-plant-select');
 });
 
-document.getElementById('home-new-bucket').addEventListener('click', () => {
-  const last = getCurrentBucket();
-  if (last && !last.sealed) {
-    // Seal or clean up the existing unsealed bucket before starting a new one
-    stopActiveElement(Date.now());
-    updateStatusBar();
-    const h = last.header || {};
-    const hasHeader = !!(h.process || h.frameNumber || h.frameWidth || h.operator);
-    if (!hasHeader && last.elements.length === 0) {
-      state.buckets.pop();
-    } else if (hasHeader && last.elements.length === 0) {
-      last.isDraft = true; last.sealed = true;
-    } else {
-      last.sealed = true; last.isDraft = false;
-    }
-    saveState();
+document.getElementById('home-change-stream').addEventListener('click', () => {
+  if (state.activeElement) {
+    if (!confirm(`You are timing "${state.activeElement.name}". Changing value stream will stop this timer and seal the current cycle. Continue?`)) return;
   }
+  sealCurrentBucketIfUnsealed();
+  state.stream = null; // plant stays as-is — that's the whole point of this button
+  saveState();
+  goToStreamSelect();
+});
+
+document.getElementById('home-new-bucket').addEventListener('click', () => {
+  sealCurrentBucketIfUnsealed();
   createNewBucket();
   autoCarryProcess();
   goToSession();
