@@ -640,13 +640,16 @@ const COMMON_ELEMENTS = [
 
 function getElementsForPlant() {
   const all = [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
-  // "Weld" only makes sense as its own element when the process itself is a welding
-  // process — otherwise operators use "Fabrication" for that work instead, and a
-  // "Weld" button sitting there is just confusing. Matches on the process name
-  // containing "weld" (e.g. "Weld", "Bushing Weld", "Manual Shell Weld").
+  // Weld and Fabrication are mutually exclusive: a welding process (name contains
+  // "weld", e.g. "Weld", "Bushing Weld", "Manual Shell Weld") gets the Weld button
+  // and not Fabrication; any other process gets Fabrication and not Weld.
   const process = (getCurrentBucket()?.header?.process || '').toLowerCase();
-  if (process.includes('weld')) return all;
-  return all.filter(el => el.name !== 'Weld');
+  const isWeld = process.includes('weld');
+  return all.filter(el => {
+    if (el.name === 'Weld') return isWeld;
+    if (el.name === 'Fabrication') return !isWeld;
+    return true;
+  });
 }
 
 /* ── State ── */
