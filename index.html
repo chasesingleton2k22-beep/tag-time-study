@@ -334,6 +334,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     <div id="home-observer-presets">
       <button class="observer-preset-btn" data-name="Chase">Chase</button>
       <button class="observer-preset-btn" data-name="Robert">Robert</button>
+      <button class="observer-preset-btn" data-name="Maureen">Maureen</button>
     </div>
   </div>
   <button class="home-btn" id="home-new-bucket">▶ New Cycle</button>
@@ -612,7 +613,14 @@ const COMMON_ELEMENTS = [
 ];
 
 function getElementsForPlant() {
-  return [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
+  const all = [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
+  // "Weld" only makes sense as its own element when the process itself is a welding
+  // process — otherwise operators use "Fabrication" for that work instead, and a
+  // "Weld" button sitting there is just confusing. Matches on the process name
+  // containing "weld" (e.g. "Weld", "Bushing Weld", "Manual Shell Weld").
+  const process = (getCurrentBucket()?.header?.process || '').toLowerCase();
+  if (process.includes('weld')) return all;
+  return all.filter(el => el.name !== 'Weld');
 }
 
 /* ── State ── */
@@ -1210,6 +1218,7 @@ function renderTimerDetails() {
 function saveTimerDetails() {
   const b = getCurrentBucket();
   if (!b || b.sealed) return;
+  const prevProcess        = b.header.process;
   b.header.process         = isCustomProcessCurrent()
     ? document.getElementById('td-process-text').value.trim()
     : document.getElementById('td-process').value;
@@ -1223,6 +1232,12 @@ function saveTimerDetails() {
   b.header.earType         = document.getElementById('td-ear-type').value.trim();
   saveState();
   updateSessionBucketLabel();
+  // The element grid depends on the process (Weld only shows for welding processes,
+  // via getElementsForPlant()) — refresh it whenever the process actually changes, from
+  // either the fixed-list dropdown or the Custom Process free-text field. Gated on an
+  // actual change (not just any save) so debounced typing doesn't re-render on every
+  // keystroke-triggered autosave.
+  if (b.header.process !== prevProcess) renderGrid();
   const summaryEl = document.getElementById('td-summary-text');
   if (summaryEl) summaryEl.textContent = tdSummaryText(b.header);
 }
