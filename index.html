@@ -94,7 +94,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .element-btn.el-xl { font-size: 2.4rem; }
 .element-btn.el-lg { font-size: 1.95rem; }
 .element-btn.el-md { font-size: 1.6rem; }
-.element-btn.el-sm { font-size: 1.25rem; }
+.element-btn.el-sm { font-size: 1.55rem; grid-column: span 2; }
 .element-btn.tier-green { background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%); }
 .element-btn.tier-amber { background: linear-gradient(180deg, #2196f3 0%, #1565c0 100%); }
 .element-btn.tier-red   { background: linear-gradient(180deg, #ef5350 0%, #c62828 100%); }
@@ -225,7 +225,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   .element-btn.el-xl { font-size: 3.1rem; }
   .element-btn.el-lg { font-size: 2.4rem; }
   .element-btn.el-md { font-size: 2rem; }
-  .element-btn.el-sm { font-size: 1.62rem; }
+  /* el-sm spans 2 grid columns. Measured live on the actual rendered button
+     (scrollHeight vs clientHeight at real font sizes, not a canvas text-width
+     estimate) across 320-1000px: the safe max barely moves (41-43px) because this
+     92px-tall box hits its 2-line height ceiling well before width becomes the
+     limit — so a fixed size beats a width-scaled one here. */
+  .element-btn.el-sm { font-size: 40px; }
 }
 
 /* Landscape — short screen, go 6 columns and compress heights */
@@ -235,7 +240,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   .element-btn.el-xl { font-size: 1.9rem; }
   .element-btn.el-lg { font-size: 1.55rem; }
   .element-btn.el-md { font-size: 1.15rem; }
-  .element-btn.el-sm { font-size: 1.05rem; }
+  /* Same reasoning as the portrait el-sm rule — calibrated against the TRUE safe
+     maximum measured live on the actual rendered button (scrollHeight vs clientHeight
+     after setting real font sizes), not a canvas text-width estimate — an earlier
+     offline estimate was off by 2px at this breakpoint and clipped two labels.
+     True safe max at 700/1024/1280px: 23/29/37px. */
+  .element-btn.el-sm { font-size: clamp(13px, calc(9px + 1.8vw), 35px); }
   #timer-details-toggle { min-height: 30px; }
   #grid-legend { padding: 2px 8px; }
 }
