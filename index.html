@@ -600,7 +600,6 @@ const ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
 const COMMON_ELEMENTS = [
   { name: 'Weld',                   tier: 'green' },
   { name: 'Fabrication',            tier: 'green' },
-  { name: 'Machining Part',         tier: 'green' },
   { name: 'Form Part',              tier: 'green' },
   // amber — wide first
   { name: 'Placing Parts in Jig',   tier: 'amber' },
@@ -1297,6 +1296,19 @@ document.getElementById('td-process').addEventListener('change', () => {
 
 ['td-frame','td-width','td-partnum','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-process-text']
   .forEach(id => document.getElementById(id).addEventListener('input', scheduleTimerDetailsSave));
+
+// Frame # and Frame Width are always recorded in all-caps — force it as they type
+// rather than relying on operators to hit caps lock, in either the Timer Details
+// panel or the Edit Details modal.
+function forceUppercaseInput(el) {
+  el.addEventListener('input', () => {
+    const pos = el.selectionStart;
+    el.value = el.value.toUpperCase();
+    if (pos !== null) el.setSelectionRange(pos, pos);
+  });
+}
+['td-frame','td-width','modal-frame-number','modal-frame-width']
+  .forEach(id => forceUppercaseInput(document.getElementById(id)));
 
 /* ── Element Note Modal (long-press on active element) ── */
 let longPressTimer = null;
