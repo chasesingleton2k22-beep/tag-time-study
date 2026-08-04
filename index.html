@@ -1968,9 +1968,20 @@ function buildExportRow(bucket) {
   // (now numeric) workbook cells cleanly on paste; keep as text only if non-numeric.
   const fwStripped = stripInSuffix(h.frameWidth);
   const fwOut = (fwStripped !== '' && !isNaN(fwStripped)) ? Number(fwStripped) : fwStripped;
+  // Emit a purely-numeric Frame # as a real number, matching the workbook's numeric Frame #
+  // cells instead of pasting in as text (which lands as "number stored as text"). Guarded on
+  // an exact round-trip so values like "0049" keep their literal form instead of becoming 49.
+  const fnRaw = String(h.frameNumber || '').trim();
+  const fnOut = (fnRaw !== '' && String(Number(fnRaw)) === fnRaw) ? Number(fnRaw) : fnRaw;
+  // Large Bucket rolls both land on the workbook's single "Bucket Roll" sheet, so stamp which
+  // one this was straight from the process name rather than leaving it to be typed in later.
+  const procLower = String(h.process || '').toLowerCase();
+  const bucketSize = /\bsmall\b/.test(procLower) ? 'Small'
+                   : /\blarge\b/.test(procLower) ? 'Large' : '';
   return {
     date:        formatExportDate(bucket.startTs),
-    frameNum:    h.frameNumber || '',
+    frameNum:    fnOut,
+    bucketSize,
     partNum:     h.partNumber  || '',
     fwRaw:       fwOut,
     operator:    h.operator    || '',
@@ -1978,7 +1989,7 @@ function buildExportRow(bucket) {
     numTeeth:    numTeeth || '',
     earType:     h.earType     || '',
     numObs:      Number(h.numObservations) || 1,
-    notes:       [...els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${e.note}`), h.notes || ''].filter(Boolean).join('\n'),
+    notes:       [...els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${flattenNoteText(e.note)}`), flattenNoteText(h.notes)].filter(Boolean).join(' / '),
     cycleMin:    cycleMin,
     vaMin,
     nnvaMin,
@@ -2000,7 +2011,7 @@ function getColumnsForProcess(processName, plant, stream) {
         VP=r=>r.vaPct, NP=r=>r.nnvaPct, OB=r=>r.numObs, NO=r=>r.notes,
         PH=r=>r.preheatMin, PB=r=>r.posBucketMin, PC=r=>r.posCount,
         TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType,
-        PN=r=>r.partNum;
+        PN=r=>r.partNum, BS=r=>r.bucketSize;
 
   // Part-number streams (Couplers, Thumbs) — no frame/width; keyed on Part Number.
   if (isPartNumberStream(stream)) {
@@ -2021,6 +2032,11 @@ function getColumnsForProcess(processName, plant, stream) {
       return [...base,c('Tooth Type',TT),c('# of Teeth',NT),...pp,c('Cycle Time (min)',CY),c('Time per Tooth (min)',TPT),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
     if (processName === 'Ears')
       return [...base,c('Ear Type',ET),...pp,...tail];
+    // Roll Bucket Large and Roll Bucket Small are separate processes here but share the
+    // workbook's one "Bucket Roll" sheet, so carry the Bucket Size column that sheet has
+    // (last, after Notes) to keep the two tellable apart once they're pasted together.
+    if (processName === 'Roll Bucket Large' || processName === 'Roll Bucket Small')
+      return [...base,...pp,...tail,c('Bucket Size',BS)];
     return [...base,...pp,...tail];
   }
 
@@ -2059,10 +2075,48 @@ function getColumnsForProcess(processName, plant, stream) {
   }
 }
 
+// Column widths sized from the content. Two things this has to get right:
+//  - measure the WIDEST row, not just the header row. A sheet whose later rows run wider
+//    than its header (the Elements totals block) would otherwise leave those extra
+//    columns with no width at all, and Excel spills their text across their neighbours.
+//  - measure the longest single LINE of a multi-line value, not its total length. A note
+//    holding three lines is not three lines wide once it wraps.
 function autoFitColumns(ws, aoa) {
-  ws['!cols'] = aoa[0].map((_, ci) => ({
-    wch: Math.min(45, Math.max(10, ...aoa.map(row => String(row[ci] ?? '').length)))
+  const lineLen = v => String(v ?? '').split('\n').reduce((m, l) => Math.max(m, l.length), 0);
+  const width = aoa.reduce((m, r) => Math.max(m, r.length), 0);
+  ws['!cols'] = Array.from({ length: width }, (_, ci) => ({
+    wch: Math.min(45, Math.max(10, ...aoa.map(row => lineLen(row[ci]))))
   }));
+}
+
+// Fills in a width for any column the sheet gained AFTER autoFitColumns ran, measuring
+// the real cells. Widths already set are left alone, so deliberate overrides survive.
+function fillMissingColumnWidths(ws) {
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  const cols = ws['!cols'] || [];
+  for (let C = range.s.c; C <= range.e.c; C++) {
+    if (cols[C] && cols[C].wch != null) continue;
+    let widest = 0;
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+      if (!cell) continue;
+      // A date cell displays as its number format, not as the underlying serial number.
+      const text = (cell.t === 'n' && cell.z) ? String(cell.z) : String(cell.v ?? '');
+      text.split('\n').forEach(l => { if (l.length > widest) widest = l.length; });
+    }
+    cols[C] = { wch: Math.min(45, Math.max(10, widest)) };
+  }
+  ws['!cols'] = cols;
+}
+
+// Notes have to be kept on ONE line. A cell containing a newline only renders sensibly
+// with wrapText, and the bundled SheetJS (0.18.5 community) does not write cell styles at
+// all — verified: nothing in the written package contains "wrapText", and a styled cell
+// reads back as {patternType:'none'}. So an embedded newline became one long unwrapped run
+// spilling across the neighbouring columns. Flatten to the same " / " separator the
+// workbooks themselves already use for multi-element notes.
+function flattenNoteText(s) {
+  return String(s == null ? '' : s).replace(/\s*\r?\n\s*/g, ' / ').trim();
 }
 
 function boldAllCells(ws) {
@@ -2279,7 +2333,7 @@ function buildExportWorkbook(buckets) {
                   : 'Waste (NVA)';
         const pct = (cycleSec > 0 && (el.tier==='green'||el.tier==='amber'))
           ? `${(el.durationSec/cycleSec*100).toFixed(1)}%` : '';
-        detailAoa.push([el.name, cat, formatMS(el.durationSec), pct, el.note||'']);
+        detailAoa.push([el.name, cat, formatMS(el.durationSec), pct, flattenNoteText(el.note)]);
       });
 
       const pctStr = cycleSec > 0
@@ -2295,7 +2349,11 @@ function buildExportWorkbook(buckets) {
       }
     });
     const wsDetail = XLSX.utils.aoa_to_sheet(detailAoa);
+    // Five deliberate widths for the element table; the per-cycle header rows above it run
+    // two columns wider (Operator / Timed by), so let those size themselves rather than
+    // inheriting no width and spilling over.
     wsDetail['!cols'] = [{wch:30},{wch:13},{wch:10},{wch:26},{wch:50}];
+    fillMissingColumnWidths(wsDetail);
     boldAllCells(wsDetail);
     XLSX.utils.book_append_sheet(wb, wsDetail, 'Cycle Detail');
 
@@ -2337,7 +2395,7 @@ function buildExportWorkbook(buckets) {
         elementsAoa.push([
           cycleNum, new Date(b.startTs), proc,
           h.operator || '', b.observerName || '',
-          el.name, cat, Math.round(el.durationSec/60*100)/100, formatMS(el.durationSec), pct, el.note || '',
+          el.name, cat, Math.round(el.durationSec/60*100)/100, formatMS(el.durationSec), pct, flattenNoteText(el.note),
         ]);
         const key = `${cycleNum}||${plant}||${stream}||${proc}||${el.name}`;
         const agg = elementTotals.get(key) || {
@@ -2403,6 +2461,10 @@ function buildExportWorkbook(buckets) {
       if (wsElements[addr] && wsElements[addr].t === 'n') wsElements[addr].z = 'mm/dd/yyyy';
     }
     wsElements['!ref'] = XLSX.utils.encode_range({ s: elRange.s, e: { r: totalsStartRow + totalsAoa.length - 1, c: Math.max(elRange.e.c, 12) } });
+    // Must run AFTER the totals block widened the sheet past the flat table: autoFitColumns
+    // above only saw the 11-column table, leaving the totals block's last two columns
+    // ("Total Duration (mm:ss)" / "Occurrences") with no width, so they overran each other.
+    fillMissingColumnWidths(wsElements);
     XLSX.utils.book_append_sheet(wb, wsElements, 'Elements');
   }
 
