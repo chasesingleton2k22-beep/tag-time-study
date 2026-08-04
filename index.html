@@ -606,6 +606,7 @@ const COMMON_ELEMENTS = [
   { name: 'Cleaning Welding Lead',  tier: 'amber' },
   { name: 'Positioning Bucket',     tier: 'amber' },
   { name: 'Positioning Operator',   tier: 'amber' },
+  { name: 'Positioning Jig',        tier: 'amber' },
   { name: 'Operating Forklift',     tier: 'amber' },
   { name: 'Loading Parts',          tier: 'amber' },
   { name: 'Unloading Parts',        tier: 'amber' },
@@ -635,21 +636,13 @@ const COMMON_ELEMENTS = [
   { name: 'Rework',                 tier: 'red'   },
   { name: 'Torch Work',             tier: 'red'   },
   { name: 'Cleaning Area',          tier: 'red'   },
+  { name: 'Cleaning Weld',          tier: 'red'   },
   { name: 'Break',                  tier: 'red'   },
 ];
 
 function getElementsForPlant() {
-  const all = [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
-  // Weld and Fabrication are mutually exclusive: a welding process (name contains
-  // "weld", e.g. "Weld", "Bushing Weld", "Manual Shell Weld") gets the Weld button
-  // and not Fabrication; any other process gets Fabrication and not Weld.
-  const process = (getCurrentBucket()?.header?.process || '').toLowerCase();
-  const isWeld = process.includes('weld');
-  return all.filter(el => {
-    if (el.name === 'Weld') return isWeld;
-    if (el.name === 'Fabrication') return !isWeld;
-    return true;
-  });
+  // Weld and Fabrication both show on every process, regardless of process name.
+  return [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
 }
 
 /* ── State ── */
