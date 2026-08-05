@@ -154,6 +154,13 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .td-field select option { background: var(--navy-light); color: var(--text-light); }
 
 /* Log screen sub-elements */
+/* [WAVE-A-LOG-SCOPE] BEGIN additive -- safe to delete these 5 rules to revert */
+#log-scope-bar { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(212,160,23,0.1); border-bottom: 2px solid rgba(212,160,23,0.35); }
+#log-scope-label { flex-shrink: 0; font-size: 0.8rem; font-weight: bold; color: var(--gold-light); letter-spacing: 0.06em; }
+#log-scope-select { flex: 1; min-width: 0; min-height: 44px; border-radius: 10px; border: 2px solid var(--gold); background: #fff; color: #111; font-family: inherit; font-size: 1rem; font-weight: bold; padding: 6px 8px; }
+#log-scope-select option { font-weight: normal; }
+#log-scope-select optgroup { font-weight: bold; color: #444; }
+/* [WAVE-A-LOG-SCOPE] END additive */
 #log-sub-tabs { flex-shrink: 0; display: flex; background: rgba(0,0,0,0.25); border-bottom: 2px solid rgba(212,160,23,0.3); }
 .log-sub-tab { flex: 1; min-height: 40px; background: transparent; border: none; color: #8a9ab8; font-size: 0.88rem; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .log-sub-tab.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
@@ -166,6 +173,58 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .bucket-checkbox-wrap { display: flex; align-items: center; padding: 0 6px 0 2px; }
 .bucket-checkbox { width: 22px; height: 22px; accent-color: var(--gold); cursor: pointer; flex-shrink: 0; }
 #log-list { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+
+/* [WAVE-B-PARETO] BEGIN additive -- safe to delete these rules to revert */
+#log-view-tabs { flex-shrink: 0; display: flex; background: rgba(0,0,0,0.25); border-bottom: 2px solid rgba(212,160,23,0.3); }
+.log-view-tab { flex: 1; min-height: 44px; background: transparent; border: none; color: #8a9ab8; font-size: 0.95rem; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; letter-spacing: 0.04em; }
+.log-view-tab.active { color: var(--gold-light); border-bottom-color: var(--gold-light); }
+/* Horizontal bars rather than a vertical-bar-plus-line Pareto: element names here run long
+   ("Looking for Supervisor") and vertical categories would need rotated, clipped labels on
+   a tablet. Ranked horizontal bars stay readable at any width, and the 80% cut line carries
+   the actual Pareto insight. */
+#log-pareto { flex: 1; min-height: 0; overflow-y: auto; padding: 10px; display: none; flex-direction: column; gap: 10px; }
+#log-pareto.visible { display: flex; }
+.pareto-head { flex-shrink: 0; background: rgba(0,0,0,0.22); border: 2px solid rgba(212,160,23,0.35); border-radius: 10px; padding: 9px 11px; display: flex; flex-direction: column; gap: 4px; }
+.pareto-scope { font-size: 1.05rem; font-weight: bold; color: var(--gold-light); }
+.pareto-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.88rem; color: #b9c4d8; }
+.pareto-thin { color: #ffb347; font-weight: bold; }
+/* [WAVE-F-PARETO-EXPORTED-ONLY] additive -- safe to delete this rule to revert */
+.pareto-waiting { color: #7ab8f5; font-style: italic; }
+.pareto-totals { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.92rem; margin-top: 2px; }
+.pareto-target { color: var(--text-light); }
+.pareto-target b { color: var(--gold-light); font-size: 1.05rem; }
+.pareto-va { color: #8a9ab8; }
+.pareto-bars { display: flex; flex-direction: column; gap: 4px; }
+.pareto-row { display: flex; align-items: center; gap: 8px; min-height: 34px; }
+.pareto-name { flex: 0 0 34%; min-width: 0; font-size: 0.92rem; font-weight: bold; color: var(--text-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pareto-track { flex: 1; min-width: 0; height: 22px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.pareto-bar { height: 100%; border-radius: 4px; }
+.pareto-bar.nec { background: linear-gradient(90deg, #1976d2, #42a5f5); }
+.pareto-bar.waste { background: linear-gradient(90deg, #c62828, #ef5350); }
+.pareto-val { flex: 0 0 52px; text-align: right; font-family: monospace; font-size: 0.92rem; font-weight: bold; color: var(--text-light); }
+.pareto-cum { flex: 0 0 44px; text-align: right; font-size: 0.85rem; color: #8a9ab8; }
+.pareto-cut { display: flex; align-items: center; gap: 8px; margin: 5px 0 2px 0; }
+.pareto-cut::before, .pareto-cut::after { content: ''; flex: 1; height: 2px; background: var(--gold); opacity: 0.65; }
+.pareto-cut span { flex-shrink: 0; font-size: 0.76rem; font-weight: bold; color: var(--gold-light); letter-spacing: 0.03em; }
+.pareto-legend { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.82rem; color: #b9c4d8; padding-top: 2px; }
+.pareto-legend .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; }
+/* [WAVE-B-PARETO] END additive */
+/* [WAVE-E-PARETO-POLISH] BEGIN additive -- safe to delete these rules to revert */
+#pareto-action-bar { flex-shrink: 0; display: none; padding: 6px 10px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(212,160,23,0.3); }
+#pareto-action-bar.visible { display: flex; }
+.pareto-cols { display: flex; align-items: center; gap: 8px; padding: 0 0 4px 0; font-size: 0.72rem; font-weight: bold; color: #8a9ab8; letter-spacing: 0.04em; text-transform: uppercase; }
+.pareto-cols .pareto-rank { flex: 0 0 22px; }
+.pareto-cols .pareto-name { flex: 0 0 34%; }
+.pareto-rank { flex: 0 0 22px; text-align: center; font-size: 0.85rem; font-weight: bold; color: #8a9ab8; }
+.pareto-row { cursor: default; }
+.pareto-row.has-notes { cursor: pointer; }
+.pareto-row.has-notes:active { background: rgba(255,255,255,0.05); }
+.pareto-row.below-cut .pareto-name, .pareto-row.below-cut .pareto-val { opacity: 0.6; }
+.pareto-row.above-cut .pareto-name { font-weight: 800; }
+.pareto-notes-hint { flex: 0 0 16px; text-align: center; font-size: 0.75rem; color: #7ab8f5; }
+.pareto-notes { display: none; margin: 0 0 4px 30px; padding: 6px 10px; background: rgba(122,184,245,0.08); border-left: 3px solid #7ab8f5; border-radius: 0 6px 6px 0; font-size: 0.85rem; color: #cfe0f5; }
+.pareto-notes.expanded { display: block; }
+/* [WAVE-E-PARETO-POLISH] END additive */
 .bucket-row { background: linear-gradient(180deg, #1a3d78 0%, #122e5e 100%); border: 2px solid var(--gold); border-radius: 14px; padding: 10px 12px; position: relative; cursor: pointer; box-shadow: 0 3px 12px rgba(0,0,0,0.35); }
 .bucket-row.exported { border-color: #3a7a3a; background: linear-gradient(180deg, #183a2a 0%, #102a1e 100%); }
 .bucket-row.live-bucket { border-color: #f0c040; box-shadow: 0 0 14px rgba(240,192,64,0.3), 0 3px 10px rgba(0,0,0,0.3); }
@@ -173,6 +232,8 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .bucket-row-meta { flex: 1; min-width: 0; }
 .bucket-time-label { color: var(--gold-light); font-weight: bold; font-size: 0.95rem; }
 .bucket-process-badge { display: inline-block; font-size: 0.72rem; color: var(--navy); font-weight: bold; background: var(--gold); border-radius: 6px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
+/* [WAVE-C-ORIGIN-BADGE] additive -- safe to delete this rule to revert */
+.bucket-origin-badge { display: inline-block; font-size: 0.7rem; color: #cfd8e8; font-weight: bold; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: 6px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
 .live-badge { display: inline-block; font-size: 0.72rem; color: #fff; font-weight: bold; background: var(--green); border-radius: 6px; padding: 2px 7px; margin-left: 7px; animation: live-pulse 1.5s infinite; vertical-align: middle; }
 @keyframes live-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 .bucket-exported-badge { font-size: 0.72rem; color: #66bb6a; font-weight: bold; background: rgba(46,125,50,0.2); border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
@@ -431,6 +492,18 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     <span class="plant-label">SESSION LOG</span>
     <button class="back-btn" id="log-go-home">← Back</button>
   </div>
+  <!-- [WAVE-A-LOG-SCOPE] BEGIN additive -- safe to delete this whole div to revert -->
+  <div id="log-scope-bar">
+    <label for="log-scope-select" id="log-scope-label">SHOWING</label>
+    <select id="log-scope-select"></select>
+  </div>
+  <!-- [WAVE-A-LOG-SCOPE] END additive -->
+  <!-- [WAVE-B-PARETO] BEGIN additive -- safe to delete this div to revert -->
+  <div id="log-view-tabs">
+    <button class="log-view-tab active" id="log-view-log">CYCLES</button>
+    <button class="log-view-tab" id="log-view-pareto">PARETO</button>
+  </div>
+  <!-- [WAVE-B-PARETO] END additive -->
   <div id="log-sub-tabs">
     <button class="log-sub-tab active" id="log-sub-active">ACTIVE</button>
     <button class="log-sub-tab" id="log-sub-history">HISTORY</button>
@@ -442,6 +515,16 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     <button class="log-action-btn selected-delete" id="log-delete-selected" style="display:none">Delete Selected (<span id="log-delete-count">0</span>)</button>
   </div>
   <div id="log-list"></div>
+  <!-- [WAVE-B-PARETO] BEGIN additive -- safe to delete this div to revert -->
+  <div id="log-pareto"></div>
+  <!-- [WAVE-B-PARETO] END additive -->
+  <!-- [WAVE-E-PARETO-POLISH] BEGIN additive -- safe to delete this div to revert. Static,
+       like #log-action-bar, so renderPareto() only ever updates its text/disabled state
+       rather than rebuilding a button (and its listener) on every render. -->
+  <div id="pareto-action-bar">
+    <button class="log-action-btn" id="pareto-export-btn">Export This View</button>
+  </div>
+  <!-- [WAVE-E-PARETO-POLISH] END additive -->
 </div>
 
 </div><!-- screens-wrapper -->
@@ -621,6 +704,7 @@ const COMMON_ELEMENTS = [
   { name: 'Changeover',             tier: 'amber' },
   { name: 'Training',               tier: 'amber' },
   { name: 'Computer Work',          tier: 'amber' },
+  { name: 'Speaking to Leadership', tier: 'amber' },
   // red — wide first
   { name: 'Spray Paint Bucket',     tier: 'red'   },
   { name: 'Searching For Parts',    tier: 'red'   },
@@ -933,11 +1017,30 @@ function goToLogScreen() {
   renderLog();
   showScreen('screen-log');
 }
-function goToLogFromSessionHome() { logReturnScreen = 'session-home'; goToLogScreen(); }
-function goToLogFromStreamSelect() { logReturnScreen = 'stream-select'; goToLogScreen(); }
+/* [WAVE-C-LOGSCOPE-DEFAULT] BEGIN additive -- safe to delete this function and its three
+   call sites below to revert (the log then always opens on Master, as it did before). */
+// Open the log already scoped to where the operator actually is. Without this, walking into
+// Plant 1 and tapping View Log lands on Master and shows Plant 2 cycles, which reads as the
+// app having switched plants on you.
+//
+// Deliberately does NOT fall back to Master just because the target scope is empty --
+// that was tried and is exactly what caused the bug above: Plant 1 with zero cycles so far
+// would fall back to Master, which shows Plant 2. Per Chase: "I don't wanna click plant one
+// and see anything from plant two" -- an empty Plant 1 log is the correct, honest result,
+// not a reason to silently widen the scope to something that leaks the other plant.
+// Only returns Master when there's genuinely no context yet (log opened before any plant
+// was picked at all).
+function defaultLogScopeForContext() {
+  if (!state.plant) return '';
+  return state.stream ? scopeStreamKey(state.plant, state.stream) : state.plant;
+}
+/* [WAVE-C-LOGSCOPE-DEFAULT] END additive */
+
+function goToLogFromSessionHome() { logReturnScreen = 'session-home'; logScope = defaultLogScopeForContext(); goToLogScreen(); }
+function goToLogFromStreamSelect() { logReturnScreen = 'stream-select'; logScope = defaultLogScopeForContext(); goToLogScreen(); }
 // Viewing the log while actively timing must NOT stop the running element —
 // state.activeElement is left untouched, it just keeps counting in the background.
-function goToLogFromSession() { logReturnScreen = 'session'; goToLogScreen(); }
+function goToLogFromSession() { logReturnScreen = 'session'; logScope = defaultLogScopeForContext(); goToLogScreen(); }
 
 function openProcessOverlay() {
   const grid = document.getElementById('process-overlay-grid');
@@ -1463,6 +1566,312 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 const TIER_COLORS = { green:'var(--green)', amber:'var(--amber)', red:'var(--red)' };
 let expandedBucketIds = new Set();
 let logSubTab = 'active'; // 'active' | 'history'
+
+/* [WAVE-A-LOG-SCOPE] BEGIN additive -- safe to delete through the END marker to revert */
+// Log scope — an orthogonal filter sitting on top of the ACTIVE/HISTORY split, so
+// "master log" is simply the unfiltered case rather than a separate screen with its own
+// rendering path. Segment count tells you the level, and plant names never contain '||':
+//   ""                                         -> Master, every cycle
+//   "Plant 1"                                  -> whole plant
+//   "Plant 1||Large Bucket"                    -> whole value stream
+//   "Plant 1||Large Bucket||roll bucket large"  -> one process within that stream
+// Plant leads every key because the same stream ("Thumbs") and the same process
+// ("Bushing Install") exist under both plants and must not pool together.
+let logScope = '';
+
+function scopeStreamKey(plant, stream) { return `${plant}||${stream}`; }
+function scopeProcessKey(plant, stream, process) {
+  // Process names are free-typed for Custom Process, so normalise case/spacing the same
+  // way the exporter groups them — otherwise "Teeth Install" and "teeth install" would
+  // read as two different scopes.
+  return `${plant}||${stream}||${String(process || '').trim().toLowerCase()}`;
+}
+function bucketScopeKeys(b) {
+  const plant  = b.plant || '';
+  const stream = bucketStream(b) || '';
+  const proc   = (b.header && b.header.process) || '';
+  const keys = [plant, scopeStreamKey(plant, stream)];
+  if (proc) keys.push(scopeProcessKey(plant, stream, proc));
+  return keys;
+}
+function bucketMatchesScope(b) {
+  if (!logScope) return true;                       // Master
+  return bucketScopeKeys(b).includes(logScope);
+}
+
+// Options are built from the cycles that actually exist, not from the full static process
+// list — otherwise this would be a 40+ entry wall of mostly-empty scopes. It grows on its
+// own as new processes get studied.
+//
+// [WAVE-D-STRICT-PLANT-ISOLATION] The one exception: PLANT groups are always both listed,
+// even at 0 cycles. Reasoning tied to a real bug -- a plant with zero cycles so far had no
+// option in this dropdown, which meant defaultLogScopeForContext() could set logScope to
+// "Plant 1", find no matching <option>, and the stale-scope cleanup below would silently
+// reset it straight back to Master -- showing Plant 2's cycles right after picking Plant 1.
+// Plants are a small fixed pair (STREAMS_BY_PLANT's keys), so listing both unconditionally
+// costs nothing and closes that hole for good, unlike streams/processes which really do
+// need to stay data-driven or this would be a 40+ entry wall.
+function buildLogScopeOptions() {
+  const sel = document.getElementById('log-scope-select');
+  const streams = new Map();  // streamKey -> { plant, stream, count, procs: Map }
+  state.buckets.forEach(b => {
+    const plant  = b.plant || '';
+    const stream = bucketStream(b) || '';
+    const proc   = (b.header && b.header.process) || '';
+    const sKey = scopeStreamKey(plant, stream);
+    const entry = streams.get(sKey) || { plant, stream, count: 0, procs: new Map() };
+    entry.count++;
+    if (proc) {
+      const pKey = scopeProcessKey(plant, stream, proc);
+      const p = entry.procs.get(pKey) || { label: proc, count: 0 };
+      p.count++;
+      entry.procs.set(pKey, p);
+    }
+    streams.set(sKey, entry);
+  });
+  // Same reasoning, one level down: if the CURRENT stream has zero cycles logged yet, it
+  // still needs an option, or defaultLogScopeForContext() picking it hits the identical
+  // stale-scope reset -- just narrower (leaking to the rest of the plant instead of Master).
+  if (state.plant && state.stream) {
+    const curKey = scopeStreamKey(state.plant, state.stream);
+    if (!streams.has(curKey)) streams.set(curKey, { plant: state.plant, stream: state.stream, count: 0, procs: new Map() });
+  }
+
+  // Group the streams under their plant so a whole-plant option can head each group. Without
+  // it, opening the log from inside a plant had to guess at one of its streams.
+  const plants = new Map();  // plant -> { count, streams: [[sKey, entry], ...] }
+  Object.keys(STREAMS_BY_PLANT).forEach(plant => plants.set(plant, { count: 0, streams: [] }));
+  [...streams.entries()]
+    .sort((a, b) => (a[1].plant + a[1].stream).localeCompare(b[1].plant + b[1].stream))
+    .forEach(([sKey, e]) => {
+      const p = plants.get(e.plant) || { count: 0, streams: [] };
+      p.count += e.count;
+      p.streams.push([sKey, e]);
+      plants.set(e.plant, p);
+    });
+
+  const html = [`<option value="">Master — all cycles (${state.buckets.length})</option>`];
+  [...plants.entries()].sort((a, b) => a[0].localeCompare(b[0])).forEach(([plant, p]) => {
+    html.push(`<optgroup label="${esc(plant)}">`);
+    html.push(`<option value="${esc(plant)}">${esc(plant)} — all (${p.count})</option>`);
+    p.streams.forEach(([sKey, e]) => {
+      html.push(`<option value="${esc(sKey)}">&nbsp;&nbsp;${esc(e.stream)} — all (${e.count})</option>`);
+      [...e.procs.entries()]
+        .sort((a, b) => a[1].label.localeCompare(b[1].label))
+        .forEach(([pKey, pr]) => {
+          html.push(`<option value="${esc(pKey)}">&nbsp;&nbsp;&nbsp;&nbsp;› ${esc(pr.label)} (${pr.count})</option>`);
+        });
+    });
+    html.push(`</optgroup>`);
+  });
+  sel.innerHTML = html.join('');
+  // A scope can disappear entirely once its last cycle is deleted — fall back to Master
+  // rather than silently showing an empty list against a scope that no longer exists.
+  if (logScope && !sel.querySelector(`option[value="${CSS.escape(logScope)}"]`)) logScope = '';
+  sel.value = logScope;
+}
+/* [WAVE-A-LOG-SCOPE] END additive */
+
+/* [WAVE-B-PARETO] BEGIN additive -- safe to delete through the END marker to revert */
+let logView = 'log'; // 'log' | 'pareto'
+/* [WAVE-E-PARETO-POLISH] which ranked elements currently have their notes expanded, by
+   name. Cleared implicitly on reload, which is fine -- this is view state, not data. */
+let expandedParetoElements = new Set();
+
+// One aggregation used by BOTH the on-screen chart and the exported Pareto sheet, so the
+// two can never disagree about a number.
+//
+// Ranks only the improvement targets — Necessary (amber) + Waste (red). Value Added is
+// deliberately excluded from the ranking because welding/fabrication IS the job: include
+// it and "Weld" tops every chart, which says nothing actionable. VA is still returned
+// separately so it can be shown as context.
+//
+// Study Pause is excluded too — that's observer downtime (lunch, interruption), not the
+// operator's time, and the workbook already reports it on its own.
+function computeParetoRows(buckets) {
+  const src = (buckets || []).filter(b => !b.isDraft && b.elements && b.elements.length > 0);
+  const agg = new Map();  // element name -> { name, tier, sec, count, notes:Set }
+  let vaSec = 0, pauseSec = 0;
+  const operators = new Set();
+  let minTs = null, maxTs = null;
+
+  src.forEach(b => {
+    const op = b.header && b.header.operator;
+    if (op) operators.add(op);
+    if (b.startTs != null) {
+      if (minTs === null || b.startTs < minTs) minTs = b.startTs;
+      if (maxTs === null || b.startTs > maxTs) maxTs = b.startTs;
+    }
+    b.elements.forEach(el => {
+      if (el.name === PAUSE_ELEMENT_NAME) { pauseSec += el.durationSec; return; }
+      if (el.tier === 'green') { vaSec += el.durationSec; return; }
+      const e = agg.get(el.name) || { name: el.name, tier: el.tier, sec: 0, count: 0, notes: new Set() };
+      e.sec += el.durationSec;
+      e.count += 1;
+      if (el.note) e.notes.add(flattenNoteText(el.note));
+      // A name could in principle appear under two tiers; keep the worst (red beats amber)
+      // so it isn't reported as merely Necessary when some of it was logged as Waste.
+      if (el.tier === 'red') e.tier = 'red';
+      agg.set(el.name, e);
+    });
+  });
+
+  const targetSec = [...agg.values()].reduce((s, e) => s + e.sec, 0);
+  let running = 0;
+  const rows = [...agg.values()]
+    .sort((a, b) => b.sec - a.sec || a.name.localeCompare(b.name))
+    .map(e => {
+      running += e.sec;
+      return {
+        name: e.name,
+        tier: e.tier,
+        sec: e.sec,
+        count: e.count,
+        pct:    targetSec > 0 ? e.sec / targetSec : 0,
+        cumPct: targetSec > 0 ? running / targetSec : 0,
+        avgSec: e.count > 0 ? e.sec / e.count : 0,
+        notes: [...e.notes].join(' / '),
+      };
+    });
+
+  // The 80/20 cut: index of the last row still inside the first 80% of the loss. Everything
+  // up to and including it is where the effort belongs.
+  let cutIdx = -1;
+  for (let i = 0; i < rows.length; i++) { cutIdx = i; if (rows[i].cumPct >= 0.8) break; }
+
+  return { rows, cutIdx, targetSec, vaSec, pauseSec, cycleCount: src.length,
+           operators: [...operators].sort(), minTs, maxTs };
+}
+
+function paretoScopeLabel() {
+  if (!logScope) return 'Master — all cycles';
+  const parts = logScope.split('||');
+  const sel = document.getElementById('log-scope-select');
+  const opt = sel && sel.querySelector(`option[value="${CSS.escape(logScope)}"]`);
+  if (parts.length === 1) return `${parts[0]} — whole plant`;
+  const stream = `${parts[0]} — ${parts[1]}`;
+  if (parts.length === 2) return `${stream} (whole stream)`;
+  // Use the option's own label for the process so capitalisation matches what was typed,
+  // rather than the lower-cased scope key.
+  const procLabel = opt ? opt.textContent.replace(/^\s*›\s*/, '').replace(/\s*\(\d+\)\s*$/, '') : parts[2];
+  return `${stream} › ${procLabel}`;
+}
+
+// [WAVE-F-PARETO-EXPORTED-ONLY] Per Chase: the on-screen chart should read as "official,
+// finalized numbers" — cycles still being reviewed/edited shouldn't move a running trend
+// chart before they're confirmed. So the CHART draws only from cycles with exportedAt set.
+// This does NOT touch computeParetoRows() itself, which the Excel export also calls on the
+// batch it's CURRENTLY exporting -- those buckets by definition don't have exportedAt set
+// yet at that point (it's stamped afterward, in the click handlers), so gating there would
+// make the Pareto tab in every export come out empty. The restriction belongs here, at the
+// one call site that reads from already-saved history rather than an in-flight export.
+function renderPareto() {
+  const host = document.getElementById('log-pareto');
+  const inScope = state.buckets.filter(bucketMatchesScope);
+  const exportedInScope = inScope.filter(b => !!b.exportedAt);
+  const data = computeParetoRows(exportedInScope);
+  const { rows, cutIdx, targetSec, vaSec, cycleCount, operators, minTs, maxTs } = data;
+
+  // [WAVE-E-PARETO-POLISH] The export button's count is deliberately NOT `cycleCount` —
+  // that number only counts cycles with elements.length>0 (what the CHART can use), whereas
+  // exporting should match every other "export this scope" button in the app: every sealed,
+  // non-draft cycle in scope. A header-only cycle with nothing timed yet wouldn't show on
+  // the chart but should still be exportable, and the two counts must never silently differ.
+  const exportableCount = inScope.filter(b => !b.isDraft && b.sealed).length;
+  const expBtn = document.getElementById('pareto-export-btn');
+  expBtn.textContent = `Export This View (${exportableCount})`;
+  expBtn.disabled = exportableCount === 0;
+
+  if (rows.length === 0) {
+    // [WAVE-F-PARETO-EXPORTED-ONLY] Three distinct reasons this can be empty, and they need
+    // different messages -- "you have cycles here, they're just not exported yet" reads very
+    // differently from "there's genuinely nothing in this selection at all".
+    const unexportedWaiting = inScope.length - exportedInScope.length;
+    let reason;
+    if (inScope.length === 0) {
+      reason = 'No cycles in this selection.';
+    } else if (exportedInScope.length === 0) {
+      reason = `${unexportedWaiting} cycle${unexportedWaiting!==1?'s':''} here ${unexportedWaiting!==1?'are':'is'} not exported yet — the Pareto only charts exported cycles. Export from the CYCLES tab first.`;
+    } else {
+      reason = 'These cycles only contain Value Added time, which is not ranked.';
+    }
+    host.innerHTML = `<div class="empty-log-msg">Nothing to chart yet.<br><small style="color:#7a8aaa;">${reason}</small></div>`;
+    return;
+  }
+
+  const dateRange = (minTs && maxTs)
+    ? (formatDate(minTs) === formatDate(maxTs) ? formatDate(minTs) : `${formatDate(minTs)} – ${formatDate(maxTs)}`)
+    : '—';
+  const maxSec = rows[0].sec;
+  // n is stated up front on purpose: most processes have very few observations so far, and
+  // a chart makes thin data look more authoritative than it is.
+  const thin = cycleCount < 3;
+
+  host.innerHTML = `
+    <div class="pareto-head">
+      <div class="pareto-scope">${esc(paretoScopeLabel())}</div>
+      <div class="pareto-meta">
+        <span class="${thin ? 'pareto-thin' : ''}">n = ${cycleCount} exported cycle${cycleCount!==1?'s':''}${thin ? ' ⚠ small sample' : ''}</span>
+        <span>${dateRange}</span>
+        ${operators.length ? `<span>${esc(operators.join(', '))}</span>` : ''}
+        <!-- [WAVE-F-PARETO-EXPORTED-ONLY] surfaces the exported-only rule whenever there's
+             unexported data sitting in this same scope, rather than leaving it as a silent
+             rule someone has to be told about once and remember forever. -->
+        ${(inScope.length - exportedInScope.length) > 0
+          ? `<span class="pareto-waiting">${inScope.length - exportedInScope.length} more not yet exported</span>` : ''}
+      </div>
+      <div class="pareto-totals">
+        <span class="pareto-target">Improvement target: <b>${formatMS(targetSec)}</b></span>
+        <span class="pareto-va">Value Added: ${formatMS(vaSec)} (not ranked)</span>
+      </div>
+    </div>
+    <!-- [WAVE-E-PARETO-POLISH] column header — the old version only explained "right column
+         = cumulative %" in a footer legend, after the reader had already seen the numbers. -->
+    <div class="pareto-cols">
+      <span class="pareto-rank">#</span>
+      <span class="pareto-name">Element</span>
+      <span style="flex:1;"></span>
+      <span style="flex:0 0 52px;text-align:right;">Time</span>
+      <span style="flex:0 0 44px;text-align:right;">Cum%</span>
+    </div>
+    <div class="pareto-bars">
+      ${rows.map((r, i) => {
+        const aboveCut = i <= cutIdx;
+        const hasNotes = !!r.notes;
+        const expanded = expandedParetoElements.has(r.name);
+        return `
+        <div class="pareto-row ${aboveCut ? 'above-cut' : 'below-cut'} ${hasNotes ? 'has-notes' : ''}" ${hasNotes ? `data-el-name="${esc(r.name)}"` : ''}>
+          <div class="pareto-rank">${i + 1}</div>
+          <div class="pareto-name" title="${esc(r.name)}">${esc(r.name)}</div>
+          <div class="pareto-track">
+            <div class="pareto-bar ${r.tier === 'red' ? 'waste' : 'nec'}" style="width:${Math.max(2, (r.sec/maxSec)*100)}%"></div>
+          </div>
+          <div class="pareto-val">${formatMS(r.sec)}</div>
+          <div class="pareto-cum">${Math.round(r.cumPct*100)}%</div>
+          <div class="pareto-notes-hint">${hasNotes ? (expanded ? '▲' : '📝') : ''}</div>
+        </div>
+        ${hasNotes ? `<div class="pareto-notes ${expanded ? 'expanded' : ''}">${esc(r.notes)}</div>` : ''}
+        ${i === cutIdx && i < rows.length - 1
+          ? `<div class="pareto-cut"><span>⚑ 80% of the loss is above this line</span></div>` : ''}
+      `;}).join('')}
+    </div>
+    <div class="pareto-legend">
+      <span><span class="legend-dot" style="background:var(--amber)"></span>Necessary</span>
+      <span><span class="legend-dot" style="background:var(--red)"></span>Waste</span>
+      <span style="color:#8a9ab8;">📝 = tap for notes recorded on that element</span>
+    </div>`;
+
+  // [WAVE-E-PARETO-POLISH] event delegation on the fresh container — re-attached every
+  // render since innerHTML above just replaced it, so there's nothing stale to leak.
+  host.querySelector('.pareto-bars').addEventListener('click', e => {
+    const row = e.target.closest('.pareto-row.has-notes');
+    if (!row) return;
+    const name = row.dataset.elName;
+    expandedParetoElements.has(name) ? expandedParetoElements.delete(name) : expandedParetoElements.add(name);
+    renderPareto();
+  });
+}
+/* [WAVE-B-PARETO] END additive */
 let timerDetailsOpen = false;
 let timerDetailsSaveTimer = null;
 
@@ -1590,14 +1999,44 @@ function renderLog() {
   const list = document.getElementById('log-list');
   list.innerHTML = '';
 
+  /* [WAVE-B-PARETO] EDIT -- the block below routes between the cycle list and the chart.
+     To revert, delete from here down to the "END view routing" marker.                  */
+  const isPareto = logView === 'pareto';
+  document.getElementById('log-view-log').classList.toggle('active', !isPareto);
+  document.getElementById('log-view-pareto').classList.toggle('active', isPareto);
+  document.getElementById('log-pareto').classList.toggle('visible', isPareto);
+  list.style.display = isPareto ? 'none' : '';
+  // ACTIVE/HISTORY is an export-bookkeeping split, not an analysis one — a Pareto wants
+  // every observation in scope, so the tabs and the export/delete bar are hidden here
+  // rather than silently halving the sample.
+  document.getElementById('log-sub-tabs').style.display = isPareto ? 'none' : '';
+  document.getElementById('log-action-bar').style.display = isPareto ? 'none' : 'flex';
+  // [WAVE-E-PARETO-POLISH] the export/delete bar above is bookkeeping-shaped (Unexported/
+  // Selected) and doesn't fit an analysis view, but there still needs to BE an export
+  // somewhere on this screen — Chase's own words: "I'm not seeing the export... I would
+  // like the export to be somewhere on this page." This one exports every cycle in the
+  // current scope, mirroring "Export All Shown" rather than the unexported-only button.
+  document.getElementById('pareto-action-bar').classList.toggle('visible', isPareto);
+  if (isPareto) { buildLogScopeOptions(); renderPareto(); return; }
+  /* [WAVE-B-PARETO] END view routing */
+
   // Sub-tab sync
   document.getElementById('log-sub-active').classList.toggle('active', logSubTab === 'active');
   document.getElementById('log-sub-history').classList.toggle('active', logSubTab === 'history');
 
+  /* [WAVE-A-LOG-SCOPE] EDIT -- to revert, delete the buildLogScopeOptions() call and replace the
+     three lines below with the original two:
+         const buckets = isHistory
+           ? state.buckets.filter(b => b.exportedAt)
+           : state.buckets.filter(b => !b.exportedAt);                                  */
+  buildLogScopeOptions();
+
   const isHistory = logSubTab === 'history';
+  // Scope narrows first, then the ACTIVE/HISTORY split — the two filters are independent.
+  const inScope = state.buckets.filter(bucketMatchesScope);
   const buckets = isHistory
-    ? state.buckets.filter(b => b.exportedAt)
-    : state.buckets.filter(b => !b.exportedAt);
+    ? inScope.filter(b => b.exportedAt)
+    : inScope.filter(b => !b.exportedAt);
 
   // Action bar: the export-only actions (Unexported/All/Selected) only make sense on
   // the Active tab, but Delete Selected must work on both — Chase wants to be able to
@@ -1613,12 +2052,23 @@ function renderLog() {
     const expNewBtn = document.getElementById('log-export-new');
     expNewBtn.textContent = `Export Unexported${exportable > 0 ? ` (${exportable})` : ''}`;
     expNewBtn.disabled = exportable === 0;
+    /* [WAVE-A-LOG-SCOPE] EDIT -- the 4 lines below are additive; delete them to revert. */
+    // Say "Shown" while scoped so the button can't be read as "export the whole database".
+    const allInScope = state.buckets.filter(b => bucketMatchesScope(b) && !b.isDraft && b.sealed).length;
+    const expAllBtn = document.getElementById('log-export-all');
+    expAllBtn.textContent = logScope ? `Export All Shown (${allInScope})` : 'Export All';
+    expAllBtn.disabled = allInScope === 0;
   }
 
   if (buckets.length === 0) {
+    /* [WAVE-A-LOG-SCOPE] EDIT -- scope-aware wording. Original was a fixed two-branch message on
+       isHistory with no 'for this selection' variant.                                 */
+    // Distinguish "nothing logged at all" from "nothing in THIS scope" — otherwise a
+    // filtered-to-empty view reads as though the data was lost.
+    const scoped = !!logScope;
     list.innerHTML = isHistory
-      ? '<div class="empty-log-msg">No exported cycles yet.<br><small style="color:#7a8aaa;">Exported cycles appear here.</small></div>'
-      : '<div class="empty-log-msg">No cycles yet.<br><small style="color:#7a8aaa;">Tap New Cycle to start timing.</small></div>';
+      ? `<div class="empty-log-msg">No exported cycles${scoped ? ' for this selection' : ' yet'}.<br><small style="color:#7a8aaa;">${scoped ? 'Try Master — all cycles.' : 'Exported cycles appear here.'}</small></div>`
+      : `<div class="empty-log-msg">No cycles${scoped ? ' for this selection' : ' yet'}.<br><small style="color:#7a8aaa;">${scoped ? 'Try Master — all cycles.' : 'Tap New Cycle to start timing.'}</small></div>`;
     return;
   }
 
@@ -1641,6 +2091,11 @@ function renderLog() {
     const liveBadge     = isLive ? `<span class="live-badge">● LIVE</span>` : '';
     const draftBadge    = bucket.isDraft ? `<span class="draft-badge">DRAFT</span>` : '';
     const procBadge     = h.process ? `<span class="bucket-process-badge">${esc(h.process)}</span>` : '';
+    /* [WAVE-C-ORIGIN-BADGE] additive -- the log lists cycles from BOTH plants, and a row
+       showed only process/frame/operator, so a Plant 2 cycle was indistinguishable from a
+       Plant 1 one. Stamp the origin on every row. Delete this line and its use below to
+       revert. Abbreviated P1/P2 to match the export's own plant tags.                    */
+    const originBadge   = `<span class="bucket-origin-badge">${bucket.plant === 'Plant 2' ? 'P2' : 'P1'}${bucketStream(bucket) ? ' · ' + esc(bucketStream(bucket)) : ''}</span>`;
     const exportedBadge = bucket.exportedAt ? `<span class="bucket-exported-badge">✓ ${formatDate(bucket.exportedAt)}</span>` : '';
     const expandHint    = elemCount > 0 ? `<span class="expand-hint">${isExpanded?'▲':'▼'} ${elemCount} element${elemCount!==1?'s':''}</span>` : '';
     const noteHint      = noteCount > 0 ? `<span class="tier-chip" style="color:#7ab8f5;">📝 ${noteCount} note${noteCount!==1?'s':''}</span>` : '';
@@ -1653,7 +2108,7 @@ function renderLog() {
         ${isCheckable ? `<div class="bucket-checkbox-wrap"><input type="checkbox" class="bucket-checkbox" data-bucket-id="${bucket.id}" ${selectedBucketIds.has(bucket.id) ? 'checked' : ''}></div>` : ''}
         <div class="bucket-row-meta">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-            <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${procBadge}${liveBadge}${draftBadge}${exportedBadge}
+            <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${originBadge}${procBadge}${liveBadge}${draftBadge}${exportedBadge}
           </div>
           <div class="bucket-fields">
             ${isPartNumberBucket(bucket)
@@ -1787,6 +2242,46 @@ document.getElementById('log-sub-history').addEventListener('click', () => {
   renderLog();
 });
 
+/* [WAVE-B-PARETO] BEGIN additive -- safe to delete these two listeners to revert */
+document.getElementById('log-view-log').addEventListener('click', () => {
+  logView = 'log';
+  renderLog();
+});
+document.getElementById('log-view-pareto').addEventListener('click', () => {
+  logView = 'pareto';
+  // Leaving a selection armed while the rows that own it are off-screen would let a later
+  // bulk delete hit cycles the user can no longer see.
+  selectedBucketIds.clear();
+  syncBulkActionButtons();
+  renderLog();
+});
+/* [WAVE-B-PARETO] END additive */
+
+/* [WAVE-E-PARETO-POLISH] BEGIN additive -- safe to delete this listener to revert */
+// Same shape as "Export All Shown" (log-export-all above) -- every sealed, non-draft
+// cycle in the current scope, marked exported afterward the same way.
+document.getElementById('pareto-export-btn').addEventListener('click', () => {
+  const toExport = state.buckets.filter(b => bucketMatchesScope(b) && !b.isDraft && b.sealed);
+  const exported = runExportBuckets(toExport);
+  if (exported) {
+    exported.forEach(b => { b.exportedAt = Date.now(); });
+    saveState(); renderPareto(); updateSessionHomeInfo(); showExportToast();
+  }
+});
+/* [WAVE-E-PARETO-POLISH] END additive */
+
+/* [WAVE-A-LOG-SCOPE] BEGIN additive -- safe to delete this listener to revert */
+// Changing scope clears the checkbox selection for the same reason switching tabs does:
+// a selection made in one view shouldn't silently stay armed for a bulk delete in another
+// where those rows aren't even visible.
+document.getElementById('log-scope-select').addEventListener('change', e => {
+  logScope = e.target.value;
+  selectedBucketIds.clear();
+  syncBulkActionButtons();
+  renderLog();
+});
+/* [WAVE-A-LOG-SCOPE] END additive */
+
 document.getElementById('log-export-selected').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => selectedBucketIds.has(b.id) && !b.isDraft && b.sealed);
   if (!toExport.length) { alert('No valid cycles selected.'); return; }
@@ -1820,8 +2315,12 @@ document.getElementById('log-delete-selected').addEventListener('click', () => {
   saveState(); renderLog(); renderGrid(); updateSessionHomeInfo();
 });
 
+/* [WAVE-A-LOG-SCOPE] EDIT -- to revert, drop the `bucketMatchesScope(b) &&` from both filters below. */
+// Both bulk exports honour the current scope: their counts are already computed from the
+// scoped list, so exporting the unscoped set would mean the button says "(3)" and then
+// writes 30 cycles. What you're looking at is what gets exported.
 document.getElementById('log-export-new').addEventListener('click', () => {
-  const toExport = state.buckets.filter(b => !b.exportedAt && !b.isDraft && b.sealed);
+  const toExport = state.buckets.filter(b => bucketMatchesScope(b) && !b.exportedAt && !b.isDraft && b.sealed);
   const exported = runExportBuckets(toExport);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
@@ -1829,7 +2328,7 @@ document.getElementById('log-export-new').addEventListener('click', () => {
   }
 });
 document.getElementById('log-export-all').addEventListener('click', () => {
-  const exported = runExportBuckets(state.buckets.filter(b => !b.isDraft && b.sealed));
+  const exported = runExportBuckets(state.buckets.filter(b => bucketMatchesScope(b) && !b.isDraft && b.sealed));
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
@@ -2232,7 +2731,9 @@ function buildExportWorkbook(buckets) {
   // after this loop runs (so they wouldn't show up in wb.SheetNames yet) — a Custom Process
   // typed as exactly one of those names would otherwise silently overwrite or crash on the
   // meta sheet later.
-  const RESERVED_SHEET_NAMES = ['Summary', 'Elements', 'Cycle Detail'];
+  // 'Pareto' is reserved too [WAVE-B-PARETO] — a Custom Process typed as any of these would
+  // otherwise collide with the meta sheets appended after this loop.
+  const RESERVED_SHEET_NAMES = ['Summary', 'Elements', 'Cycle Detail', 'Pareto'];
   function uniqueSheetName(candidate) {
     let name = candidate.slice(0, 31);
     let n = 2;
@@ -2459,6 +2960,73 @@ function buildExportWorkbook(buckets) {
     // ("Total Duration (mm:ss)" / "Occurrences") with no width, so they overran each other.
     fillMissingColumnWidths(wsElements);
     XLSX.utils.book_append_sheet(wb, wsElements, 'Elements');
+
+    /* [WAVE-B-PARETO] BEGIN additive -- safe to delete through the END marker to revert */
+    // "Pareto" tab — the same ranking the app charts on screen, laid out so Excel can turn
+    // it into a real chart in a few clicks. The bundled SheetJS (0.18.5 community) cannot
+    // write chart objects, so the chart itself can't be pre-built here; what this sheet
+    // does instead is put Element / Total (min) / Cumulative % in three ADJACENT columns
+    // (B:D) so the whole series can be selected in one drag and dropped into
+    // Insert > Combo Chart. Everything is live formulas, so editing a duration recalculates.
+    const par = computeParetoRows(exported);
+    if (par.rows.length > 0) {
+      const dateRange = (par.minTs && par.maxTs)
+        ? (formatExportDate(par.minTs) === formatExportDate(par.maxTs)
+            ? formatExportDate(par.minTs)
+            : `${formatExportDate(par.minTs)} - ${formatExportDate(par.maxTs)}`)
+        : '';
+      const scopeLabel = [...new Set(exported.map(b => {
+        const st = bucketStream(b) || '';
+        const pr = (b.header && b.header.process) || '(no process)';
+        return `${b.plant || ''} — ${st} › ${pr}`;
+      }))].join(' | ');
+
+      const HDR_ROWS = 9;   // header block above the table (0-indexed rows 0..7, table at 8)
+      const paretoAoa = [
+        ['PARETO — IMPROVEMENT TARGETS (Necessary + Waste)'],
+        ['Scope:', scopeLabel],
+        ['Observations:', par.cycleCount, par.cycleCount < 3 ? 'SMALL SAMPLE — interpret with care' : ''],
+        ['Dates:', dateRange],
+        ['Operator(s):', par.operators.join(', ')],
+        ['Improvement target total (min):', Math.round(par.targetSec/60*100)/100],
+        ['Value Added total (min):', Math.round(par.vaSec/60*100)/100, '(not ranked — VA is the work itself)'],
+        ['TO CHART:', 'select B9:D' + (HDR_ROWS + par.rows.length) + ', then Insert > Chart > Combo. Put Cumulative % on the secondary axis as a line.'],
+        ['Rank', 'Element', 'Total (min)', 'Cumulative %', 'Category', 'Total (mm:ss)', '% of Target', 'Occurrences', 'Avg per Occurrence (min)', 'Notes / observations'],
+      ];
+      par.rows.forEach((r, i) => {
+        paretoAoa.push([
+          i + 1, r.name, Math.round(r.sec/60*100)/100, null,
+          r.tier === 'red' ? 'Waste (NVA)' : 'Nec (NNVA)',
+          formatMS(r.sec), null, r.count,
+          Math.round(r.avgSec/60*100)/100, r.notes || '',
+        ]);
+      });
+      paretoAoa.push([]);
+      paretoAoa.push([null, 'TOTAL', Math.round(par.targetSec/60*100)/100]);
+
+      const wsPar = XLSX.utils.aoa_to_sheet(paretoAoa);
+      const firstDataRow = HDR_ROWS + 1;                 // Excel row of the first ranked element
+      const lastDataRow  = HDR_ROWS + par.rows.length;
+      // The TOTAL cell: one blank spacer row after the last ranked row, then TOTAL. So it
+      // is lastDataRow + 2, NOT +3 — and getting this wrong is silent, because a formula
+      // pointing at an empty cell hits the `=0` guard and renders as blank rather than #REF.
+      const targetRef    = `$C$${lastDataRow + 2}`;
+      // Cumulative % (D) and % of Target (G) as real formulas rather than baked numbers, so
+      // the sheet stays correct if a duration is edited in Excel afterwards.
+      for (let i = 0; i < par.rows.length; i++) {
+        const row = firstDataRow + i;
+        wsPar[`D${row}`] = { t: 'f', f: `IF(${targetRef}=0,"",SUM($C$${firstDataRow}:C${row})/${targetRef})`, z: '0.0%' };
+        wsPar[`G${row}`] = { t: 'f', f: `IF(${targetRef}=0,"",C${row}/${targetRef})`, z: '0.0%' };
+      }
+      wsPar['!cols'] = [
+        { wch: 6 }, { wch: 26 }, { wch: 12 }, { wch: 14 }, { wch: 13 },
+        { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 22 }, { wch: 60 },
+      ];
+      // AutoFilter over just the ranked table so sorting can't drag the TOTAL row into it.
+      wsPar['!autofilter'] = { ref: `A${HDR_ROWS}:J${lastDataRow}` };
+      XLSX.utils.book_append_sheet(wb, wsPar, 'Pareto');
+    }
+    /* [WAVE-B-PARETO] END additive */
   }
 
   // Filename (per-second timestamp so repeated exports never collide)
