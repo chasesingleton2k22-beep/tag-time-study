@@ -1609,6 +1609,28 @@ function bucketMatchesScope(b) {
   return bucketScopeKeys(b).includes(logScope);
 }
 
+/* [WAVE-H-STREAM-EXPORT-GUARD] BEGIN additive -- safe to delete this function and its four
+   call sites below to revert (bulk exports go back to allowing a mixed-stream batch). */
+// Chase: "I want separate logs per value stream... when I export, I don't want it mixing
+// through bucket observations, because they're going to different workbooks." The exporter
+// already splits by stream onto separate sheet tabs, so nothing was ever silently merged
+// together on one sheet -- but a wide scope (Master, or a whole Plant covering several
+// streams) could still hand him ONE FILE spanning multiple streams, which is exactly the
+// mixing he doesn't want when the destination is several separate real-world workbooks.
+// Block it outright at the export buttons rather than relying on him remembering to narrow
+// the scope dropdown first.
+function exportSpanKeys(buckets) {
+  return new Set(buckets.map(b => `${b.plant || ''}||${bucketStream(b) || ''}`));
+}
+function blockIfMixedStreams(buckets) {
+  const spans = exportSpanKeys(buckets);
+  if (spans.size <= 1) return false;
+  const names = [...spans].map(k => k.split('||')[1] || '(no stream)').join(', ');
+  alert(`This export would span more than one value stream (${names}).\n\nNarrow the Log Scope dropdown to a single value stream first -- each stream needs to stay in its own export.`);
+  return true;
+}
+/* [WAVE-H-STREAM-EXPORT-GUARD] END additive */
+
 // Options are built from the cycles that actually exist, not from the full static process
 // list — otherwise this would be a 40+ entry wall of mostly-empty scopes. It grows on its
 // own as new processes get studied.
@@ -2272,6 +2294,7 @@ document.getElementById('log-view-pareto').addEventListener('click', () => {
 // cycle in the current scope, marked exported afterward the same way.
 document.getElementById('pareto-export-btn').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => bucketMatchesScope(b) && !b.isDraft && b.sealed);
+  if (blockIfMixedStreams(toExport)) return; // [WAVE-H-STREAM-EXPORT-GUARD]
   const exported = runExportBuckets(toExport);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
@@ -2295,6 +2318,7 @@ document.getElementById('log-scope-select').addEventListener('change', e => {
 document.getElementById('log-export-selected').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => selectedBucketIds.has(b.id) && !b.isDraft && b.sealed);
   if (!toExport.length) { alert('No valid cycles selected.'); return; }
+  if (blockIfMixedStreams(toExport)) return; // [WAVE-H-STREAM-EXPORT-GUARD]
   const exported = runExportBuckets(toExport);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
@@ -2331,6 +2355,7 @@ document.getElementById('log-delete-selected').addEventListener('click', () => {
 // writes 30 cycles. What you're looking at is what gets exported.
 document.getElementById('log-export-new').addEventListener('click', () => {
   const toExport = state.buckets.filter(b => bucketMatchesScope(b) && !b.exportedAt && !b.isDraft && b.sealed);
+  if (blockIfMixedStreams(toExport)) return; // [WAVE-H-STREAM-EXPORT-GUARD]
   const exported = runExportBuckets(toExport);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
@@ -2338,7 +2363,9 @@ document.getElementById('log-export-new').addEventListener('click', () => {
   }
 });
 document.getElementById('log-export-all').addEventListener('click', () => {
-  const exported = runExportBuckets(state.buckets.filter(b => bucketMatchesScope(b) && !b.isDraft && b.sealed));
+  const toExportAll = state.buckets.filter(b => bucketMatchesScope(b) && !b.isDraft && b.sealed);
+  if (blockIfMixedStreams(toExportAll)) return; // [WAVE-H-STREAM-EXPORT-GUARD]
+  const exported = runExportBuckets(toExportAll);
   if (exported) {
     exported.forEach(b => { b.exportedAt = Date.now(); });
     saveState(); renderLog(); updateSessionHomeInfo(); showExportToast();
