@@ -724,8 +724,18 @@ const COMMON_ELEMENTS = [
   { name: 'Break',                  tier: 'red'   },
 ];
 
+// [WAVE-G-THUMBS-ELEMENTS] Thumbs aren't buckets -- "Roll Bucket" doesn't apply at all (dropped
+// entirely for this stream), and any remaining "...Bucket" element reads as "...Thumb" instead
+// so the grid actually names what's being timed. Every other stream keeps the original wording.
+const THUMBS_ELEMENT_RENAMES = { 'Positioning Bucket': 'Positioning Thumb', 'Spray Paint Bucket': 'Spray Paint Thumb' };
+
 function getElementsForPlant() {
   // Weld and Fabrication both show on every process, regardless of process name.
+  if (state.stream === 'Thumbs') {
+    return COMMON_ELEMENTS.map(el =>
+      THUMBS_ELEMENT_RENAMES[el.name] ? { ...el, name: THUMBS_ELEMENT_RENAMES[el.name] } : el
+    );
+  }
   return [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
 }
 
@@ -2806,7 +2816,9 @@ function buildExportWorkbook(buckets) {
       const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
       const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
       const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
-      const posCount = els.filter(e=>e.name==='Positioning Bucket').length;
+      // Matches both names -- Thumbs cycles show 'Positioning Thumb' [WAVE-G-THUMBS-ELEMENTS]
+      // but should still roll up into this same summary line as every other stream does.
+      const posCount = els.filter(e=>e.name==='Positioning Bucket'||e.name==='Positioning Thumb').length;
       const pnBucket = isPartNumberBucket(b);
 
       detailAoa.push([
@@ -2838,7 +2850,7 @@ function buildExportWorkbook(buckets) {
         `Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`,
       ]);
       if (posCount > 0) {
-        const posTotalSec = els.filter(e=>e.name==='Positioning Bucket').reduce((s,e)=>s+e.durationSec,0);
+        const posTotalSec = els.filter(e=>e.name==='Positioning Bucket'||e.name==='Positioning Thumb').reduce((s,e)=>s+e.durationSec,0);
         detailAoa.push(['POSITIONING', `${posCount}x`, formatMS(posTotalSec), '', '']);
       }
     });
