@@ -643,8 +643,8 @@ const STORAGE_KEY = 'tagTimeStudy_state';
 
 const PROCESSES_BY_STREAM = {
   'Large Bucket': ['Roll Bucket Large','Roll Bucket Small','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld','Manual Panel Build','ABB Sides','Cobot Panel Weld','Side Build'],
-  'Quick Hitch':  ['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install'],
-  'Pin On':       ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld'],
+  'Quick Hitch':  ['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install','Manual Panel Build'],
+  'Pin On':       ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld','Manual Panel Build'],
   'Couplers':     ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Thumbs':       ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
 };
@@ -1278,12 +1278,15 @@ function tdSummaryText(h) {
   if (h.operator) parts.push(h.operator);
   return parts.length ? parts.join(' · ') : '— tap to fill in details…';
 }
-// Toggle Details-panel fields for part-number streams (Part Number vs Frame #/Width/# of Obs).
+// Toggle Details-panel fields for part-number streams (Part Number vs Frame #/Width).
+// [WAVE-I-OBS-FOR-PARTNUMBER] # of Obs used to hide for Couplers/Thumbs along with Frame
+// #/Width -- per Chase, that was wrong: part-number streams can still cover more than one
+// physical unit in a single cycle, same as bucket streams can, so this field always shows now.
 function updateTdStreamFields() {
   const pn = isPartNumberCurrent();
   document.getElementById('td-partnum-row').style.display = pn ? 'grid' : 'none';
   document.getElementById('td-frame-row').style.display   = pn ? 'none' : 'grid';
-  document.getElementById('td-obs-field').style.display   = pn ? 'none' : 'flex';
+  document.getElementById('td-obs-field').style.display   = 'flex';
 }
 
 function populateTdProcess(selected) {
@@ -2148,7 +2151,11 @@ function renderLog() {
               : `<span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
                  <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>`}
             <span><span class="lbl">Operator:</span> ${esc(h.operator)||'—'}</span>
-            ${!isPartNumberBucket(bucket) && h.numObservations && h.numObservations!=='1' ? `<span><span class="lbl">Obs:</span> ${esc(h.numObservations)}</span>` : ''}
+            <!-- [WAVE-I-OBS-FOR-PARTNUMBER] Always show, every stream, whether it's 1 or more --
+                 Chase: "let it show me one or more than that. I need to know." Used to hide
+                 entirely for part-number buckets and for a plain "1", which meant an absent
+                 badge was ambiguous (not logged yet, vs. genuinely 1). Now it's never ambiguous. -->
+            <span><span class="lbl">Obs:</span> ${esc(h.numObservations || '1')}</span>
             ${bucket.observerName ? `<span><span class="lbl">Timed by:</span> ${esc(bucket.observerName)}</span>` : ''}
           </div>
           <div class="bucket-tier-bar">
@@ -2395,12 +2402,13 @@ function updateModalConditionals(process) {
   document.getElementById('modal-ear-section').style.display         = isEar   ? 'flex' : 'none';
 }
 
-// Part-number streams show Part Number; frame/width streams show Frame #/Width/# of Obs.
+// Part-number streams show Part Number; frame/width streams show Frame #/Width.
+// [WAVE-I-OBS-FOR-PARTNUMBER] # of Obs stays visible either way -- see updateTdStreamFields().
 function updateModalStreamFields(pn) {
   document.getElementById('modal-partnum-section').style.display = pn ? 'flex' : 'none';
   document.getElementById('modal-frame-section').style.display   = pn ? 'none' : 'flex';
   document.getElementById('modal-width-section').style.display   = pn ? 'none' : 'flex';
-  document.getElementById('modal-obs-section').style.display     = pn ? 'none' : 'flex';
+  document.getElementById('modal-obs-section').style.display     = 'flex';
 }
 
 // Custom Process has no fixed list — show a free-text field instead of the process dropdown.
@@ -2543,8 +2551,11 @@ function getColumnsForProcess(processName, plant, stream) {
         PN=r=>r.partNum, BS=r=>r.bucketSize;
 
   // Part-number streams (Couplers, Thumbs) — no frame/width; keyed on Part Number.
+  // [WAVE-I-OBS-FOR-PARTNUMBER] # of Observations used to be dropped entirely for these
+  // streams along with Frame #/Width -- it shouldn't have been; a part-number cycle can
+  // still cover more than one physical unit, same as a bucket cycle can.
   if (isPartNumberStream(stream)) {
-    return [c('Date',D),c('Part Number',PN),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+    return [c('Date',D),c('Part Number',PN),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('# of Observations',OB),c('Notes',NO)];
   }
 
   // Custom Process — one-off study; generic frame/width schema, same shape on both plants.
