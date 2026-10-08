@@ -650,7 +650,7 @@ const PROCESSES_BY_STREAM = {
 // Value streams available per plant. Custom Process is a top-level stream on both plants —
 // it has no fixed process list; the operator names the one-off study when they create a bucket.
 const STREAMS_BY_PLANT = {
-  'Plant 1': ['Large Bucket','Thumbs','Custom Process'],
+  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Custom Process'],
   'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Custom Process'],
 };
 function isCustomProcessStream(s) { return s === 'Custom Process'; }
@@ -666,6 +666,23 @@ function bucketStream(b) {
 const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs']);
 function isPartNumberStream(s) { return PART_NUMBER_STREAMS.has(s); }
 function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
+
+// Custom Fab (Plant 1) -- the ONLY place to add/edit its products and steps. Each product is
+// its own value stream with its own workbook: buttons read "<Product> <Step>", and the export
+// sheet is just "<Step>" so it lands on that product workbook's tab of the same name.
+const CUSTOM_FAB = 'Custom Fab';
+const CUSTOM_FAB_PRODUCTS = {
+  'Wheel Loader': ['Fabrication', 'Weld'],
+};
+Object.entries(CUSTOM_FAB_PRODUCTS).forEach(([prod, steps]) => {
+  PROCESSES_BY_STREAM[prod] = steps.map(st => `${prod} ${st}`);
+  PART_NUMBER_STREAMS.add(prod);
+});
+function isCustomFabProduct(s) { return Object.prototype.hasOwnProperty.call(CUSTOM_FAB_PRODUCTS, s); }
+function exportSheetBaseName(process, stream) {
+  const prefix = `${stream} `;
+  return isCustomFabProduct(stream) && process.startsWith(prefix) ? process.slice(prefix.length) : process;
+}
 function isPartNumberCurrent() { return isPartNumberStream(state.stream); }
 function getProcessesForCurrent() {
   return PROCESSES_BY_STREAM[state.stream] || [];
@@ -727,6 +744,10 @@ const COMMON_ELEMENTS = [
 // entirely for this stream), and any remaining "...Bucket" element reads as "...Thumb" instead
 // so the grid actually names what's being timed. Every other stream keeps the original wording.
 const THUMBS_ELEMENT_RENAMES = { 'Positioning Bucket': 'Positioning Thumb', 'Spray Paint Bucket': 'Spray Paint Thumb' };
+// Custom Fab parts aren't buckets either -- no Roll Bucket, "...Bucket" reads "...Part", and
+// every Custom Fab process gets Verify Parts (Necessary) at the head of the amber tier.
+const CUSTOM_FAB_ELEMENT_RENAMES = { 'Positioning Bucket': 'Positioning Part', 'Spray Paint Bucket': 'Spray Paint Part' };
+const CUSTOM_FAB_EXTRA_ELEMENTS = [{ name: 'Verify Parts', tier: 'amber' }];
 
 function getElementsForPlant() {
   // Weld and Fabrication both show on every process, regardless of process name.
@@ -734,6 +755,14 @@ function getElementsForPlant() {
     return COMMON_ELEMENTS.map(el =>
       THUMBS_ELEMENT_RENAMES[el.name] ? { ...el, name: THUMBS_ELEMENT_RENAMES[el.name] } : el
     );
+  }
+  if (isCustomFabProduct(state.stream)) {
+    const els = COMMON_ELEMENTS.map(el =>
+      CUSTOM_FAB_ELEMENT_RENAMES[el.name] ? { ...el, name: CUSTOM_FAB_ELEMENT_RENAMES[el.name] } : el
+    );
+    const firstAmber = els.findIndex(el => el.tier === 'amber');
+    els.splice(firstAmber, 0, ...CUSTOM_FAB_EXTRA_ELEMENTS);
+    return els;
   }
   return [...ROLL_ELEMENTS, ...COMMON_ELEMENTS];
 }
@@ -837,22 +866,34 @@ document.querySelectorAll('.plant-btn').forEach(btn => btn.addEventListener('cli
   goToStreamSelect();
 }));
 
+// null = the plant's value streams; CUSTOM_FAB = that group's product list.
+let streamSelectGroup = null;
 function renderStreamSelect() {
-  document.getElementById('stream-plant-label').textContent = (state.plant || 'PLANT').toUpperCase();
+  const inGroup = streamSelectGroup === CUSTOM_FAB;
+  document.getElementById('stream-plant-label').textContent =
+    (state.plant || 'PLANT').toUpperCase() + (inGroup ? ` — ${CUSTOM_FAB.toUpperCase()}` : '');
+  document.querySelector('#screen-stream-select h1').textContent = inGroup ? 'SELECT PRODUCT' : 'SELECT VALUE STREAM';
   const cont = document.getElementById('stream-btn-container');
   cont.innerHTML = '';
-  (STREAMS_BY_PLANT[state.plant] || []).forEach(s => {
+  const items = inGroup ? Object.keys(CUSTOM_FAB_PRODUCTS) : (STREAMS_BY_PLANT[state.plant] || []);
+  items.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'stream-btn';
     btn.textContent = s.toUpperCase();
-    btn.addEventListener('click', () => { state.stream = s; saveState(); goToSessionHome(); });
+    btn.addEventListener('click', () => {
+      if (s === CUSTOM_FAB) { streamSelectGroup = CUSTOM_FAB; renderStreamSelect(); return; }
+      state.stream = s; saveState(); goToSessionHome();
+    });
     cont.appendChild(btn);
   });
 }
-function goToStreamSelect() { renderStreamSelect(); showScreen('screen-stream-select'); }
+function goToStreamSelect() { streamSelectGroup = null; renderStreamSelect(); showScreen('screen-stream-select'); }
 
 function plantDisplayLabel() {
-  return state.stream ? `${state.plant} — ${state.stream}` : (state.plant || '');
+  if (!state.stream) return state.plant || '';
+  return isCustomFabProduct(state.stream)
+    ? `${state.plant} — ${CUSTOM_FAB} · ${state.stream}`
+    : `${state.plant} — ${state.stream}`;
 }
 
 /* ── Session Home ── */
@@ -1102,7 +1143,10 @@ document.getElementById('custom-process-input').addEventListener('keydown', e =>
   if (e.key === 'Enter') document.getElementById('custom-process-save').click();
 });
 
-document.getElementById('stream-go-back').addEventListener('click', () => showScreen('screen-plant-select'));
+document.getElementById('stream-go-back').addEventListener('click', () => {
+  if (streamSelectGroup) { streamSelectGroup = null; renderStreamSelect(); return; }
+  showScreen('screen-plant-select');
+});
 document.getElementById('process-overlay-cancel').addEventListener('click', closeProcessOverlay);
 document.getElementById('log-go-home').addEventListener('click', () => {
   if (logReturnScreen === 'stream-select') goToStreamSelect();
@@ -2753,7 +2797,7 @@ function buildExportWorkbook(buckets) {
   // and the raw name wouldn't see them as duplicates, letting them collide anyway.
   const processCounts = {};
   Object.values(byGroup).forEach(g => {
-    const key = sanitizeSheetNameChars(g.process);
+    const key = sanitizeSheetNameChars(exportSheetBaseName(g.process, g.stream));
     processCounts[key] = (processCounts[key] || 0) + 1;
   });
   // Plant 1 now has multiple streams (Large Bucket, Thumbs, Custom Process) that can share
@@ -2796,7 +2840,7 @@ function buildExportWorkbook(buckets) {
     const ws   = XLSX.utils.aoa_to_sheet(aoa);
     autoFitColumns(ws, aoa);
     styleProcessSheet(ws, cols, rows.length, g.plant, g.stream);
-    const safeProc = sanitizeSheetNameChars(g.process);
+    const safeProc = sanitizeSheetNameChars(exportSheetBaseName(g.process, g.stream));
     let sheetName = safeProc;
     if (processCounts[safeProc] > 1) sheetName = `${safeProc} (${groupTag(g)})`;
     // Store the ACTUAL name used so the Summary sheet below reports the real tab name,
