@@ -674,6 +674,7 @@ const CUSTOM_FAB = 'Custom Fab';
 const CUSTOM_FAB_PRODUCTS = {
   'Wheel Loader':  ['Fabrication', 'Weld'],
   'Fork Carriage': ['Fabrication', 'Weld'],
+  'Boon':          ['Base Fab', 'Base Fab Weld', 'Ear Install', 'Middle Arm Fab', 'End Arm Extension Fab'],
 };
 Object.entries(CUSTOM_FAB_PRODUCTS).forEach(([prod, steps]) => {
   PROCESSES_BY_STREAM[prod] = steps.map(st => `${prod} ${st}`);
@@ -749,6 +750,8 @@ const THUMBS_ELEMENT_RENAMES = { 'Positioning Bucket': 'Positioning Thumb', 'Spr
 // every Custom Fab process gets Verify Parts (Necessary) at the head of the amber tier.
 const CUSTOM_FAB_ELEMENT_RENAMES = { 'Positioning Bucket': 'Positioning Part', 'Spray Paint Bucket': 'Spray Paint Part' };
 const CUSTOM_FAB_EXTRA_ELEMENTS = [{ name: 'Verify Parts', tier: 'amber' }];
+// Every name the Positioning element can take, so per-cycle summaries count all of them.
+const POSITIONING_ELEMENT_NAMES = new Set(['Positioning Bucket', THUMBS_ELEMENT_RENAMES['Positioning Bucket'], CUSTOM_FAB_ELEMENT_RENAMES['Positioning Bucket']]);
 
 function getElementsForPlant() {
   // Weld and Fabrication both show on every process, regardless of process name.
@@ -2755,8 +2758,9 @@ function styleProcessSheet(ws, cols, numDataRows, plant, stream) {
     const vaRef   = XLSX.utils.encode_col(vaIdx)    + er;
     const nnvaRef = XLSX.utils.encode_col(nnvaIdx)  + er;
     const style   = { font: { bold: false }, alignment: { horizontal: 'center', vertical: 'center' } };
-    ws[XLSX.utils.encode_cell({ r: i+1, c: vpIdx })]  = { t: 'f', f: `IF(${cRef}=0,"",${vaRef}/${cRef})`,    z: '0.00%', s: style };
-    ws[XLSX.utils.encode_cell({ r: i+1, c: nvpIdx })] = { t: 'f', f: `IF(${cRef}=0,"",${nnvaRef}/${cRef})`, z: '0.00%', s: style };
+    // t:'n' + f -- SheetJS has no 'f' cell type and silently drops cells typed that way.
+    ws[XLSX.utils.encode_cell({ r: i+1, c: vpIdx })]  = { t: 'n', f: `IF(${cRef}=0,"",${vaRef}/${cRef})`,    z: '0.00%', s: style };
+    ws[XLSX.utils.encode_cell({ r: i+1, c: nvpIdx })] = { t: 'n', f: `IF(${cRef}=0,"",${nnvaRef}/${cRef})`, z: '0.00%', s: style };
   }
 }
 
@@ -2891,9 +2895,7 @@ function buildExportWorkbook(buckets) {
       const nnvaSec  = els.filter(e=>e.tier==='amber').reduce((s,e)=>s+e.durationSec,0);
       const wasteSec = els.filter(e=>e.tier==='red'&&e.name!==PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
       const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
-      // Matches both names -- Thumbs cycles show 'Positioning Thumb' [WAVE-G-THUMBS-ELEMENTS]
-      // but should still roll up into this same summary line as every other stream does.
-      const posCount = els.filter(e=>e.name==='Positioning Bucket'||e.name==='Positioning Thumb').length;
+      const posCount = els.filter(e => POSITIONING_ELEMENT_NAMES.has(e.name)).length;
       const pnBucket = isPartNumberBucket(b);
 
       detailAoa.push([
@@ -2925,7 +2927,7 @@ function buildExportWorkbook(buckets) {
         `Waste: ${formatMS(wasteSec)}${pauseSec>0?'  |  Pause: '+formatMS(pauseSec):''}`,
       ]);
       if (posCount > 0) {
-        const posTotalSec = els.filter(e=>e.name==='Positioning Bucket'||e.name==='Positioning Thumb').reduce((s,e)=>s+e.durationSec,0);
+        const posTotalSec = els.filter(e => POSITIONING_ELEMENT_NAMES.has(e.name)).reduce((s,e)=>s+e.durationSec,0);
         detailAoa.push(['POSITIONING', `${posCount}x`, formatMS(posTotalSec), '', '']);
       }
     });
@@ -3102,8 +3104,8 @@ function buildExportWorkbook(buckets) {
       // the sheet stays correct if a duration is edited in Excel afterwards.
       for (let i = 0; i < par.rows.length; i++) {
         const row = firstDataRow + i;
-        wsPar[`D${row}`] = { t: 'f', f: `IF(${targetRef}=0,"",SUM($C$${firstDataRow}:C${row})/${targetRef})`, z: '0.0%' };
-        wsPar[`G${row}`] = { t: 'f', f: `IF(${targetRef}=0,"",C${row}/${targetRef})`, z: '0.0%' };
+        wsPar[`D${row}`] = { t: 'n', f: `IF(${targetRef}=0,"",SUM($C$${firstDataRow}:C${row})/${targetRef})`, z: '0.0%' };
+        wsPar[`G${row}`] = { t: 'n', f: `IF(${targetRef}=0,"",C${row}/${targetRef})`, z: '0.0%' };
       }
       wsPar['!cols'] = [
         { wch: 6 }, { wch: 26 }, { wch: 12 }, { wch: 14 }, { wch: 13 },
