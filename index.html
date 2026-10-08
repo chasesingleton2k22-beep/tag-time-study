@@ -672,9 +672,13 @@ function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
 // sheet is just "<Step>" so it lands on that product workbook's tab of the same name.
 const CUSTOM_FAB = 'Custom Fab';
 const CUSTOM_FAB_PRODUCTS = {
-  'Wheel Loader':  ['Fabrication', 'Weld'],
-  'Fork Carriage': ['Fabrication', 'Weld'],
-  'Boon':          ['Base Fab', 'Base Fab Weld', 'Ear Install', 'Middle Arm Fab', 'End Arm Extension Fab'],
+  'Wheel Loader':   ['Fabrication', 'Weld'],
+  'Fork Carriage':  ['Fabrication', 'Weld'],
+  'Boon':           ['Base Fab', 'Base Fab Weld', 'Ear Install', 'Middle Arm Fab', 'End Arm Extension Fab'],
+  'Compactor':      ['Machine Shop', 'Fabrication', 'Weld'],
+  // Fabrication 1 / 2: same part comes back after weld -- separate tabs keep the rounds from blending.
+  'Rollout Bucket': ['Fabrication 1', 'Weld', 'Fabrication 2'],
+  'Cradle':         ['Fabrication 1', 'Weld', 'Fabrication 2'],
 };
 Object.entries(CUSTOM_FAB_PRODUCTS).forEach(([prod, steps]) => {
   PROCESSES_BY_STREAM[prod] = steps.map(st => `${prod} ${st}`);
