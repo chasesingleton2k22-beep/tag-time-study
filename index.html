@@ -672,7 +672,8 @@ function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
 // sheet is just "<Step>" so it lands on that product workbook's tab of the same name.
 const CUSTOM_FAB = 'Custom Fab';
 const CUSTOM_FAB_PRODUCTS = {
-  'Wheel Loader': ['Fabrication', 'Weld'],
+  'Wheel Loader':  ['Fabrication', 'Weld'],
+  'Fork Carriage': ['Fabrication', 'Weld'],
 };
 Object.entries(CUSTOM_FAB_PRODUCTS).forEach(([prod, steps]) => {
   PROCESSES_BY_STREAM[prod] = steps.map(st => `${prod} ${st}`);
