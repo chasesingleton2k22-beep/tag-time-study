@@ -667,21 +667,36 @@ const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs']);
 function isPartNumberStream(s) { return PART_NUMBER_STREAMS.has(s); }
 function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
 
-// Custom Fab (Plant 1) -- the ONLY place to add/edit its products and steps. Each product is
-// its own value stream with its own workbook: buttons read "<Product> <Step>", and the export
-// sheet is just "<Step>" so it lands on that product workbook's tab of the same name.
+// Custom Fab (Plant 1) -- the ONLY place to add/edit its menu. A list of steps is a product (its
+// own value stream with its own workbook); a nested group is a folder of products, e.g. Wheel
+// Loader. Buttons read "<Product> <Step>", and the export sheet is just "<Step>" so it lands on
+// that product workbook's tab of the same name. Product names must be unique across folders.
 const CUSTOM_FAB = 'Custom Fab';
-const CUSTOM_FAB_PRODUCTS = {
-  'Wheel Loader':   ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
-  'CTL Bucket':     ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
-  'GP Bucket':      ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+const CUSTOM_FAB_MENU = {
+  'Wheel Loader': {
+    'GP Bucket':         ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+    'Side Dump Bucket':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+    'Trash Bucket':      ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+    '4-in-1 Bucket':     ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+    'Grapple Bucket':    ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+    // Fabrication 1 / 2: same part comes back after weld -- separate tabs keep the rounds from blending.
+    'Rollout Bucket':    ['Fabrication 1', 'Weld', 'Fabrication 2'],
+    'Skid Steer Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+  },
   'Fork Carriage':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   'Boon':           ['Base Fab', 'Base Fab Weld', 'Ear Install', 'Middle Arm Fab', 'End Arm Extension Fab'],
   'Compactor':      ['Machine Shop', 'Fabrication', 'Weld'],
-  // Fabrication 1 / 2: same part comes back after weld -- separate tabs keep the rounds from blending.
-  'Rollout Bucket': ['Fabrication 1', 'Weld', 'Fabrication 2'],
   'Cradle':         ['Fabrication 1', 'Weld', 'Fabrication 2'],
 };
+// Flattened: product -> steps, and product -> the folders it sits in (for labels).
+const CUSTOM_FAB_PRODUCTS = {};
+const CUSTOM_FAB_PATH = {};
+(function walk(node, path) {
+  Object.entries(node).forEach(([name, v]) => {
+    if (Array.isArray(v)) { CUSTOM_FAB_PRODUCTS[name] = v; CUSTOM_FAB_PATH[name] = path; }
+    else walk(v, [...path, name]);
+  });
+})(CUSTOM_FAB_MENU, []);
 Object.entries(CUSTOM_FAB_PRODUCTS).forEach(([prod, steps]) => {
   PROCESSES_BY_STREAM[prod] = steps.map(st => `${prod} ${st}`);
   PART_NUMBER_STREAMS.add(prod);
@@ -876,33 +891,35 @@ document.querySelectorAll('.plant-btn').forEach(btn => btn.addEventListener('cli
   goToStreamSelect();
 }));
 
-// null = the plant's value streams; CUSTOM_FAB = that group's product list.
-let streamSelectGroup = null;
+// [] = the plant's value streams; [CUSTOM_FAB, ...folders] = a level inside the Custom Fab menu.
+let streamSelectPath = [];
+function customFabNode(path) { return path.slice(1).reduce((node, key) => node[key], CUSTOM_FAB_MENU); }
 function renderStreamSelect() {
-  const inGroup = streamSelectGroup === CUSTOM_FAB;
-  document.getElementById('stream-plant-label').textContent =
-    (state.plant || 'PLANT').toUpperCase() + (inGroup ? ` — ${CUSTOM_FAB.toUpperCase()}` : '');
-  document.querySelector('#screen-stream-select h1').textContent = inGroup ? 'SELECT PRODUCT' : 'SELECT VALUE STREAM';
+  const inFab = streamSelectPath.length > 0;
+  document.getElementById('stream-plant-label').textContent = [state.plant || 'PLANT', ...streamSelectPath].join(' — ').toUpperCase();
+  document.querySelector('#screen-stream-select h1').textContent = inFab ? 'SELECT PRODUCT' : 'SELECT VALUE STREAM';
   const cont = document.getElementById('stream-btn-container');
   cont.innerHTML = '';
-  const items = inGroup ? Object.keys(CUSTOM_FAB_PRODUCTS) : (STREAMS_BY_PLANT[state.plant] || []);
+  const node = inFab ? customFabNode(streamSelectPath) : null;
+  const items = inFab ? Object.keys(node) : (STREAMS_BY_PLANT[state.plant] || []);
   items.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'stream-btn';
     btn.textContent = s.toUpperCase();
     btn.addEventListener('click', () => {
-      if (s === CUSTOM_FAB) { streamSelectGroup = CUSTOM_FAB; renderStreamSelect(); return; }
+      if (!inFab && s === CUSTOM_FAB) { streamSelectPath = [CUSTOM_FAB]; renderStreamSelect(); return; }
+      if (inFab && !Array.isArray(node[s])) { streamSelectPath = [...streamSelectPath, s]; renderStreamSelect(); return; }
       state.stream = s; saveState(); goToSessionHome();
     });
     cont.appendChild(btn);
   });
 }
-function goToStreamSelect() { streamSelectGroup = null; renderStreamSelect(); showScreen('screen-stream-select'); }
+function goToStreamSelect() { streamSelectPath = []; renderStreamSelect(); showScreen('screen-stream-select'); }
 
 function plantDisplayLabel() {
   if (!state.stream) return state.plant || '';
   return isCustomFabProduct(state.stream)
-    ? `${state.plant} — ${CUSTOM_FAB} · ${state.stream}`
+    ? `${state.plant} — ${[CUSTOM_FAB, ...CUSTOM_FAB_PATH[state.stream], state.stream].join(' · ')}`
     : `${state.plant} — ${state.stream}`;
 }
 
@@ -1154,7 +1171,7 @@ document.getElementById('custom-process-input').addEventListener('keydown', e =>
 });
 
 document.getElementById('stream-go-back').addEventListener('click', () => {
-  if (streamSelectGroup) { streamSelectGroup = null; renderStreamSelect(); return; }
+  if (streamSelectPath.length) { streamSelectPath = streamSelectPath.slice(0, -1); renderStreamSelect(); return; }
   showScreen('screen-plant-select');
 });
 document.getElementById('process-overlay-cancel').addEventListener('click', closeProcessOverlay);
