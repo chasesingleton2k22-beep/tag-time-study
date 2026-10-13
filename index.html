@@ -684,7 +684,8 @@ const CUSTOM_FAB_MENU = {
     'Skid Steer Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   },
   'Fork Carriage':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
-  'Boon':           ['Base Fab', 'Base Fab Weld', 'Ear Install', 'Middle Arm Fab', 'End Arm Extension Fab'],
+  // "Middle & End Extension Install" -- "and" spelled out would be 32 chars, over Excel's 31-char tab limit.
+  'Boon':           ['Base Build', 'Base Weld', 'Ear Install', 'Ear Weld', 'Middle & End Extension Install'],
   'Compactor':      ['Machine Shop', 'Fabrication', 'Weld'],
   'Cradle':         ['Fabrication 1', 'Weld', 'Fabrication 2'],
 };
@@ -774,7 +775,17 @@ const CUSTOM_FAB_EXTRA_ELEMENTS = [{ name: 'Verify Parts', tier: 'amber' }];
 // Every name the Positioning element can take, so per-cycle summaries count all of them.
 const POSITIONING_ELEMENT_NAMES = new Set(['Positioning Bucket', THUMBS_ELEMENT_RENAMES['Positioning Bucket'], CUSTOM_FAB_ELEMENT_RENAMES['Positioning Bucket']]);
 
+// Every Plant 1 stream (Large Bucket, Thumbs, Custom Fab, Custom Process) gets Jig Check; Plant 2 doesn't.
+const PLANT1_EXTRA_ELEMENTS = [{ name: 'Jig Check', tier: 'amber' }];
+
 function getElementsForPlant() {
+  const els = elementsForStream();
+  if (state.plant !== 'Plant 1') return els;
+  const at = els.findIndex(el => el.name === 'Placing Parts in Jig');   // head of the shared amber tier
+  return [...els.slice(0, at), ...PLANT1_EXTRA_ELEMENTS, ...els.slice(at)];
+}
+
+function elementsForStream() {
   // Weld and Fabrication both show on every process, regardless of process name.
   if (state.stream === 'Thumbs') {
     return COMMON_ELEMENTS.map(el =>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tag-time-study-v100';
+const CACHE_NAME = 'tag-time-study-v101';
 
 const CORE_ASSETS = ['./', './index.html', './logo.png'];
 const CDN_SHEETJS = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
