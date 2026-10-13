@@ -715,11 +715,7 @@ function isTeethProcess(p) { return TEETH_PROCESSES.has(p); }
 function isEarProcess(p)   { return EAR_PROCESSES.has(p); }
 
 const ROLL_ELEMENTS = [{ name: 'Roll Bucket', tier: 'green' }];
-// Grouped by tier (green/amber/red), and within each tier the 2-column-wide labels
-// (el-sm in elementSizeClass — the ones with a long single word) come first. That
-// puts them right after each tier's own row break, where they have the most room to
-// land cleanly, so grid-auto-flow: dense rarely has to pull a later item out of
-// reading order just to close a gap they leave behind.
+// Listed by tier; display order is A–Z within each tier (see getElementsForPlant), so order here doesn't matter.
 const COMMON_ELEMENTS = [
   { name: 'Weld',                   tier: 'green' },
   { name: 'Fabrication',            tier: 'green' },
@@ -778,11 +774,14 @@ const POSITIONING_ELEMENT_NAMES = new Set(['Positioning Bucket', THUMBS_ELEMENT_
 // Every Plant 1 stream (Large Bucket, Thumbs, Custom Fab, Custom Process) gets Jig Check; Plant 2 doesn't.
 const PLANT1_EXTRA_ELEMENTS = [{ name: 'Jig Check', tier: 'amber' }];
 
+const TIER_ORDER = ['green', 'amber', 'red'];
+
+// Tiers stay grouped (green, blue, red) and each tier reads A–Z. The grid's dense packing may
+// still pull a short button up a spot or two to fill the hole a 2-wide button leaves behind.
 function getElementsForPlant() {
-  const els = elementsForStream();
-  if (state.plant !== 'Plant 1') return els;
-  const at = els.findIndex(el => el.name === 'Placing Parts in Jig');   // head of the shared amber tier
-  return [...els.slice(0, at), ...PLANT1_EXTRA_ELEMENTS, ...els.slice(at)];
+  const els = state.plant === 'Plant 1' ? [...elementsForStream(), ...PLANT1_EXTRA_ELEMENTS] : elementsForStream();
+  return els.sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier)
+    || a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
 function elementsForStream() {
