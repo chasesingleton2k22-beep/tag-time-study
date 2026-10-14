@@ -646,12 +646,13 @@ const PROCESSES_BY_STREAM = {
   'Pin On':       ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld','Manual Panel Build'],
   'Couplers':     ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Thumbs':       ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
+  'Blast and Paint': ['Blast','Paint'],
 };
 // Value streams available per plant. Custom Process is a top-level stream on both plants —
 // it has no fixed process list; the operator names the one-off study when they create a bucket.
 const STREAMS_BY_PLANT = {
-  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Custom Process'],
-  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Custom Process'],
+  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Custom Process'],
+  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Custom Process'],
 };
 function isCustomProcessStream(s) { return s === 'Custom Process'; }
 function isCustomProcessCurrent() { return isCustomProcessStream(state.stream); }
@@ -666,6 +667,23 @@ function bucketStream(b) {
 const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs']);
 function isPartNumberStream(s) { return PART_NUMBER_STREAMS.has(s); }
 function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
+// Blast and Paint is where everything ends up, so it takes BOTH keys: Part Number (Custom Fab, Thumbs...)
+// or Frame #/Width (buckets). Both field sets show; the operator fills in whichever the item has.
+const DUAL_KEY_STREAMS = new Set(['Blast and Paint']);
+function isDualKeyStream(s) { return DUAL_KEY_STREAMS.has(s); }
+function isDualKeyBucket(b) { return isDualKeyStream(bucketStream(b)); }
+function isDualKeyCurrent() { return isDualKeyStream(state.stream); }
+// Header key text for subtitles/summaries: ["Part X"], ["Frame Y","Width Z"], or both.
+function headerKeyParts(stream, h) {
+  const parts = [];
+  if (isDualKeyStream(stream)) {
+    if (h.partNumber) parts.push(`Part ${h.partNumber}`);
+    if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+    if (h.frameWidth) parts.push(`Width ${h.frameWidth}`);
+  } else if (isPartNumberStream(stream)) { if (h.partNumber) parts.push(`Part ${h.partNumber}`); }
+  else if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  return parts;
+}
 
 // Custom Fab (Plant 1) -- the ONLY place to add/edit its menu. A list of steps is a product (its
 // own value stream with its own workbook); a nested group is a folder of products, e.g. Wheel
@@ -683,6 +701,7 @@ const CUSTOM_FAB_MENU = {
     'Rollout Bucket':    ['Fabrication 1', 'Weld', 'Fabrication 2'],
     'Skid Steer Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   },
+  'Pavement Removal Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   'Fork Carriage':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   // "Middle & End Extension Install" -- "and" spelled out would be 32 chars, over Excel's 31-char tab limit.
   'Boon':           ['Base Build', 'Base Weld', 'Ear Install', 'Ear Weld', 'Middle & End Extension Install'],
@@ -784,7 +803,14 @@ function getElementsForPlant() {
     || a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 }
 
+// Blast and Paint: items aren't rolled buckets (no Roll Bucket, "...Part" names like Custom Fab), and the
+// department's own work gets a Paint element (Value Added).
+const BLAST_PAINT_EXTRA_ELEMENTS = [{ name: 'Paint', tier: 'green' }];
+
 function elementsForStream() {
+  if (isDualKeyStream(state.stream)) {
+    return [...COMMON_ELEMENTS.map(el => CUSTOM_FAB_ELEMENT_RENAMES[el.name] ? { ...el, name: CUSTOM_FAB_ELEMENT_RENAMES[el.name] } : el), ...BLAST_PAINT_EXTRA_ELEMENTS];
+  }
   // Weld and Fabrication both show on every process, regardless of process name.
   if (state.stream === 'Thumbs') {
     return COMMON_ELEMENTS.map(el =>
@@ -1234,8 +1260,7 @@ function bucketSubtitleText() {
   const h = b.header || {};
   const parts = [];
   if (h.process) parts.push(h.process);
-  if (isPartNumberBucket(b)) { if (h.partNumber) parts.push(`Part ${h.partNumber}`); }
-  else if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  parts.push(...headerKeyParts(bucketStream(b), h));
   if (h.operator) parts.push(h.operator);
   if (parts.length === 0) return bucketTimeLabel(b);
   return parts.join(' · ');
@@ -1353,18 +1378,17 @@ function refreshHeaderDataLists() {
 function tdSummaryText(h) {
   const parts = [];
   if (h.process) parts.push(h.process);
-  if (isPartNumberCurrent()) { if (h.partNumber) parts.push(`Part ${h.partNumber}`); }
-  else if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
+  parts.push(...headerKeyParts(state.stream, h));
   if (h.operator) parts.push(h.operator);
   return parts.length ? parts.join(' · ') : '— tap to fill in details…';
 }
 // Toggle Details-panel fields for part-number streams (Part Number vs Frame #/Width/# of Obs).
 // Part-number streams time one part per cycle, so # of Obs is a bucket-stream-only field.
 function updateTdStreamFields() {
-  const pn = isPartNumberCurrent();
-  document.getElementById('td-partnum-row').style.display = pn ? 'grid' : 'none';
-  document.getElementById('td-frame-row').style.display   = pn ? 'none' : 'grid';
-  document.getElementById('td-obs-field').style.display   = pn ? 'none' : 'flex';
+  const pn = isPartNumberCurrent(), dual = isDualKeyCurrent();
+  document.getElementById('td-partnum-row').style.display = (pn || dual) ? 'grid' : 'none';
+  document.getElementById('td-frame-row').style.display   = (!pn || dual) ? 'grid' : 'none';
+  document.getElementById('td-obs-field').style.display   = (pn || dual) ? 'none' : 'flex';
 }
 
 function populateTdProcess(selected) {
@@ -2224,14 +2248,18 @@ function renderLog() {
             <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${originBadge}${procBadge}${liveBadge}${draftBadge}${exportedBadge}
           </div>
           <div class="bucket-fields">
-            ${isPartNumberBucket(bucket)
+            ${isDualKeyBucket(bucket)
+              ? (h.partNumber || !(h.frameNumber || h.frameWidth) ? `<span><span class="lbl">Part #:</span> ${esc(h.partNumber)||'—'}</span>` : '') +
+                (h.frameNumber || h.frameWidth ? `<span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
+                 <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>` : '')
+              : isPartNumberBucket(bucket)
               ? `<span><span class="lbl">Part #:</span> ${esc(h.partNumber)||'—'}</span>`
               : `<span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
                  <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>`}
             <span><span class="lbl">Operator:</span> ${esc(h.operator)||'—'}</span>
             <!-- Bucket streams always show Obs, even a plain "1", so an absent badge is never
                  ambiguous. Part-number streams time one part per cycle and don't track it. -->
-            ${isPartNumberBucket(bucket) ? '' : `<span><span class="lbl">Obs:</span> ${esc(h.numObservations || '1')}</span>`}
+            ${isPartNumberBucket(bucket) || isDualKeyBucket(bucket) ? '' : `<span><span class="lbl">Obs:</span> ${esc(h.numObservations || '1')}</span>`}
             ${bucket.observerName ? `<span><span class="lbl">Timed by:</span> ${esc(bucket.observerName)}</span>` : ''}
           </div>
           <div class="bucket-tier-bar">
@@ -2478,12 +2506,14 @@ function updateModalConditionals(process) {
   document.getElementById('modal-ear-section').style.display         = isEar   ? 'flex' : 'none';
 }
 
-// Part-number streams show Part Number; frame/width streams show Frame #/Width/# of Obs.
-function updateModalStreamFields(pn) {
-  document.getElementById('modal-partnum-section').style.display = pn ? 'flex' : 'none';
-  document.getElementById('modal-frame-section').style.display   = pn ? 'none' : 'flex';
-  document.getElementById('modal-width-section').style.display   = pn ? 'none' : 'flex';
-  document.getElementById('modal-obs-section').style.display     = pn ? 'none' : 'flex';
+// Part-number streams show Part Number; frame/width streams show Frame #/Width/# of Obs;
+// dual-key streams (Blast and Paint) show Part Number AND Frame #/Width, no # of Obs.
+function updateModalStreamFields(stream) {
+  const pn = isPartNumberStream(stream), dual = isDualKeyStream(stream);
+  document.getElementById('modal-partnum-section').style.display = (pn || dual) ? 'flex' : 'none';
+  document.getElementById('modal-frame-section').style.display   = (!pn || dual) ? 'flex' : 'none';
+  document.getElementById('modal-width-section').style.display   = (!pn || dual) ? 'flex' : 'none';
+  document.getElementById('modal-obs-section').style.display     = (pn || dual) ? 'none' : 'flex';
 }
 
 // Custom Process has no fixed list — show a free-text field instead of the process dropdown.
@@ -2517,7 +2547,7 @@ function openEditModal(bucketId) {
   document.getElementById('modal-ear-type').value     = h.earType     || '';
   document.getElementById('modal-notes').value        = h.notes       || '';
   updateModalConditionals(h.process || '');
-  updateModalStreamFields(isPartNumberStream(bStream));
+  updateModalStreamFields(bStream);
   updateModalProcessMode(isCustomProcessStream(bStream));
   modalOverlay.classList.add('active');
 }
@@ -2624,6 +2654,12 @@ function getColumnsForProcess(processName, plant, stream) {
         PH=r=>r.preheatMin, PB=r=>r.posBucketMin, PC=r=>r.posCount,
         TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType,
         PN=r=>r.partNum, BS=r=>r.bucketSize;
+
+  // Blast and Paint — either key: Part Number for parts, Frame #/Width for buckets (one is left blank).
+  // Column order must match the BLAST AND PAINT workbook's Blast/Paint tabs exactly.
+  if (isDualKeyStream(stream)) {
+    return [c('Date',D),c('Part Number',PN),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+  }
 
   // Part-number streams (Couplers, Thumbs) — no frame/width/# of Obs; keyed on Part Number.
   // Column order must match the Thumbs/Couplers workbooks exactly (Date..NNVA %, Notes).
@@ -2930,13 +2966,15 @@ function buildExportWorkbook(buckets) {
       const pauseSec = els.filter(e=>e.name===PAUSE_ELEMENT_NAME).reduce((s,e)=>s+e.durationSec,0);
       const posCount = els.filter(e => POSITIONING_ELEMENT_NAMES.has(e.name)).length;
       const pnBucket = isPartNumberBucket(b);
+      const dualBucket = isDualKeyBucket(b);
 
       detailAoa.push([
         `Cycle ${bi+1}`,
         formatExportDate(b.startTs),
         h.process || '(no process)',
-        pnBucket ? (h.partNumber ? `Part #: ${h.partNumber}` : '') : (h.frameNumber ? `Frame #${h.frameNumber}` : ''),
-        pnBucket ? '' : (h.frameWidth ? `Width: ${h.frameWidth}"` : ''),
+        dualBucket ? [h.partNumber ? `Part #: ${h.partNumber}` : '', h.frameNumber ? `Frame #${h.frameNumber}` : ''].filter(Boolean).join(' · ')
+          : pnBucket ? (h.partNumber ? `Part #: ${h.partNumber}` : '') : (h.frameNumber ? `Frame #${h.frameNumber}` : ''),
+        (pnBucket && !dualBucket) ? '' : (h.frameWidth ? `Width: ${h.frameWidth}"` : ''),
         h.operator    ? `Operator: ${h.operator}` : '',
         b.observerName ? `Timed by: ${b.observerName}` : '',
       ]);
