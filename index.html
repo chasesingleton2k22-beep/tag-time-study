@@ -459,12 +459,12 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
             <input id="td-process-text" type="text" placeholder="Process name" style="display:none">
           </div>
         </div>
-        <div class="td-row" id="td-partnum-row" style="display:none">
-          <div class="td-field td-full"><label>Part Number</label><input id="td-partnum" type="text" placeholder="e.g. 12345" list="dl-part-number" autocomplete="off"></div>
-        </div>
         <div class="td-row" id="td-frame-row">
           <div class="td-field"><label>Frame #</label><input id="td-frame" type="text" placeholder="e.g. 330Q2" list="dl-frame-number"></div>
           <div class="td-field"><label>Frame Width</label><input id="td-width" type="text" placeholder="e.g. 24" list="dl-frame-width"></div>
+        </div>
+        <div class="td-row" id="td-partnum-row" style="display:none">
+          <div class="td-field td-full"><label>Part Number</label><input id="td-partnum" type="text" placeholder="e.g. 12345" list="dl-part-number" autocomplete="off"></div>
         </div>
         <div class="td-row">
           <div class="td-field"><label>Operator</label><input id="td-operator" type="text" placeholder="Name" list="dl-operator"></div>
@@ -585,10 +585,6 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <select id="modal-process"></select>
       <input type="text" id="modal-process-text" placeholder="Process name" style="display:none">
     </div>
-    <div class="modal-field" id="modal-partnum-section" style="display:none">
-      <label>Part Number</label>
-      <input type="text" id="modal-part-number" placeholder="e.g. 12345" list="dl-part-number">
-    </div>
     <div class="modal-field" id="modal-frame-section">
       <label>Frame #</label>
       <input type="text" id="modal-frame-number" placeholder="e.g. 330Q2" list="dl-frame-number">
@@ -596,6 +592,10 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     <div class="modal-field" id="modal-width-section">
       <label>Frame Width</label>
       <input type="text" id="modal-frame-width" placeholder="e.g. 24" list="dl-frame-width">
+    </div>
+    <div class="modal-field" id="modal-partnum-section" style="display:none">
+      <label>Part Number</label>
+      <input type="text" id="modal-part-number" placeholder="e.g. 12345" list="dl-part-number">
     </div>
     <div class="modal-field">
       <label>Operator</label>
@@ -667,9 +667,10 @@ function bucketStream(b) {
 const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs']);
 function isPartNumberStream(s) { return PART_NUMBER_STREAMS.has(s); }
 function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
-// Blast and Paint is where everything ends up, so it takes BOTH keys: Part Number (Custom Fab, Thumbs...)
-// or Frame #/Width (buckets). Both field sets show; the operator fills in whichever the item has.
-const DUAL_KEY_STREAMS = new Set(['Blast and Paint']);
+// Either-key streams take Part Number OR Frame #/Width: both field sets show and the operator fills in
+// whichever the item has. Blast and Paint (where everything ends up), Custom Process, and every Custom
+// Fab product (added where CUSTOM_FAB_MENU is flattened).
+const DUAL_KEY_STREAMS = new Set(['Blast and Paint', 'Custom Process']);
 function isDualKeyStream(s) { return DUAL_KEY_STREAMS.has(s); }
 function isDualKeyBucket(b) { return isDualKeyStream(bucketStream(b)); }
 function isDualKeyCurrent() { return isDualKeyStream(state.stream); }
@@ -696,7 +697,7 @@ const CUSTOM_FAB_MENU = {
     'Side Dump Bucket':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
     'Trash Bucket':      ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
     '4-in-1 Bucket':     ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
-    'Grapple Bucket':    ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
+    'Grapple Bucket':    ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld', 'Arm Fab', 'Arm Install'],
     // Fabrication 1 / 2: same part comes back after weld -- separate tabs keep the rounds from blending.
     'Rollout Bucket':    ['Fabrication 1', 'Weld', 'Fabrication 2'],
     'Skid Steer Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
@@ -719,7 +720,7 @@ const CUSTOM_FAB_PATH = {};
 })(CUSTOM_FAB_MENU, []);
 Object.entries(CUSTOM_FAB_PRODUCTS).forEach(([prod, steps]) => {
   PROCESSES_BY_STREAM[prod] = steps.map(st => `${prod} ${st}`);
-  PART_NUMBER_STREAMS.add(prod);
+  DUAL_KEY_STREAMS.add(prod);
 });
 function isCustomFabProduct(s) { return Object.prototype.hasOwnProperty.call(CUSTOM_FAB_PRODUCTS, s); }
 function exportSheetBaseName(process, stream) {
@@ -764,7 +765,7 @@ const COMMON_ELEMENTS = [
   { name: 'Spray Paint Bucket',     tier: 'red'   },
   { name: 'Searching For Parts',    tier: 'red'   },
   { name: 'Looking for Supervisor', tier: 'red'   },
-  { name: 'Sanding / Grinding',     tier: 'red'   },
+  { name: 'Grinding',               tier: 'red'   },
   { name: 'Visiting with Others',   tier: 'red'   },
   { name: 'Out of Area',            tier: 'red'   },
   { name: 'Restroom',               tier: 'red'   },
@@ -808,7 +809,7 @@ function getElementsForPlant() {
 const BLAST_PAINT_EXTRA_ELEMENTS = [{ name: 'Paint', tier: 'green' }];
 
 function elementsForStream() {
-  if (isDualKeyStream(state.stream)) {
+  if (state.stream === 'Blast and Paint') {
     return [...COMMON_ELEMENTS.map(el => CUSTOM_FAB_ELEMENT_RENAMES[el.name] ? { ...el, name: CUSTOM_FAB_ELEMENT_RENAMES[el.name] } : el), ...BLAST_PAINT_EXTRA_ELEMENTS];
   }
   // Weld and Fabrication both show on every process, regardless of process name.
@@ -835,12 +836,21 @@ function emptyHeader() {
 function defaultState() {
   return { plant: null, stream: null, buckets: [], activeElement: null, nextBucketId: 1, observerName: '' };
 }
+// Elements that were renamed: cycles timed under the old name read as the new one, so the
+// Pareto and exports don't split one element into two rows. Defined before loadState() runs.
+const ELEMENT_NAME_MIGRATIONS = { 'Sanding / Grinding': 'Grinding' };
+function migrateElementNames(st) {
+  const fix = el => { if (el && ELEMENT_NAME_MIGRATIONS[el.name]) el.name = ELEMENT_NAME_MIGRATIONS[el.name]; };
+  (st.buckets || []).forEach(b => (b.elements || []).forEach(fix));
+  fix(st.activeElement);
+  return st;
+}
 let state = loadState();
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return defaultState();
   try {
-    return Object.assign(defaultState(), JSON.parse(raw));
+    return migrateElementNames(Object.assign(defaultState(), JSON.parse(raw)));
   } catch(e) {
     // Corrupted save (e.g. tablet lost power mid-write). Stash the unreadable raw
     // string under a separate key BEFORE returning a blank state — otherwise the
@@ -2655,8 +2665,8 @@ function getColumnsForProcess(processName, plant, stream) {
         TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType,
         PN=r=>r.partNum, BS=r=>r.bucketSize;
 
-  // Blast and Paint — either key: Part Number for parts, Frame #/Width for buckets (one is left blank).
-  // Column order must match the BLAST AND PAINT workbook's Blast/Paint tabs exactly.
+  // Either-key streams (Blast and Paint, Custom Fab, Custom Process): Part Number for parts, Frame #/Width
+  // for buckets (one is left blank). Column order must match those workbooks' process tabs exactly.
   if (isDualKeyStream(stream)) {
     return [c('Date',D),c('Part Number',PN),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
   }
@@ -2665,11 +2675,6 @@ function getColumnsForProcess(processName, plant, stream) {
   // Column order must match the Thumbs/Couplers workbooks exactly (Date..NNVA %, Notes).
   if (isPartNumberStream(stream)) {
     return [c('Date',D),c('Part Number',PN),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
-  }
-
-  // Custom Process — one-off study; generic frame/width schema, same shape on both plants.
-  if (isCustomProcessStream(stream)) {
-    return [c('Date',D),c('Frame #',FN),c('Frame Width',FWR),c('Operator',OP),c('Cycle Time (min)',CY),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
   }
 
   if (isP1) {
