@@ -790,6 +790,9 @@ const CUSTOM_FAB_MENU = {
   'Cradle':         ['Fabrication 1', 'Weld', 'Fabrication 2'],
   // Straighten: a finished coupler is bowed a little, so it goes to the straightening table last.
   'Hydraulic Couplers': ['Body Fab', 'Weld', 'Bushing Install', 'Bushing Weld', 'Straighten'],
+  // One Rakes database for every rake type, looked up by part number (the part # tells you the type).
+  // Arms, ears and bushings with their own part numbers are timed under those part numbers.
+  'Rakes': ['Body Fab', 'Weld', 'Bushing Install', 'Ear Install', 'Ear Weld', 'Bushing Weld', 'Arm Fab', 'Arm Weld', 'Arm Install'],
 };
 // Flattened: product -> steps, and product -> the folders it sits in (for labels).
 const CUSTOM_FAB_PRODUCTS = {};
