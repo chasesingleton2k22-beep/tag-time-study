@@ -285,7 +285,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 /* Edit Element Duration sheet */
 #edit-duration-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 600; display: none; align-items: flex-end; justify-content: center; }
 #edit-duration-overlay.visible { display: flex; }
-#edit-duration-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; }
+#edit-duration-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; max-height: 92vh; overflow-y: auto; }
 #edit-duration-title { font-size: 0.78rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
 #edit-duration-name { color: var(--text-light); text-transform: none; letter-spacing: 0; font-size: 1rem; }
 #edit-duration-hint { font-size: 0.82rem; color: #b9c4d8; margin-top: -6px; }
@@ -294,6 +294,33 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 #edit-duration-save { min-height: 52px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
 #edit-duration-save:active { background: var(--gold-light); }
 #edit-duration-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
+/* quick +/- buttons in the edit-duration box */
+#edit-duration-preview { font-size: 1rem; color: var(--text-light); min-height: 1.3em; }
+#edit-duration-preview b { color: var(--gold); }
+.nudge-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.nudge-row.fine { grid-template-columns: repeat(4, 1fr); }
+.nudge-row.fine .nudge-btn { min-height: 40px; font-size: 0.85rem; }
+.nudge-btn { min-height: 48px; border-radius: 10px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: 2px solid; background: rgba(255,255,255,0.06); }
+.nudge-btn.minus { color: #ef9a9a; border-color: rgba(239,154,154,0.55); }
+.nudge-btn.plus { color: #a5d6a7; border-color: rgba(165,214,167,0.55); }
+.nudge-btn:active { background: rgba(255,255,255,0.22); }
+/* Add Element (forgot to time it) */
+.el-add-btn { align-self: flex-start; margin-top: 4px; min-height: 40px; background: rgba(212,160,23,0.15); border: 2px dashed rgba(212,160,23,0.6); color: var(--gold); border-radius: 10px; padding: 0 14px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+.el-add-btn:active { background: rgba(212,160,23,0.3); }
+#add-el-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 600; display: none; align-items: flex-end; justify-content: center; }
+#add-el-overlay.visible { display: flex; }
+#add-el-modal { background: var(--navy-light); border: 3px solid var(--gold); border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; max-height: 92vh; overflow-y: auto; }
+#add-el-title { font-size: 0.78rem; font-weight: bold; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+#add-el-hint { font-size: 0.82rem; color: #b9c4d8; margin-top: -6px; }
+#add-el-select, #add-el-note { width: 100%; min-height: 52px; background: rgba(255,255,255,0.1); border: 2px solid rgba(212,160,23,0.4); border-radius: 10px; color: var(--text-light); padding: 10px 12px; font-size: 1.05rem; font-family: inherit; }
+#add-el-select option, #add-el-select optgroup { background: var(--navy); color: var(--text-light); }
+.add-el-time { display: flex; align-items: center; gap: 8px; color: var(--text-light); font-size: 1rem; }
+.add-el-time input { flex: 1; min-width: 0; min-height: 52px; background: rgba(255,255,255,0.1); border: 2px solid rgba(212,160,23,0.4); border-radius: 10px; color: var(--text-light); padding: 10px 12px; font-size: 1.2rem; font-family: inherit; text-align: center; }
+#add-el-select:focus, #add-el-note:focus, .add-el-time input:focus { outline: 2px solid var(--gold); border-color: transparent; }
+#add-el-error { color: #ef9a9a; font-size: 0.9rem; min-height: 1.1em; }
+#add-el-save { min-height: 52px; background: var(--gold); color: var(--navy); border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+#add-el-save:active { background: var(--gold-light); }
+#add-el-cancel { min-height: 44px; background: transparent; border: 2px solid #888; color: #ccc; border-radius: 10px; font-size: 0.95rem; cursor: pointer; }
 
 /* Portrait — more vertical room, so make buttons taller */
 @media (orientation: portrait) {
@@ -553,10 +580,48 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 <div id="edit-duration-overlay">
   <div id="edit-duration-modal">
     <div id="edit-duration-title">EDIT DURATION: <span id="edit-duration-name"></span></div>
-    <div id="edit-duration-hint">Format: mm:ss (e.g. 2:30) — or type +/-mm:ss to add/remove time (e.g. -2:00)</div>
-    <input id="edit-duration-input" type="text" placeholder="m:ss or -m:ss" inputmode="numeric" autocomplete="off">
+    <div id="edit-duration-hint">Tap the buttons to add or take off time (breaks, lunches), or type it: 25m, 2:30, plain seconds (90). Put +/- in front to add or remove (-2:00, +5m).</div>
+    <div id="edit-duration-preview"></div>
+    <div class="nudge-row">
+      <button type="button" class="nudge-btn minus" data-nudge="-300">−5m</button>
+      <button type="button" class="nudge-btn minus" data-nudge="-600">−10m</button>
+      <button type="button" class="nudge-btn minus" data-nudge="-900">−15m</button>
+      <button type="button" class="nudge-btn minus" data-nudge="-1800">−30m</button>
+      <button type="button" class="nudge-btn minus" data-nudge="-3600">−1h</button>
+    </div>
+    <div class="nudge-row">
+      <button type="button" class="nudge-btn plus" data-nudge="300">+5m</button>
+      <button type="button" class="nudge-btn plus" data-nudge="600">+10m</button>
+      <button type="button" class="nudge-btn plus" data-nudge="900">+15m</button>
+      <button type="button" class="nudge-btn plus" data-nudge="1800">+30m</button>
+      <button type="button" class="nudge-btn plus" data-nudge="3600">+1h</button>
+    </div>
+    <div class="nudge-row fine">
+      <button type="button" class="nudge-btn minus" data-nudge="-60">−1m</button>
+      <button type="button" class="nudge-btn minus" data-nudge="-5">−5s</button>
+      <button type="button" class="nudge-btn plus" data-nudge="5">+5s</button>
+      <button type="button" class="nudge-btn plus" data-nudge="60">+1m</button>
+    </div>
+    <input id="edit-duration-input" type="text" placeholder="or type: 25m, 2:30, -2:00" autocomplete="off">
     <button id="edit-duration-save">✓ Save Duration</button>
     <button id="edit-duration-cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Add Element Overlay (forgot to time something: pick it, type minutes) -->
+<div id="add-el-overlay">
+  <div id="add-el-modal">
+    <div id="add-el-title">ADD ELEMENT: <span id="add-el-cycle"></span></div>
+    <div id="add-el-hint">For time you forgot to start. Pick the element and type how long it took.</div>
+    <select id="add-el-select" aria-label="Element"></select>
+    <div class="add-el-time">
+      <input id="add-el-min" type="number" inputmode="numeric" min="0" step="1" placeholder="0" aria-label="Minutes"><span>min</span>
+      <input id="add-el-sec" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="0" aria-label="Seconds"><span>sec</span>
+    </div>
+    <input id="add-el-note" type="text" placeholder="Note (optional)" autocomplete="off">
+    <div id="add-el-error"></div>
+    <button id="add-el-save">✓ Add Element</button>
+    <button id="add-el-cancel">Cancel</button>
   </div>
 </div>
 
@@ -2099,7 +2164,9 @@ function parseDurationInput(str, currentSec) {
   const s = signMatch ? signMatch[2] : raw;
   let sec;
   const m = s.match(/^(\d+):([0-5]?\d)$/);
+  const mins = s.match(/^(\d+(?:\.\d+)?)\s*(?:m|min|mins|minute|minutes)$/i);
   if (m) sec = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  else if (mins) sec = Math.round(parseFloat(mins[1]) * 60);
   else if (/^\d+$/.test(s)) sec = parseInt(s, 10);
   else return null;
   return sign === null ? sec : Math.max(0, (currentSec || 0) + sign * sec);
@@ -2114,6 +2181,7 @@ function openEditDurationOverlay(bucketId, elIdx) {
   document.getElementById('edit-duration-name').textContent = el.name;
   const input = document.getElementById('edit-duration-input');
   input.value = formatMS(el.durationSec);
+  updateEditDurationPreview();
   document.getElementById('edit-duration-overlay').classList.add('visible');
   setTimeout(() => { input.focus(); input.select(); }, 100);
 }
@@ -2122,6 +2190,25 @@ function closeEditDurationOverlay() {
   editingDurationBucketId = null;
   editingDurationElIdx = null;
 }
+// "Was 30:00 → now 25:00", so the result is visible before saving.
+function editingDurationElement() {
+  const b = state.buckets.find(bk => bk.id === editingDurationBucketId);
+  return b && b.elements[editingDurationElIdx];
+}
+function updateEditDurationPreview() {
+  const el = editingDurationElement(); const out = document.getElementById('edit-duration-preview');
+  if (!el) { out.textContent = ''; return; }
+  const sec = parseDurationInput(document.getElementById('edit-duration-input').value, el.durationSec);
+  out.innerHTML = sec === null ? 'Not a time yet. Try 25m or 2:30.' : `Was <b>${formatMS(el.durationSec)}</b> &rarr; now <b>${formatMS(sec)}</b>`;
+}
+document.getElementById('edit-duration-input').addEventListener('input', updateEditDurationPreview);
+document.querySelectorAll('.nudge-btn').forEach(btn => btn.addEventListener('click', () => {
+  const el = editingDurationElement(); if (!el) return;
+  const input = document.getElementById('edit-duration-input');
+  const base = parseDurationInput(input.value, el.durationSec);
+  input.value = formatMS(Math.max(0, (base === null ? el.durationSec : base) + Number(btn.dataset.nudge)));
+  updateEditDurationPreview();
+}));
 document.getElementById('edit-duration-save').addEventListener('click', () => {
   const input = document.getElementById('edit-duration-input');
   const b = state.buckets.find(bk => bk.id === editingDurationBucketId);
@@ -2141,6 +2228,70 @@ document.getElementById('edit-duration-cancel').addEventListener('click', closeE
 document.getElementById('edit-duration-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('edit-duration-save').click();
 });
+
+/* ── Add Element after the fact (Log) ── */
+let addingElBucketId = null;
+
+// The element list a cycle was timed with (its own plant + stream), regardless of what the
+// session screen is currently set to.
+function elementsForBucket(b) {
+  const keep = { plant: state.plant, stream: state.stream };
+  try {
+    state.plant = b.plant || state.plant;
+    state.stream = bucketStream(b) || state.stream;
+    return getElementsForPlant();
+  } finally { state.plant = keep.plant; state.stream = keep.stream; }
+}
+
+function openAddElementOverlay(bucketId) {
+  const b = state.buckets.find(bk => bk.id === bucketId);
+  if (!b) return;
+  addingElBucketId = bucketId;
+  const groups = [['green', 'Value added'], ['amber', 'Necessary'], ['red', 'Waste']];
+  const els = elementsForBucket(b);
+  const sel = document.getElementById('add-el-select');
+  sel.innerHTML = '<option value="">Pick an element…</option>' + groups.map(([tier, label]) => {
+    const opts = els.filter(el => el.tier === tier).map(el => `<option value="${esc(el.name)}">${esc(el.name)}</option>`).join('');
+    return opts ? `<optgroup label="${label}">${opts}</optgroup>` : '';
+  }).join('');
+  document.getElementById('add-el-cycle').textContent = bucketTimeLabel(b);
+  ['add-el-min', 'add-el-sec', 'add-el-note'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('add-el-error').textContent = '';
+  document.getElementById('add-el-overlay').classList.add('visible');
+  setTimeout(() => sel.focus(), 100);
+}
+function closeAddElementOverlay() {
+  document.getElementById('add-el-overlay').classList.remove('visible');
+  addingElBucketId = null;
+}
+document.getElementById('add-el-save').addEventListener('click', () => {
+  const b = state.buckets.find(bk => bk.id === addingElBucketId);
+  const err = document.getElementById('add-el-error');
+  if (!b) { closeAddElementOverlay(); return; }
+  const name = document.getElementById('add-el-select').value;
+  const el = elementsForBucket(b).find(x => x.name === name);
+  const min = parseFloat(document.getElementById('add-el-min').value || '0');
+  const secRaw = parseFloat(document.getElementById('add-el-sec').value || '0');
+  const durationSec = Math.round((isNaN(min) ? NaN : min) * 60 + secRaw);
+  if (!el) { err.textContent = 'Pick an element first.'; return; }
+  if (isNaN(durationSec) || min < 0 || secRaw < 0) { err.textContent = 'Enter the time in minutes and seconds.'; return; }
+  if (durationSec <= 0) { err.textContent = 'Time has to be more than zero.'; return; }
+  if (durationSec > 86400) { err.textContent = 'That is more than 24 hours. Check the minutes.'; return; }
+  const now = Date.now();
+  b.elements.push({
+    name: el.name, tier: el.tier,
+    startTs: now - durationSec * 1000, endTs: now,
+    durationSec, note: document.getElementById('add-el-note').value.trim(), manual: true,
+  });
+  // The old export doesn't contain this element, so flag the cycle as needing a fresh export.
+  b.exportedAt = null;
+  saveState();
+  closeAddElementOverlay();
+  renderLog(); renderGrid(); updateSessionHomeInfo();
+});
+document.getElementById('add-el-cancel').addEventListener('click', closeAddElementOverlay);
+['add-el-min', 'add-el-sec', 'add-el-note'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('add-el-save').click(); }));
 
 function renderLog() {
   const list = document.getElementById('log-list');
@@ -2304,6 +2455,7 @@ function renderLog() {
                   <button class="el-delete-btn" data-bucket-id="${bucket.id}" data-el-idx="${elIdx}" title="Delete this element">✕</button>
                 </span>
               </div>${el.note ? `<div class="bucket-element-note">📝 ${esc(el.note)}</div>` : ''}`).join('')}
+        <button class="el-add-btn" data-add-el="${bucket.id}">＋ Add Element</button>
       </div>`;
 
     if (isLive) {
@@ -2320,6 +2472,7 @@ function renderLog() {
         if (exported && exported.length) { bucket.exportedAt = Date.now(); saveState(); renderLog(); updateSessionHomeInfo(); showExportToast(); }
       });
     }
+    row.querySelector('[data-add-el]').addEventListener('click', e => { e.stopPropagation(); openAddElementOverlay(bucket.id); });
     row.querySelectorAll('.el-edit-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
