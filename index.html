@@ -496,6 +496,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
         <div class="td-row">
           <div class="td-field"><label>Operator</label><input id="td-operator" type="text" placeholder="Name" list="dl-operator"></div>
           <div class="td-field" id="td-obs-field"><label># of Obs</label><input id="td-obs" type="number" min="1" value="1" inputmode="numeric"></div>
+          <div class="td-field" id="td-qty-field" style="display:none"><label>Quantity</label><input id="td-qty" type="number" min="1" inputmode="numeric" placeholder="pcs in batch"></div>
         </div>
         <div class="td-row" id="td-teeth-row" style="display:none">
           <div class="td-field"><label>Tooth Type</label><input id="td-tooth-type" type="text" placeholder="optional" autocomplete="off"></div>
@@ -670,6 +671,10 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
       <label># of Observations</label>
       <input type="number" id="modal-num-obs" min="1" value="1" inputmode="numeric">
     </div>
+    <div class="modal-field" id="modal-qty-section" style="display:none">
+      <label>Quantity (pcs in batch)</label>
+      <input type="number" id="modal-quantity" min="1" inputmode="numeric">
+    </div>
     <div class="modal-field" id="modal-teeth-section" style="display:none">
       <label>Tooth Type</label>
       <input type="text" id="modal-tooth-type" placeholder="optional">
@@ -712,12 +717,13 @@ const PROCESSES_BY_STREAM = {
   'Couplers':     ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Thumbs':       ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Blast and Paint': ['Blast','Paint'],
+  'Machine Shop':    ['Machine Part'],
 };
 // Value streams available per plant. Custom Process is a top-level stream on both plants —
 // it has no fixed process list; the operator names the one-off study when they create a bucket.
 const STREAMS_BY_PLANT = {
-  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Custom Process'],
-  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Custom Process'],
+  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Machine Shop','Custom Process'],
+  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Machine Shop','Custom Process'],
 };
 function isCustomProcessStream(s) { return s === 'Custom Process'; }
 function isCustomProcessCurrent() { return isCustomProcessStream(state.stream); }
@@ -729,9 +735,14 @@ function bucketStream(b) {
   return b.stream || (b.plant === 'Plant 1' ? 'Large Bucket' : null);
 }
 // Part-number streams (Couplers, Thumbs) key on Part Number instead of Frame #/Frame Width.
-const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs']);
+const PART_NUMBER_STREAMS = new Set(['Couplers','Thumbs','Machine Shop']);
 function isPartNumberStream(s) { return PART_NUMBER_STREAMS.has(s); }
 function isPartNumberBucket(b) { return isPartNumberStream(bucketStream(b)); }
+// Machine Shop runs parts in batches: each cycle also records how many pieces were made, so the
+// workbook can work out time per part (batch time / quantity).
+const QUANTITY_STREAMS = new Set(['Machine Shop']);
+function isQuantityStream(s) { return QUANTITY_STREAMS.has(s); }
+function isQuantityBucket(b) { return isQuantityStream(bucketStream(b)); }
 // Either-key streams take Part Number OR Frame #/Width: both field sets show and the operator fills in
 // whichever the item has. Blast and Paint (where everything ends up), Custom Process, and every Custom
 // Fab product (added where CUSTOM_FAB_MENU is flattened).
@@ -746,7 +757,10 @@ function headerKeyParts(stream, h) {
     if (h.partNumber) parts.push(`Part ${h.partNumber}`);
     if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
     if (h.frameWidth) parts.push(`Width ${h.frameWidth}`);
-  } else if (isPartNumberStream(stream)) { if (h.partNumber) parts.push(`Part ${h.partNumber}`); }
+  } else if (isPartNumberStream(stream)) {
+    if (h.partNumber) parts.push(`Part ${h.partNumber}`);
+    if (isQuantityStream(stream) && h.quantity) parts.push(`Qty ${h.quantity}`);
+  }
   else if (h.frameNumber) parts.push(`Frame ${h.frameNumber}`);
   return parts;
 }
@@ -771,7 +785,8 @@ const CUSTOM_FAB_MENU = {
   'Fork Carriage':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   // "Middle & End Extension Install" -- "and" spelled out would be 32 chars, over Excel's 31-char tab limit.
   'Boon':           ['Base Build', 'Base Weld', 'Ear Install', 'Ear Weld', 'Middle & End Extension Install'],
-  'Compactor':      ['Machine Shop', 'Fabrication', 'Weld'],
+  // Compactor's machined parts are timed in the Machine Shop department by part number, like everything else.
+  'Compactor':      ['Fabrication', 'Weld'],
   'Cradle':         ['Fabrication 1', 'Weld', 'Fabrication 2'],
   // Straighten: a finished coupler is bowed a little, so it goes to the straightening table last.
   'Hydraulic Couplers': ['Body Fab', 'Weld', 'Bushing Install', 'Bushing Weld', 'Straighten'],
@@ -875,7 +890,33 @@ function getElementsForPlant() {
 // department's own work gets a Paint element (Value Added).
 const BLAST_PAINT_EXTRA_ELEMENTS = [{ name: 'Paint', tier: 'green' }];
 
+// Machine Shop (CNC / lathe work): its own value-added and necessary elements; the waste list is
+// the same as everywhere else ("...Part" names, no Roll Bucket).
+const MACHINE_SHOP_ELEMENTS = [
+  { name: 'Machine Run Time',       tier: 'green' },
+  { name: 'Machine Setup',          tier: 'amber' },
+  { name: 'Load Part',              tier: 'amber' },
+  { name: 'Unload Part',            tier: 'amber' },
+  { name: 'Tool Change',            tier: 'amber' },
+  { name: 'Measure/Inspect',        tier: 'amber' },
+  { name: 'Deburr',                 tier: 'amber' },
+  { name: 'Programming',            tier: 'amber' },
+  { name: 'Verify Parts',           tier: 'amber' },
+  { name: 'Paperwork',              tier: 'amber' },
+  { name: 'Operating Forklift',     tier: 'amber' },
+  { name: 'Operating Crane',        tier: 'amber' },
+  { name: 'Cleaning Parts',         tier: 'amber' },
+  { name: 'Computer Work',          tier: 'amber' },
+  { name: 'Training',               tier: 'amber' },
+  { name: 'Speaking to Leadership', tier: 'amber' },
+];
+
 function elementsForStream() {
+  if (state.stream === 'Machine Shop') {
+    const waste = COMMON_ELEMENTS.filter(el => el.tier === 'red')
+      .map(el => CUSTOM_FAB_ELEMENT_RENAMES[el.name] ? { ...el, name: CUSTOM_FAB_ELEMENT_RENAMES[el.name] } : el);
+    return [...MACHINE_SHOP_ELEMENTS, ...waste];
+  }
   if (state.stream === 'Blast and Paint') {
     return [...COMMON_ELEMENTS.map(el => CUSTOM_FAB_ELEMENT_RENAMES[el.name] ? { ...el, name: CUSTOM_FAB_ELEMENT_RENAMES[el.name] } : el), ...BLAST_PAINT_EXTRA_ELEMENTS];
   }
@@ -898,7 +939,7 @@ function elementsForStream() {
 
 /* ── State ── */
 function emptyHeader() {
-  return { process:'', frameNumber:'', frameWidth:'', operator:'', numObservations:'1', toothType:'', numTeeth:'', earType:'', partNumber:'' };
+  return { process:'', frameNumber:'', frameWidth:'', operator:'', numObservations:'1', toothType:'', numTeeth:'', earType:'', partNumber:'', quantity:'' };
 }
 function defaultState() {
   return { plant: null, stream: null, buckets: [], activeElement: null, nextBucketId: 1, observerName: '' };
@@ -1466,6 +1507,7 @@ function updateTdStreamFields() {
   document.getElementById('td-partnum-row').style.display = (pn || dual) ? 'grid' : 'none';
   document.getElementById('td-frame-row').style.display   = (!pn || dual) ? 'grid' : 'none';
   document.getElementById('td-obs-field').style.display   = (pn || dual) ? 'none' : 'flex';
+  document.getElementById('td-qty-field').style.display   = isQuantityStream(state.stream) ? 'flex' : 'none';
 }
 
 function populateTdProcess(selected) {
@@ -1477,6 +1519,7 @@ function populateTdProcess(selected) {
     if (p === selected) opt.selected = true;
     sel.appendChild(opt);
   });
+  appendRetiredProcessOption(sel, selected, getProcessesForCurrent());
 }
 
 function updateTdConditionals(process) {
@@ -1507,7 +1550,7 @@ function renderTimerDetails() {
   if (!b) {
     summaryEl.textContent = 'No active cycle';
     document.getElementById('td-process').innerHTML = '<option value="">— Select process —</option>';
-    ['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-partnum','td-process-text']
+    ['td-frame','td-width','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-partnum','td-process-text','td-qty']
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = id === 'td-obs' ? '1' : ''; });
     updateTdConditionals('');
     updateTdStreamFields();
@@ -1523,6 +1566,7 @@ function renderTimerDetails() {
   document.getElementById('td-partnum').value    = h.partNumber  || '';
   document.getElementById('td-operator').value   = h.operator    || '';
   document.getElementById('td-obs').value        = h.numObservations || '1';
+  document.getElementById('td-qty').value        = h.quantity    || '';
   document.getElementById('td-tooth-type').value = h.toothType   || '';
   document.getElementById('td-num-teeth').value  = h.numTeeth    || '';
   document.getElementById('td-ear-type').value   = h.earType     || '';
@@ -1545,6 +1589,7 @@ function saveTimerDetails() {
   b.header.partNumber      = document.getElementById('td-partnum').value.trim();
   b.header.operator        = document.getElementById('td-operator').value.trim();
   b.header.numObservations = document.getElementById('td-obs').value || '1';
+  b.header.quantity        = document.getElementById('td-qty').value.trim();
   b.header.toothType       = document.getElementById('td-tooth-type').value.trim();
   b.header.numTeeth        = document.getElementById('td-num-teeth').value.trim();
   b.header.earType         = document.getElementById('td-ear-type').value.trim();
@@ -1583,7 +1628,7 @@ document.getElementById('td-process').addEventListener('change', () => {
   saveTimerDetails();
 });
 
-['td-frame','td-width','td-partnum','td-operator','td-obs','td-tooth-type','td-num-teeth','td-ear-type','td-process-text']
+['td-frame','td-width','td-partnum','td-operator','td-obs','td-qty','td-tooth-type','td-num-teeth','td-ear-type','td-process-text']
   .forEach(id => document.getElementById(id).addEventListener('input', scheduleTimerDetailsSave));
 
 // Frame # and Frame Width are always recorded in all-caps — force it as they type
@@ -2416,7 +2461,8 @@ function renderLog() {
                 (h.frameNumber || h.frameWidth ? `<span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
                  <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>` : '')
               : isPartNumberBucket(bucket)
-              ? `<span><span class="lbl">Part #:</span> ${esc(h.partNumber)||'—'}</span>`
+              ? `<span><span class="lbl">Part #:</span> ${esc(h.partNumber)||'—'}</span>` +
+                (isQuantityBucket(bucket) ? `<span><span class="lbl">Qty:</span> ${esc(h.quantity)||'—'}</span>` : '')
               : `<span><span class="lbl">Frame:</span> ${esc(h.frameNumber)||'—'}</span>
                  <span><span class="lbl">Width:</span> ${esc(h.frameWidth)||'—'}</span>`}
             <span><span class="lbl">Operator:</span> ${esc(h.operator)||'—'}</span>
@@ -2655,12 +2701,24 @@ let editingBucketId = null;
 function populateModalProcessSelect(selected, processes) {
   const sel = document.getElementById('modal-process');
   sel.innerHTML = '<option value="">-- Select Process --</option>';
-  (processes || getProcessesForCurrent()).forEach(p => {
+  const list = processes || getProcessesForCurrent();
+  list.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p; opt.textContent = p;
     if (p === selected) opt.selected = true;
     sel.appendChild(opt);
   });
+  appendRetiredProcessOption(sel, selected, list);
+}
+
+// A cycle timed under a step that has since been removed or renamed (e.g. Compactor's old Machine Shop
+// step) keeps its process: show it as "(old step)" and selected, instead of a blank dropdown that
+// would wipe the process on Save.
+function appendRetiredProcessOption(sel, selected, list) {
+  if (!selected || list.includes(selected)) return;
+  const opt = document.createElement('option');
+  opt.value = selected; opt.textContent = `${selected} (old step)`; opt.selected = true;
+  sel.appendChild(opt);
 }
 
 function updateModalConditionals(process) {
@@ -2679,6 +2737,7 @@ function updateModalStreamFields(stream) {
   document.getElementById('modal-frame-section').style.display   = (!pn || dual) ? 'flex' : 'none';
   document.getElementById('modal-width-section').style.display   = (!pn || dual) ? 'flex' : 'none';
   document.getElementById('modal-obs-section').style.display     = (pn || dual) ? 'none' : 'flex';
+  document.getElementById('modal-qty-section').style.display     = isQuantityStream(stream) ? 'flex' : 'none';
 }
 
 // Custom Process has no fixed list — show a free-text field instead of the process dropdown.
@@ -2707,6 +2766,7 @@ function openEditModal(bucketId) {
   document.getElementById('modal-frame-width').value  = h.frameWidth  || '';
   document.getElementById('modal-operator').value     = h.operator    || '';
   document.getElementById('modal-num-obs').value      = h.numObservations || '1';
+  document.getElementById('modal-quantity').value     = h.quantity    || '';
   document.getElementById('modal-tooth-type').value   = h.toothType   || '';
   document.getElementById('modal-num-teeth').value    = h.numTeeth    || '';
   document.getElementById('modal-ear-type').value     = h.earType     || '';
@@ -2734,6 +2794,7 @@ document.getElementById('modal-save-log-edit').addEventListener('click', () => {
       frameWidth:      document.getElementById('modal-frame-width').value.trim(),
       operator:        document.getElementById('modal-operator').value.trim(),
       numObservations: document.getElementById('modal-num-obs').value || '1',
+      quantity:        document.getElementById('modal-quantity').value.trim(),
       toothType:       document.getElementById('modal-tooth-type').value.trim(),
       numTeeth:        document.getElementById('modal-num-teeth').value.trim(),
       earType:         document.getElementById('modal-ear-type').value.trim(),
@@ -2796,6 +2857,8 @@ function buildExportRow(bucket) {
     numTeeth:    numTeeth || '',
     earType:     h.earType     || '',
     numObs:      Number(h.numObservations) || 1,
+    quantity:    Number(h.quantity) > 0 ? Number(h.quantity) : '',
+    timePerPart: (Number(h.quantity) > 0 && cycleMin > 0) ? +(cycleMin / Number(h.quantity)).toFixed(4) : null,
     notes:       [...els.filter(e=>e.note && e.name !== PAUSE_ELEMENT_NAME).map(e=>`${e.name}: ${flattenNoteText(e.note)}`), flattenNoteText(h.notes)].filter(Boolean).join(' / '),
     cycleMin:    cycleMin,
     vaMin,
@@ -2818,7 +2881,13 @@ function getColumnsForProcess(processName, plant, stream) {
         VP=r=>r.vaPct, NP=r=>r.nnvaPct, OB=r=>r.numObs, NO=r=>r.notes,
         PH=r=>r.preheatMin, PB=r=>r.posBucketMin, PC=r=>r.posCount,
         TT=r=>r.toothType, NT=r=>r.numTeeth, TPT=r=>r.timePTooth, ET=r=>r.earType,
-        PN=r=>r.partNum, BS=r=>r.bucketSize;
+        PN=r=>r.partNum, BS=r=>r.bucketSize, QT=r=>r.quantity, TPP=r=>r.timePerPart;
+
+  // Machine Shop (both plants, one workbook): Part Number + batch Quantity, and Time per Part.
+  // Column order must match the MACHINE SHOP workbook's Machine Part tab exactly.
+  if (isQuantityStream(stream)) {
+    return [c('Date',D),c('Part Number',PN),c('Quantity',QT),c('Operator',OP),c('Cycle Time (min)',CY),c('Time per Part (min)',TPP),c('VA Time (min)',VA),c('NNVA Time (min)',NV),c('VA %',VP),c('NNVA %',NP),c('Notes',NO)];
+  }
 
   // Either-key streams (Blast and Paint, Custom Fab, Custom Process): Part Number for parts, Frame #/Width
   // for buckets (one is left blank). Column order must match those workbooks' process tabs exactly.
@@ -3134,7 +3203,7 @@ function buildExportWorkbook(buckets) {
         h.process || '(no process)',
         dualBucket ? [h.partNumber ? `Part #: ${h.partNumber}` : '', h.frameNumber ? `Frame #${h.frameNumber}` : ''].filter(Boolean).join(' · ')
           : pnBucket ? (h.partNumber ? `Part #: ${h.partNumber}` : '') : (h.frameNumber ? `Frame #${h.frameNumber}` : ''),
-        (pnBucket && !dualBucket) ? '' : (h.frameWidth ? `Width: ${h.frameWidth}"` : ''),
+        (pnBucket && !dualBucket) ? (isQuantityBucket(b) && h.quantity ? `Qty: ${h.quantity}` : '') : (h.frameWidth ? `Width: ${h.frameWidth}"` : ''),
         h.operator    ? `Operator: ${h.operator}` : '',
         b.observerName ? `Timed by: ${b.observerName}` : '',
       ]);
