@@ -776,12 +776,12 @@ const CUSTOM_FAB_MENU = {
     'Side Dump Bucket':  ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
     'Trash Bucket':      ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
     '4-in-1 Bucket':     ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
-    // Grapple has a second set of ears (pivot ears) that go on with bushings. After Bushing Weld it
+    // Grapple has a second set of ears (pivot ears), then the pivot arm goes on with bushings. After Bushing Weld it
     // comes back to Custom Fab once more for pin knockout (process map only, not timed here).
     'Grapple Bucket':    ['Body Fab', 'Body Weld', 'Arm Fab', 'Arm Weld', 'Ear Install', 'Ear Weld',
-                          'Pivot Ear & Bushing Install', 'Pivot Ear & Bushing Weld', 'Arm Install', 'Bushing Weld'],
-    // Fabrication 1 / 2: same part comes back after weld -- separate tabs keep the rounds from blending.
-    'Rollout Bucket':    ['Fabrication 1', 'Weld', 'Fabrication 2'],
+                          'Pivot Ear Install', 'Pivot Ear Weld', 'Pivot Arm and Bushing Install', 'Bushing Weld'],
+    // Everything on a rollout starts at Manual Panel Build.
+    'Rollout Bucket':    ['Manual Panel Build', 'Body Fab', 'Body Weld', 'Box and Bushing Install', 'Bushing Weld'],
     'Skid Steer Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
   },
   'Pavement Removal Bucket': ['Body Fab', 'Weld', 'Ear Install', 'Ear Weld'],
