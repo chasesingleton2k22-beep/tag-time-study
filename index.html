@@ -718,12 +718,13 @@ const PROCESSES_BY_STREAM = {
   'Thumbs':       ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Blast and Paint': ['Blast','Paint'],
   'Machine Shop':    ['Machine Part'],
+  'Assembly':        ['Assembly'],
 };
 // Value streams available per plant. Custom Process is a top-level stream on both plants —
 // it has no fixed process list; the operator names the one-off study when they create a bucket.
 const STREAMS_BY_PLANT = {
-  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Machine Shop','Custom Process'],
-  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Machine Shop','Custom Process'],
+  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Assembly','Machine Shop','Custom Process'],
+  'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Assembly','Machine Shop','Custom Process'],
 };
 function isCustomProcessStream(s) { return s === 'Custom Process'; }
 function isCustomProcessCurrent() { return isCustomProcessStream(state.stream); }
@@ -746,7 +747,7 @@ function isQuantityBucket(b) { return isQuantityStream(bucketStream(b)); }
 // Either-key streams take Part Number OR Frame #/Width: both field sets show and the operator fills in
 // whichever the item has. Blast and Paint (where everything ends up), Custom Process, and every Custom
 // Fab product (added where CUSTOM_FAB_MENU is flattened).
-const DUAL_KEY_STREAMS = new Set(['Blast and Paint', 'Custom Process']);
+const DUAL_KEY_STREAMS = new Set(['Blast and Paint', 'Assembly', 'Custom Process']);
 function isDualKeyStream(s) { return DUAL_KEY_STREAMS.has(s); }
 function isDualKeyBucket(b) { return isDualKeyStream(bucketStream(b)); }
 function isDualKeyCurrent() { return isDualKeyStream(state.stream); }
@@ -932,7 +933,8 @@ function elementsForStream() {
       THUMBS_ELEMENT_RENAMES[el.name] ? { ...el, name: THUMBS_ELEMENT_RENAMES[el.name] } : el
     );
   }
-  if (isCustomFabProduct(state.stream)) {
+  // Assembly (both plants) uses the Custom Fab element set: "...Part" names, Verify Parts, no Roll Bucket.
+  if (isCustomFabProduct(state.stream) || state.stream === 'Assembly') {
     const els = COMMON_ELEMENTS.map(el =>
       CUSTOM_FAB_ELEMENT_RENAMES[el.name] ? { ...el, name: CUSTOM_FAB_ELEMENT_RENAMES[el.name] } : el
     );
