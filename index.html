@@ -744,6 +744,8 @@ const PROCESSES_BY_STREAM = {
   'Large Bucket': ['Roll Bucket Large','Roll Bucket Small','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld','Manual Panel Build','ABB Sides','Cobot Panel Weld','Side Build'],
   'Quick Hitch':  ['Bucket Roll','Manual Shell Weld','Teeth And Logo','Teeth Weld','Ear & Bushing Install','Manual Panel Build'],
   'Pin On':       ['Bucket Roll','Manual Shell Weld','Teeth Install','Ear and Bushing Install','Final Weld','Manual Panel Build'],
+  // CTL (Plant 1): the Large Bucket database's processes, one Bucket Roll (the workbook has one roll tab).
+  'CTL':          ['Bucket Roll','Teeth and Logo','Ears','Weld','Bushing Install','Bushing Weld','Manual Panel Build','ABB Sides','Cobot Panel Weld','Side Build'],
   'Couplers':     ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Thumbs':       ['Body Fab','Body Weld','Bushing Install','Bushing Weld'],
   'Blast and Paint': ['Blast','Paint'],
@@ -753,16 +755,16 @@ const PROCESSES_BY_STREAM = {
 // Value streams available per plant. Custom Process is a top-level stream on both plants —
 // it has no fixed process list; the operator names the one-off study when they create a bucket.
 const STREAMS_BY_PLANT = {
-  'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Assembly','Machine Shop','Custom Process'],
+  'Plant 1': ['Large Bucket','CTL','Thumbs','Custom Fab','Blast and Paint','Assembly','Machine Shop','Custom Process'],
   'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Assembly','Machine Shop','Custom Process'],
 };
 // Hit List: the boss's top 5 parts by cost per plant (11/2026). Tap HIT LIST, tap a part, pick the
 // stream and process; the cycle starts with its frame/width (or part #) filled in and a ★ tag, and
 // shows in the Hit List log. home = the part's usual stream (listed first). Edit this list when a
-// new hit list comes out. CTL has no stream yet, so it has no home.
+// new hit list comes out.
 const HIT_LIST = {
   'Plant 1': [
-    { pn: '102-0806Q',                  label: 'CTL Bucket',      home: null,           partNumber: '102-0806Q' },
+    { pn: '102-0806Q',                  label: 'CTL Bucket',      home: 'CTL',          partNumber: '102-0806Q' },
     { pn: '48200X2-1210-NY06B3S1E0P1N', label: 'Large Bucket',    home: 'Large Bucket', frame: '200X2', width: '48' },
     { pn: '60330X2-0330-NY06AAS2E0P1N', label: 'Large Bucket',    home: 'Large Bucket', frame: '330X2', width: '60' },
     { pn: '36120X2-4130-NY05B8S1E0P1N', label: 'Large Bucket',    home: 'Large Bucket', frame: '120X2', width: '36' },
@@ -797,9 +799,9 @@ const QUANTITY_STREAMS = new Set(['Machine Shop']);
 function isQuantityStream(s) { return QUANTITY_STREAMS.has(s); }
 function isQuantityBucket(b) { return isQuantityStream(bucketStream(b)); }
 // Either-key streams take Part Number OR Frame #/Width: both field sets show and the operator fills in
-// whichever the item has. Blast and Paint (where everything ends up), Custom Process, and every Custom
-// Fab product (added where CUSTOM_FAB_MENU is flattened).
-const DUAL_KEY_STREAMS = new Set(['Blast and Paint', 'Assembly', 'Custom Process']);
+// whichever the item has. Blast and Paint (where everything ends up), Custom Process, CTL (part-numbered
+// buckets like 102-0806Q), and every Custom Fab product (added where CUSTOM_FAB_MENU is flattened).
+const DUAL_KEY_STREAMS = new Set(['Blast and Paint', 'Assembly', 'Custom Process', 'CTL']);
 function isDualKeyStream(s) { return DUAL_KEY_STREAMS.has(s); }
 function isDualKeyBucket(b) { return isDualKeyStream(bucketStream(b)); }
 function isDualKeyCurrent() { return isDualKeyStream(state.stream); }
@@ -1670,8 +1672,10 @@ function populateTdProcess(selected) {
 }
 
 function updateTdConditionals(process) {
-  const isTeeth = isTeethProcess(process);
-  const isEar   = isEarProcess(process);
+  // Either-key exports (11 columns) have no tooth/ear columns, so don't ask for what can't export (CTL).
+  const dual    = isDualKeyCurrent();
+  const isTeeth = isTeethProcess(process) && !dual;
+  const isEar   = isEarProcess(process) && !dual;
   document.getElementById('td-teeth-row').style.display = isTeeth ? 'grid' : 'none';
   document.getElementById('td-ear-row').style.display   = isEar   ? 'grid' : 'none';
 }
@@ -2888,8 +2892,11 @@ function appendRetiredProcessOption(sel, selected, list) {
 }
 
 function updateModalConditionals(process) {
-  const isTeeth = isTeethProcess(process);
-  const isEar   = isEarProcess(process);
+  // Same rule as the Details panel: either-key streams (CTL) export no tooth/ear columns.
+  const eb      = state.buckets.find(x => x.id === editingBucketId);
+  const dual    = !!(eb && isDualKeyBucket(eb));
+  const isTeeth = isTeethProcess(process) && !dual;
+  const isEar   = isEarProcess(process) && !dual;
   document.getElementById('modal-teeth-section').style.display       = isTeeth ? 'flex' : 'none';
   document.getElementById('modal-teeth-count-section').style.display = isTeeth ? 'flex' : 'none';
   document.getElementById('modal-ear-section').style.display         = isEar   ? 'flex' : 'none';
