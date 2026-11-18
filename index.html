@@ -59,6 +59,21 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
 .stream-btn { font-size: 1.8rem; }
 .plant-btn:active, .stream-btn:active { background: var(--gold); color: var(--navy); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
+/* Hit List (top-5 parts per plant) */
+#screen-hitlist { align-items: center; gap: 16px; padding-bottom: 24px; overflow-y: auto; background: radial-gradient(ellipse at 50% 30%, #1b3f85 0%, #091d44 100%); }
+#screen-hitlist .stream-content { display: flex; flex-direction: column; align-items: center; gap: 16px; flex: 1; padding: 12px 24px 0; width: 100%; }
+#screen-hitlist h1 { color: var(--gold-light); font-size: 1.8rem; text-align: center; }
+#hitlist-hint { color: #b9c4d8; font-size: 1rem; font-weight: bold; text-align: center; max-width: 560px; word-break: break-word; }
+#hitlist-btn-container { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
+.hitlist-btn { width: 92%; max-width: 560px; min-height: 92px; background: linear-gradient(180deg, #1e4085 0%, #0d2258 100%); border: 3px solid var(--gold); color: var(--text-light); border-radius: 16px; cursor: pointer; padding: 10px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.45); }
+.hitlist-btn:active { background: var(--gold); color: var(--navy); }
+.hitlist-btn .hl-pn { font-size: 1.35rem; font-weight: bold; letter-spacing: 0.02em; word-break: break-all; }
+.hitlist-btn .hl-sub { font-size: 1rem; font-weight: bold; color: var(--gold-light); }
+.hitlist-btn:active .hl-sub { color: var(--navy); }
+.hitlist-btn.usual { border-color: var(--gold-light); box-shadow: 0 0 0 3px rgba(255,213,79,0.35), 0 4px 20px rgba(0,0,0,0.45); }
+.stream-btn.hitlist-entry, .home-btn.hitlist-entry { background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 100%); color: var(--navy); border-color: var(--gold-light); }
+.hitlist-badge { display: inline-block; font-size: 0.7rem; color: var(--navy); font-weight: bold; background: var(--gold-light); border-radius: 6px; padding: 2px 7px; margin-left: 7px; vertical-align: middle; }
+
 /* Session Home */
 #screen-session-home { align-items: center; justify-content: center; gap: 14px; padding: 20px; overflow-y: auto; background: radial-gradient(ellipse at 50% 20%, #162f6e 0%, #091d44 100%); }
 #home-session-info { font-size: 0.95rem; color: #b9c4d8; font-weight: bold; text-align: center; padding: 2px 0; }
@@ -416,6 +431,20 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
   </div>
 </div>
 
+<!-- Hit List: pick a part, then its stream; the process picker follows -->
+<div class="screen" id="screen-hitlist">
+  <div class="topbar">
+    <span class="plant-label" id="hitlist-plant-label">HIT LIST</span>
+    <button class="back-btn" id="hitlist-go-back">← Back</button>
+  </div>
+  <div class="stream-content">
+    <h1 id="hitlist-title">★ HIT LIST</h1>
+    <div id="hitlist-hint"></div>
+    <div id="hitlist-btn-container"></div>
+    <button class="home-btn" id="hitlist-view-log">★ Hit List Log</button>
+  </div>
+</div>
+
 <!-- Session Home -->
 <div class="screen" id="screen-session-home">
   <div class="topbar">
@@ -443,6 +472,7 @@ html, body { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial
     </div>
   </div>
   <button class="home-btn" id="home-new-bucket">▶ New Cycle</button>
+  <button class="home-btn hitlist-entry" id="home-hit-list" style="display:none">★ Hit List</button>
   <button class="home-btn" id="home-resume-timing" style="display:none">▶ Resume Timing</button>
   <button class="home-btn" id="home-view-log">View Log</button>
   <button id="btn-check-update">Check for Update</button>
@@ -726,6 +756,28 @@ const STREAMS_BY_PLANT = {
   'Plant 1': ['Large Bucket','Thumbs','Custom Fab','Blast and Paint','Assembly','Machine Shop','Custom Process'],
   'Plant 2': ['Quick Hitch','Pin On','Couplers','Thumbs','Blast and Paint','Assembly','Machine Shop','Custom Process'],
 };
+// Hit List: the boss's top 5 parts by cost per plant (11/2026). Tap HIT LIST, tap a part, pick the
+// stream and process; the cycle starts with its frame/width (or part #) filled in and a ★ tag, and
+// shows in the Hit List log. home = the part's usual stream (listed first). Edit this list when a
+// new hit list comes out. CTL has no stream yet, so it has no home.
+const HIT_LIST = {
+  'Plant 1': [
+    { pn: '102-0806Q',                  label: 'CTL Bucket',      home: null,           partNumber: '102-0806Q' },
+    { pn: '48200X2-1210-NY06B3S1E0P1N', label: 'Large Bucket',    home: 'Large Bucket', frame: '200X2', width: '48' },
+    { pn: '60330X2-0330-NY06AAS2E0P1N', label: 'Large Bucket',    home: 'Large Bucket', frame: '330X2', width: '60' },
+    { pn: '36120X2-4130-NY05B8S1E0P1N', label: 'Large Bucket',    home: 'Large Bucket', frame: '120X2', width: '36' },
+    { pn: '214-0215A',                  label: 'Hydraulic Thumb', home: 'Thumbs',       partNumber: '214-0215A' },
+  ],
+  'Plant 2': [
+    { pn: '2430Q2-0000-NN05A1S0E0P2N',  label: 'Quick Hitch', home: 'Quick Hitch', frame: '30Q2',  width: '24' },
+    { pn: '3630Q2-0000-NN06A1S0E0P2N',  label: 'Quick Hitch', home: 'Quick Hitch', frame: '30Q2',  width: '36' },
+    { pn: '2427Q2S-0000-NN04A7S6E0P2N', label: 'Quick Hitch', home: 'Quick Hitch', frame: '27Q2S', width: '24' },
+    { pn: '1827Q2-0000-NN04A7S6E0P2N',  label: 'Quick Hitch', home: 'Quick Hitch', frame: '27Q2',  width: '18' },
+    { pn: '213-0461A',                  label: 'Thumb',       home: 'Thumbs',      partNumber: '213-0461A' },
+  ],
+};
+const HIT_LIST_SCOPE = '★HL'; // log scope prefix: "★HL||Plant 2" and "★HL||Plant 2||Quick Hitch"
+function hitListFor(plant) { return HIT_LIST[plant] || []; }
 function isCustomProcessStream(s) { return s === 'Custom Process'; }
 function isCustomProcessCurrent() { return isCustomProcessStream(state.stream); }
 const TEETH_PROCESSES = new Set(['Teeth and Logo','Teeth And Logo','Teeth Install']);
@@ -1038,7 +1090,7 @@ function createNewBucket() {
 }
 
 /* ── Screen navigation ── */
-const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select','screen-session-home']);
+const SCREENS_WITHOUT_STATUS = new Set(['screen-plant-select','screen-stream-select','screen-session-home','screen-hitlist']);
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1067,6 +1119,13 @@ function renderStreamSelect() {
   cont.innerHTML = '';
   const node = inFab ? customFabNode(streamSelectPath) : null;
   const items = inFab ? Object.keys(node) : (STREAMS_BY_PLANT[state.plant] || []);
+  if (!inFab && hitListFor(state.plant).length) {
+    const hb = document.createElement('button');
+    hb.className = 'stream-btn hitlist-entry';
+    hb.textContent = '★ HIT LIST';
+    hb.addEventListener('click', () => goToHitList('stream-select'));
+    cont.appendChild(hb);
+  }
   items.forEach(s => {
     const btn = document.createElement('button');
     btn.className = 'stream-btn';
@@ -1080,6 +1139,80 @@ function renderStreamSelect() {
   });
 }
 function goToStreamSelect() { streamSelectPath = []; renderStreamSelect(); showScreen('screen-stream-select'); }
+
+/* ── Hit List ── */
+let hitListPick = null;              // the part tapped, while its stream is being picked
+let hitListReturn = 'stream-select'; // where ← Back goes: 'stream-select' | 'session-home'
+function hitListItemSub(item) {
+  return item.frame ? `${item.label} · Frame ${item.frame} · Width ${item.width}` : `${item.label} · Part # ${item.partNumber}`;
+}
+// Every stream on the plant except the Custom Fab folder; the part's usual stream goes first.
+function hitListStreams(item) {
+  const all = (STREAMS_BY_PLANT[state.plant] || []).filter(s => s !== CUSTOM_FAB);
+  return item.home && all.includes(item.home) ? [item.home, ...all.filter(s => s !== item.home)] : all;
+}
+function renderHitList() {
+  const cont = document.getElementById('hitlist-btn-container');
+  const title = document.getElementById('hitlist-title');
+  const hint = document.getElementById('hitlist-hint');
+  cont.innerHTML = '';
+  document.getElementById('hitlist-plant-label').textContent = `${state.plant || ''} — HIT LIST`.toUpperCase();
+  document.getElementById('hitlist-view-log').style.display = hitListPick ? 'none' : '';
+  if (!hitListPick) {
+    title.textContent = '★ HIT LIST';
+    hint.textContent = 'Tap the part you are timing.';
+    hitListFor(state.plant).forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'hitlist-btn';
+      btn.innerHTML = `<span class="hl-pn">${esc(item.pn)}</span><span class="hl-sub">${esc(hitListItemSub(item))}</span>`;
+      btn.addEventListener('click', () => { hitListPick = item; renderHitList(); });
+      cont.appendChild(btn);
+    });
+    return;
+  }
+  title.textContent = 'SELECT VALUE STREAM';
+  hint.textContent = `${hitListPick.pn} — ${hitListItemSub(hitListPick)}`;
+  hitListStreams(hitListPick).forEach(s => {
+    const usual = s === hitListPick.home;
+    const btn = document.createElement('button');
+    btn.className = 'hitlist-btn' + (usual ? ' usual' : '');
+    btn.innerHTML = `<span class="hl-pn">${esc(s.toUpperCase())}</span>${usual ? '<span class="hl-sub">★ usual stream for this part</span>' : ''}`;
+    btn.addEventListener('click', () => startHitListCycle(hitListPick, s));
+    cont.appendChild(btn);
+  });
+}
+function goToHitList(from) {
+  if (from) hitListReturn = from;
+  hitListPick = null;
+  renderHitList();
+  showScreen('screen-hitlist');
+}
+// Starts a cycle in the picked stream with the part's key already filled in, then asks for the
+// process. Frame streams get frame/width; part-number streams get the part #; either-key streams
+// get whichever the part has. The process is asked fresh every time (no carry-over).
+function startHitListCycle(item, stream) {
+  if (state.activeElement && !confirm(`You are timing "${state.activeElement.name}". Starting a Hit List cycle will stop this timer and seal the current cycle. Continue?`)) return;
+  sealCurrentBucketIfUnsealed();
+  state.stream = stream;
+  createNewBucket();
+  const b = getCurrentBucket();
+  b.hitList = item.pn;
+  const h = b.header;
+  if (item.frame && !isPartNumberStream(stream)) { h.frameNumber = item.frame; h.frameWidth = item.width; }
+  else if (isPartNumberStream(stream) || isDualKeyStream(stream)) h.partNumber = item.partNumber || item.pn;
+  saveState();
+  hitListPick = null;
+  goToSession();
+  ensureProcessPicked();
+}
+document.getElementById('hitlist-go-back').addEventListener('click', () => {
+  if (hitListPick) { hitListPick = null; renderHitList(); return; }
+  if (hitListReturn === 'session-home' && state.stream) goToSessionHome(); else goToStreamSelect();
+});
+document.getElementById('hitlist-view-log').addEventListener('click', () => {
+  logReturnScreen = 'hitlist'; logScope = `${HIT_LIST_SCOPE}||${state.plant}`; goToLogScreen();
+});
+document.getElementById('home-hit-list').addEventListener('click', () => goToHitList('session-home'));
 
 function plantDisplayLabel() {
   if (!state.stream) return state.plant || '';
@@ -1115,6 +1248,7 @@ function updateSessionHomeInfo() {
 function goToSessionHome() {
   document.getElementById('home-plant-label').textContent = plantDisplayLabel();
   document.getElementById('home-observer-input').value = state.observerName || '';
+  document.getElementById('home-hit-list').style.display = hitListFor(state.plant).length ? '' : 'none';
   syncObserverPresetHighlight();
   updateSessionHomeInfo();
   showScreen('screen-session-home');
@@ -1342,6 +1476,7 @@ document.getElementById('stream-go-back').addEventListener('click', () => {
 document.getElementById('process-overlay-cancel').addEventListener('click', closeProcessOverlay);
 document.getElementById('log-go-home').addEventListener('click', () => {
   if (logReturnScreen === 'stream-select') goToStreamSelect();
+  else if (logReturnScreen === 'hitlist') goToHitList();
   else if (logReturnScreen === 'session') goToSession();
   else goToSessionHome();
 });
@@ -1388,6 +1523,7 @@ function bucketSubtitleText() {
   if (!b) return 'No active cycle';
   const h = b.header || {};
   const parts = [];
+  if (b.hitList) parts.push('★ Hit List');
   if (h.process) parts.push(h.process);
   parts.push(...headerKeyParts(bucketStream(b), h));
   if (h.operator) parts.push(h.operator);
@@ -1840,6 +1976,7 @@ function bucketScopeKeys(b) {
   const proc   = (b.header && b.header.process) || '';
   const keys = [plant, scopeStreamKey(plant, stream)];
   if (proc) keys.push(scopeProcessKey(plant, stream, proc));
+  if (b.hitList) keys.push(`${HIT_LIST_SCOPE}||${plant}`, `${HIT_LIST_SCOPE}||${plant}||${stream}`);
   return keys;
 }
 function bucketMatchesScope(b) {
@@ -1921,6 +2058,19 @@ function buildLogScopeOptions() {
     });
 
   const html = [`<option value="">Master — all cycles (${state.buckets.length})</option>`];
+  // Hit List log: one option per plant (always listed, like the plant groups below) plus one per
+  // stream it has cycles in -- exports must stay one stream at a time.
+  html.push(`<optgroup label="★ Hit List">`);
+  Object.keys(HIT_LIST).forEach(plant => {
+    const mine = state.buckets.filter(b => b.hitList && b.plant === plant);
+    html.push(`<option value="${esc(HIT_LIST_SCOPE + '||' + plant)}">★ ${esc(plant)} Hit List — all (${mine.length})</option>`);
+    const byStream = new Map();
+    mine.forEach(b => { const s = bucketStream(b) || ''; byStream.set(s, (byStream.get(s) || 0) + 1); });
+    [...byStream.entries()].sort((a, b) => a[0].localeCompare(b[0])).forEach(([s, n]) => {
+      html.push(`<option value="${esc(HIT_LIST_SCOPE + '||' + plant + '||' + s)}">&nbsp;&nbsp;★ ${esc(s)} (${n})</option>`);
+    });
+  });
+  html.push(`</optgroup>`);
   [...plants.entries()].sort((a, b) => a[0].localeCompare(b[0])).forEach(([plant, p]) => {
     html.push(`<optgroup label="${esc(plant)}">`);
     html.push(`<option value="${esc(plant)}">${esc(plant)} — all (${p.count})</option>`);
@@ -2015,6 +2165,10 @@ function computeParetoRows(buckets) {
 
 function paretoScopeLabel() {
   if (!logScope) return 'Master — all cycles';
+  if (logScope.startsWith(HIT_LIST_SCOPE + '||')) {
+    const hl = logScope.split('||');
+    return `★ ${hl[1]} Hit List${hl[2] ? ' — ' + hl[2] : ''}`;
+  }
   const parts = logScope.split('||');
   const sel = document.getElementById('log-scope-select');
   const opt = sel && sel.querySelector(`option[value="${CSS.escape(logScope)}"]`);
@@ -2453,6 +2607,7 @@ function renderLog() {
        revert. Abbreviated P1/P2 to match the export's own plant tags.                    */
     const originBadge   = `<span class="bucket-origin-badge">${bucket.plant === 'Plant 2' ? 'P2' : 'P1'}${bucketStream(bucket) ? ' · ' + esc(bucketStream(bucket)) : ''}</span>`;
     const exportedBadge = bucket.exportedAt ? `<span class="bucket-exported-badge">✓ ${formatDate(bucket.exportedAt)}</span>` : '';
+    const hitBadge      = bucket.hitList ? `<span class="hitlist-badge">★ HIT LIST · ${esc(bucket.hitList)}</span>` : '';
     const expandHint    = elemCount > 0 ? `<span class="expand-hint">${isExpanded?'▲':'▼'} ${elemCount} element${elemCount!==1?'s':''}</span>` : '';
     const noteHint      = noteCount > 0 ? `<span class="tier-chip" style="color:#7ab8f5;">📝 ${noteCount} note${noteCount!==1?'s':''}</span>` : '';
 
@@ -2464,7 +2619,7 @@ function renderLog() {
         ${isCheckable ? `<div class="bucket-checkbox-wrap"><input type="checkbox" class="bucket-checkbox" data-bucket-id="${bucket.id}" ${selectedBucketIds.has(bucket.id) ? 'checked' : ''}></div>` : ''}
         <div class="bucket-row-meta">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
-            <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${originBadge}${procBadge}${liveBadge}${draftBadge}${exportedBadge}
+            <span class="bucket-time-label">${bucketTimeLabel(bucket)}</span>${originBadge}${hitBadge}${procBadge}${liveBadge}${draftBadge}${exportedBadge}
           </div>
           <div class="bucket-fields">
             ${isDualKeyBucket(bucket)
